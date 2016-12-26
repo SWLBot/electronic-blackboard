@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link href={{ static_url("css/bootstrap.min.css") }} rel="stylesheet">
+        <title>Board</title>
+        {% block head %} 
+
+        {% end %}
+    </head>
+    <body>
+        <center>
+            <img src="{{ static_url("img/"+files[0]) }}" name="pic" border=0>
+            <script>
+            </script>
+        </center>
+        <script type="text/javascript" src={{ static_url("js/jquery-3.1.1.min.js") }}></script>
+        <script>
+            var index = 1;
+            var imgs = [
+            {% for index in range(len(files)-1) %}
+            "{{static_url("img/"+files[index]) }}",
+            {% end %}
+            "{{static_url("img/"+files[len(files)-1]) }}"
+            ];
+            
+            function slideshow(){
+                $('img[name="pic"]').attr("src",imgs[index]);
+                index = (index + 1)% imgs.length;
+                console.log("change");
+            //    document.pic.height = window.screen.height-20;
+            //    document.pic.width = window.screen.width-20;
+            }
+            $(document).ready(function(){
+                setInterval(slideshow,3000);
+            });
+        </script>
+    </body>
+</html>

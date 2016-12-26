@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>Board</title>
+        <link href={{ static_url("css/bootstrap.min.css") }} rel="stylesheet">
+        {% block head %}
+        <link href={{ static_url("css/navbar-fixed-top.css") }} rel="stylesheet">
+        {% end %}
+    </head>
+    <body>
+        <nav class="navbar navbar-default navbar-fixed-top">
+          <div class="container">
+            <div class="navbar-header">
+              <a class="navbar-brand" href="/">NCTU Board</a>
+            </div>
+            <div id="navbar" class="navbar-collapse collapse">
+              <ul class="nav navbar-nav">
+                <li><a href="/">Home</a></li>
+                <li><a href="/upload">Upload</a></li>
+                <li><a href="#">Contact</a></li>
+              </ul>
+              <ul class="nav navbar-nav navbar-right">
+                {% if current_user %}
+                    <li><a href="#" class="btn-link btn">{{current_user}}</a></li>
+                    <li><a href="/signout">Sign out</a></li>
+                {% else %}
+                    <li><a href="/signin">Sign in</a></li>
+                    <li><a href="/signup">Sign up</a></li>
+                {% end %}
+              </ul>
+            </div><!--/.nav-collapse -->
+          </div>
+        </nav>
+        {% block body %}
+        {% if current_user %}
+            
+        {% end %}
+        {% end %}
+        <script type="text/javascript" src={{ static_url("js/jquery-3.1.1.min.js") }}></script>
+    </body>
+</html>

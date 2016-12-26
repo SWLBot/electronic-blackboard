@@ -1,0 +1,15 @@
+{% extends "index.html" %}
+{% block body %}
+    <div class="container">
+    <div class="jumbotron">
+    <form method="post" enctype="multipart/form-data">
+        <p><input type='file' name='file'/></p>
+        <p><input type='submit' value='上傳' class="btn btn-primary"/></p>
+        {% module xsrf_form_html() %}
+    </form>
+    {% if flash %}
+    <p>{{flash}}</p>
+    {% end %}
+    </div>
+    </div>
+{% end %}
