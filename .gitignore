@@ -1,3 +1,4 @@
 *.swp
 thumbnail
-static/img
+*.jpg
+*.jpge
