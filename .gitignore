@@ -2,3 +2,4 @@
 thumbnail
 *.jpg
 *.jpge
+__pycache__
