@@ -9,6 +9,11 @@
             <p><h5>Username: </h5><input type="text" name="username" /></p>
             <p><h5>Password: </h5><input type="password" name="password" /></p>
             <p><input type="submit" value="Log In" class="btn btn-primary"/></p>
+            {% if flash %}
+                {% for msg in flash %}
+                    <div>{{msg}}</div>
+                {% end %}
+            {% end %}
             {% module xsrf_form_html() %}
 
         </form>
