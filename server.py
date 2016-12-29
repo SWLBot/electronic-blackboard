@@ -18,6 +18,14 @@ class MainHandler(BaseHandler):
     def post(self):
         self.write("Hello Tornado! post")
 
+class SignupHandler(BaseHandler):
+    def get(self):
+        self.render('signup.html')
+    def post(self):
+        
+        pass
+        
+
 class LoginHandler(BaseHandler):
     def get(self):
         incorrect = self.get_secure_cookie("incorrect")
@@ -87,6 +95,7 @@ class Application(tornado.web.Application):
         tornado.web.Application.__init__(self,[
             tornado.web.url(r"/",MainHandler,name="main"),
             tornado.web.url(r"/signin",LoginHandler,name="signin"),
+            tornado.web.url(r"/signup",SignupHandler,name="signup"),
             tornado.web.url(r"/signout",LogoutHandler,name="signout"),
             tornado.web.url(r"/upload",UploadHandler,name="upload")
         ],**settings)
