@@ -1,7 +1,10 @@
 import tornado.ioloop
 import tornado.web
 import os.path
+import bcrypt
+from datetime import datetime
 from PIL import Image
+from mysql import MySQL
 
 class BaseHandler(tornado.web.RequestHandler):
     def get_current_user(self):
@@ -12,7 +15,10 @@ class MainHandler(BaseHandler):
     
     def get(self):
         user = self.get_current_user()
-        self.render("index.html",user = user)
+        if user:
+            self.render("index.html",user = user)
+        else:
+            self.redirect("/signin")
 
 
     def post(self):
@@ -20,10 +26,28 @@ class MainHandler(BaseHandler):
 
 class SignupHandler(BaseHandler):
     def get(self):
-        self.render('signup.html')
+        self.render('signup.html',flash=None)
     def post(self):
-        
-        pass
+        client = MySQL()
+        cursor = client.cursor
+        getusername = tornado.escape.xhtml_escape(self.get_argument("username"))
+        getpassword = tornado.escape.xhtml_escape(self.get_argument("password"))
+        cursor.execute("select Count(*) from `user` where `name`=%s",(getusername,))
+        is_existed = cursor.fetchone()[0]
+        if is_existed == 0:
+            hashed = bcrypt.hashpw(getpassword.encode('utf-8'),bcrypt.gensalt())
+            now = datetime.now()
+            ret = cursor.execute("insert into `user` (`name`,`password`,`create_time`) values (%s,%s,%s)",(getusername,hashed,now))
+            client.db.commit()
+            self.set_secure_cookie("user",getusername)
+            self.set_secure_cookie("incorrect","0")
+            client.close()
+            self.redirect(self.reverse_url("main"))
+        else:
+            client.close()
+            self.render("signup.html",flash=["The name \""+getusername+"\" has been used"])
+
+
         
 
 class LoginHandler(BaseHandler):
@@ -32,27 +56,35 @@ class LoginHandler(BaseHandler):
         if incorrect and int(incorrect) > 20:
             self.write('<center>Blocked</center>')
             return
-        self.render('signin.html')
+        self.render('signin.html',flash=None)
     def post(self):
         incorrect = self.get_secure_cookie("incorrect")
         if incorrect and int(incorrect) > 20:
             self.write('<center>Blocked</center>')
             return
 
+        client = MySQL()
+        cursor = client.cursor
         getusername = tornado.escape.xhtml_escape(self.get_argument("username"))
         getpassword = tornado.escape.xhtml_escape(self.get_argument("password"))
-        if "demo" == getusername and "demo" == getpassword:
-            self.set_secure_cookie("user",self.get_argument("username"))
-            self.set_secure_cookie("incorrect","0")
-            self.redirect(self.reverse_url("main"))
+        ret = cursor.execute("select `password` from user where `name` = %s",(getusername,))
+        if ret != 0:
+            hashed = cursor.fetchone()[0].encode('utf-8')
+            if bcrypt.checkpw(getpassword.encode('utf-8'),hashed):
+                self.set_secure_cookie("user",self.get_argument("username"))
+                self.set_secure_cookie("incorrect","0")
+                self.redirect(self.reverse_url("main"))
+            else:
+                incorrect = self.get_secure_cookie("incorrect") or 0
+                increased = str(int(incorrect)+1)
+                self.set_secure_cookie("incorrect",increased)
+                self.render("signin.html",flash=["wrong password","You can still try "+str(20-int(increased))+" times"])                
         else:
             incorrect = self.get_secure_cookie("incorrect") or 0
             increased = str(int(incorrect)+1)
             self.set_secure_cookie("incorrect",increased)
-            self.write("""<center>
-                          Something Wrong With Your Data (%s)<br/>
-                          <a href="/">Go Home</a>
-                          </center>""" % increased)
+            self.render("signin.html",flash=["No such user","You can still try "+str(20-int(increased))+" times"])
+            
 
 class LogoutHandler(BaseHandler):
     def get(self):
@@ -61,7 +93,11 @@ class LogoutHandler(BaseHandler):
 
 class UploadHandler(BaseHandler):
     def get(self):
-        self.render("upload.html",flash=None)
+        user = self.get_current_user()
+        if user:
+            self.render("upload.html",flash=None)
+        else:
+            self.redirect("/signin")
 
     def post(self):
         upload_path = os.path.join(os.path.dirname(__file__),"static/img")
