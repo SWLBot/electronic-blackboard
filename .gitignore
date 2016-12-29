@@ -3,3 +3,4 @@ thumbnail
 *.jpg
 *.jpge
 __pycache__
+mysql.txt
