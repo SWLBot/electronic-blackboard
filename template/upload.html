@@ -4,6 +4,8 @@
     <div class="jumbotron">
     <form method="post" enctype="multipart/form-data">
         <p><input type='file' name='file'/></p>
+        <p>播放日期: <input type='date' name='start_date'/> ~ <input type='date' name='end_date'/></p>
+        <p>播放時段: <input type='time' name='start_time'/> ~ <input type='time' name='end_time'/></p>
         <p><input type='submit' value='上傳' class="btn btn-primary"/></p>
         {% module xsrf_form_html() %}
     </form>
