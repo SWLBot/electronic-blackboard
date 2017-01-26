@@ -1,5 +1,13 @@
 <!DOCTYPE html>
 <html>
+	<style>
+	img {
+	    	max-width: 1920px;
+		max-height: 1080px;
+		height: auto;
+		width: auto;
+	}
+	</style>
     <head>
         <link href={{ static_url("css/bootstrap.min.css") }} rel="stylesheet">
         <title>Board</title>
@@ -13,26 +21,162 @@
             <script>
             </script>
         </center>
-        <script type="text/javascript" src={{ static_url("js/jquery-3.1.1.min.js") }}></script>
+	<script type="text/javascript" src={{ static_url("js/jquery-3.1.1.min.js") }}></script>
         <script>
-            var index = 1;
-            var imgs = [
-            {% for index in range(len(files)-1) %}
-            "{{static_url("img/"+files[index]) }}",
-            {% end %}
-            "{{static_url("img/"+files[len(files)-1]) }}"
-            ];
-            
-            function slideshow(){
-                $('img[name="pic"]').attr("src",imgs[index]);
-                index = (index + 1)% imgs.length;
-                console.log("change");
-            //    document.pic.height = window.screen.height-20;
-            //    document.pic.width = window.screen.width-20;
-            }
-            $(document).ready(function(){
-                setInterval(slideshow,3000);
-            });
+			
+		var imgs_index = 0;
+		var time_count = 0;
+		var imgs = ["{{static_url("img/"+files[0]) }}","{{static_url("img/"+files[0]) }}"];
+		var limit_time = [5, 5];
+		var schedule_dir_txt = '/home/project/electronic-blackboard/';
+
+	
+		function inc_schedule()
+		{
+			$.ajaxSetup({
+			    beforeSend: function (jqXHR, settings)  {
+				type = settings.type
+				if (type != 'GET' && type != 'HEAD' && type != 'OPTIONS' ) {
+				     var pattern = /(.+; *)?_xsrf *= *([^;" ]+)/ ;
+				     var xsrf = pattern.exec( document.cookie);
+				     if (xsrf) {
+					jqXHR.setRequestHeader( 'X-Xsrftoken' , xsrf[ 2 ]);
+				    }
+				}
+			}});
+
+			var data =
+			{
+				"schedule_dir": schedule_dir_txt,
+				"arrange_mode": 1
+			};
+			var dataToSend = JSON.stringify(data);
+			var pattern = /(.+; *)?_xsrf *= *([^;" ]+)/ ;
+			var xsrf = pattern.exec( document.cookie);
+			if (xsrf) 
+			{
+				dataToSend._xsrf = xsrf[3];
+			}
+
+			$.ajax({
+					url: '/db_schedule',
+					type: 'POST',
+					contentType : 'application/json',
+					data: dataToSend,
+					success: function (jsonResponse)
+					{
+						var objresponse = JSON.parse(jsonResponse);
+						if (objresponse['num'] > 0)
+						{
+							console.log('inc_schedule scuess');
+						}
+					},
+					error: function (xhr, textStatus, error) 
+					{
+						console.log(xhr.statusText);
+						console.log(textStatus);
+						console.log(error);
+						console.log("img_schedule error");
+					}
+		       		 });
+		}
+	
+		function load_next_schedule()
+		{
+			$.ajaxSetup({
+			    beforeSend: function (jqXHR, settings)  {
+				type = settings.type
+				if (type != 'GET' && type != 'HEAD' && type != 'OPTIONS' ) {
+				     var pattern = /(.+; *)?_xsrf *= *([^;" ]+)/ ;
+				     var xsrf = pattern.exec( document .cookie);
+				     if (xsrf) {
+					jqXHR.setRequestHeader( 'X-Xsrftoken' , xsrf[ 2 ]);
+				    }
+				}
+			}});
+			var data =
+			{
+			    "schedule_dir": schedule_dir_txt
+			};
+			var dataToSend = JSON.stringify(data);
+			var pattern = /(.+; *)?_xsrf *= *([^;" ]+)/ ;
+			var xsrf = pattern.exec( document.cookie);
+			if (xsrf) 
+			{
+				dataToSend._xsrf = xsrf[3];
+			}
+			
+			$.ajax({
+				url: '/txt_schedule',
+				type: 'POST',
+				contentType : 'application/json',
+				data: dataToSend,
+				success: function (jsonResponse) 
+				{
+					var objresponse = JSON.parse(jsonResponse);
+					if(imgs_index==1)
+					{
+						imgs[0] = ('/static/'+objresponse['next_img']);
+						limit_time[0] = objresponse['limit_time'];
+					}
+					else if(imgs_index==0)
+					{
+						imgs[1] = ('/static/'+objresponse['next_img']);
+						limit_time[1] = objresponse['limit_time'];
+					}
+
+					if (objresponse['enough_schedule'] == 0)
+					{
+						console.log("call inc_schedule");
+						inc_schedule();
+					}
+				},
+				error: function (xhr, textStatus, error) 
+				{
+					console.log(xhr.statusText);
+					console.log(textStatus);
+					console.log(error);
+					console.log("load_schedule error");
+					if(imgs_index==1)
+					{
+						imgs[0] = "{{static_url("img/0.jpg")}}";
+						limit_time[0] = 5;
+					}
+					else if(imgs_index==0)
+					{
+						imgs[1] = "{{static_url("img/0.jpg")}}";
+						limit_time[1] = 5;
+					}
+				}
+			});
+			
+		
+		}
+
+		function slideshow()
+		{
+			//console.log(imgs[0]);
+			//console.log(imgs[1]);
+			imgs_index = (imgs_index + 1) % 2;
+			$('img[name="pic"]').attr("src",imgs[imgs_index]);
+			console.log("change");
+			//document.pic.height = window.screen.height;
+			//document.pic.width = window.screen.width;
+		    }
+	
+		function timerr()
+		{
+			if(time_count % limit_time[imgs_index] == limit_time[imgs_index]-1)
+			{
+				load_next_schedule();
+				slideshow();
+			}
+		
+			time_count = (time_count+1) % 60;
+		}
+	
+	
+		window.setInterval(timerr,1000);
         </script>
     </body>
 </html>

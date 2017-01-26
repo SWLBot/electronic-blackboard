@@ -4,7 +4,7 @@ import os.path
 import bcrypt
 from datetime import datetime
 from PIL import Image
-from mysql import MySQL
+from mysql import mysql
 
 class BaseHandler(tornado.web.RequestHandler):
     def get_current_user(self):
@@ -28,16 +28,16 @@ class SignupHandler(BaseHandler):
     def get(self):
         self.render('signup.html',flash=None)
     def post(self):
-        client = MySQL()
+        client = mysql()
+        client.connect()
         cursor = client.cursor
         getusername = tornado.escape.xhtml_escape(self.get_argument("username"))
         getpassword = tornado.escape.xhtml_escape(self.get_argument("password"))
-        cursor.execute("select Count(*) from `user` where `name`=%s",(getusername,))
+        cursor.execute("select Count(*) from `user` where `user_name`=%s",(getusername,))
         is_existed = cursor.fetchone()[0]
         if is_existed == 0:
             hashed = bcrypt.hashpw(getpassword.encode('utf-8'),bcrypt.gensalt())
-            now = datetime.now()
-            ret = cursor.execute("insert into `user` (`name`,`password`,`create_time`) values (%s,%s,%s)",(getusername,hashed,now))
+            ret = cursor.execute("insert into `user` (`user_name`,`user_password`) values (%s,%s)",(getusername,hashed))
             client.db.commit()
             self.set_secure_cookie("user",getusername)
             self.set_secure_cookie("incorrect","0")
@@ -63,11 +63,12 @@ class LoginHandler(BaseHandler):
             self.write('<center>Blocked</center>')
             return
 
-        client = MySQL()
+        client = mysql()
+        client.connect()
         cursor = client.cursor
         getusername = tornado.escape.xhtml_escape(self.get_argument("username"))
         getpassword = tornado.escape.xhtml_escape(self.get_argument("password"))
-        ret = cursor.execute("select `password` from user where `name` = %s",(getusername,))
+        ret = cursor.execute("select `user_password` from user where `user_name` = %s",(getusername,))
         if ret != 0:
             hashed = cursor.fetchone()[0].encode('utf-8')
             if bcrypt.checkpw(getpassword.encode('utf-8'),hashed):
@@ -101,8 +102,16 @@ class UploadHandler(BaseHandler):
 
     def post(self):
         upload_path = os.path.join(os.path.dirname(__file__),"static/img")
-        thumbnail_path = os.path.join(os.path.dirname(__file__),"thumbnail")
+        thumbnail_path = os.path.join(os.path.dirname(__file__),"static/thumbnail")
         file_metas=self.request.files['file']
+        start_date = tornado.escape.xhtml_escape(self.get_argument("start_date"))
+        end_date = tornado.escape.xhtml_escape(self.get_argument("end_date"))
+        start_time = tornado.escape.xhtml_escape(self.get_argument("start_time"))
+        end_time = tornado.escape.xhtml_escape(self.get_argument("end_time"))
+        user = self.get_current_user()
+        client = mysql()
+        client.connect()
+        user_id = client.query("select `user_id` from `user` where user_name = \""+user.decode("utf-8")+"\"")[0][0]
         for meta in file_metas:
             filename=meta['filename']
             filepath=os.path.join(upload_path,filename)
@@ -112,6 +121,23 @@ class UploadHandler(BaseHandler):
             im = Image.open(filepath)
             im.thumbnail((200,200))
             im.save(thumbnail_path) 
+            last_id = client.query("select img_id from image_data order by img_upload_time limit 1")
+            if type(last_id) == list():
+                last_id = last_id[0]
+                next_id = int(last_id[4:]) + 1
+            else:
+                next_id = 0
+            client.cmd("insert `image_data` (`img_id`, `img_system_name`, `img_thumbnail_name`, `img_file_name`, `img_start_date`, `img_end_date`, `img_start_time`, `img_end_time`, `user_id`) values (" \
+            +"\"imge"+"{0:010d}".format(next_id) \
+            +"\",\""+filename+"\",\"" \
+            +thumbnail_path+"\",\"" \
+            +filename+"\",\"" \
+            +start_date+"\",\"" \
+            +end_date+"\",\"" \
+            +start_time+"\",\"" \
+            +end_time+"\",\"" \
+            +str(user_id)+"\")")
+                
         self.render("upload.html",flash="Upload finish!")
 
 class Application(tornado.web.Application):
