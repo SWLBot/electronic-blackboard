@@ -37,7 +37,6 @@ def arrange_schedule(json_obj):
 			+" WHERE img_is_expire=0 and TO_DAYS(NOW())-TO_DAYS(img_start_date)>=0 " \
 			+" and TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(img_start_time) and TIME_TO_SEC(img_end_time)) a0 " \
 			+" LEFT JOIN (SELECT type_id, type_dir FROM image_type) a1 on a0.type_id=a1.type_id "
-	#print(sql)
 	
 	pure_result = db.query(sql)
 	if pure_result == -1:

@@ -155,16 +155,12 @@
 
 		function slideshow()
 		{
-			//console.log(imgs[0]);
-			//console.log(imgs[1]);
 			imgs_index = (imgs_index + 1) % 2;
 			$('img[name="pic"]').attr("src",imgs[imgs_index]);
 			console.log("change");
-			//document.pic.height = window.screen.height;
-			//document.pic.width = window.screen.width;
-		    }
+		}
 	
-		function timerr()
+		function timer()
 		{
 			if(time_count % limit_time[imgs_index] == limit_time[imgs_index]-1)
 			{
@@ -176,7 +172,7 @@
 		}
 	
 	
-		window.setInterval(timerr,1000);
+		window.setInterval(timer,1000);
         </script>
     </body>
 </html>
