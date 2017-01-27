@@ -34,7 +34,6 @@ class Get_DB_Data(BaseHandler):
 	def post(self):
 		json_obj =  tornado.escape.json_decode(self.request.body)
 		response_to_send =  arrange_schedule(json_obj)
-		#pprint.pprint(response_to_send)
 		self.write(json.dumps(response_to_send))
 		
 class Get_txt_Data(BaseHandler):
@@ -44,7 +43,6 @@ class Get_txt_Data(BaseHandler):
 	def post(self):
 		json_obj =  tornado.escape.json_decode(self.request.body)
 		response_to_send = load_schedule(json_obj)
-		#pprint.pprint(response_to_send)
 		self.write(json.dumps(response_to_send))
 
 class Edit_txt_Data(BaseHandler):
@@ -54,7 +52,6 @@ class Edit_txt_Data(BaseHandler):
 	def post(self):
 		json_obj =  tornado.escape.json_decode(self.request.body)
 		response_to_send = edit_schedule(json_obj)
-		#pprint.pprint(response_to_send)
 		self.write(json.dumps(response_to_send))
 
 
