@@ -16,7 +16,10 @@ class MainHandler(BaseHandler):
     def get(self):
         user = self.get_current_user()
         if user:
-            self.render("index.html",user = user)
+            client = mysql()
+            client.connect()
+            imgs = client.query("select * from image_data where user_id in ( select user_id from user where user_name = \""+user.decode("utf-8")+"\")")
+            self.render("index.html",user = user,imgs=imgs)
         else:
             self.redirect("/signin")
 
@@ -122,15 +125,16 @@ class UploadHandler(BaseHandler):
             im.thumbnail((200,200))
             im.save(thumbnail_path) 
             last_id = client.query("select img_id from image_data order by img_upload_time limit 1")
-            if type(last_id) == list():
-                last_id = last_id[0]
+            if type(last_id) == type(tuple()):
+                last_id = last_id[0][0]
+                print(last_id)
                 next_id = int(last_id[4:]) + 1
             else:
                 next_id = 0
             client.cmd("insert `image_data` (`img_id`, `img_system_name`, `img_thumbnail_name`, `img_file_name`, `img_start_date`, `img_end_date`, `img_start_time`, `img_end_time`, `user_id`) values (" \
             +"\"imge"+"{0:010d}".format(next_id) \
             +"\",\""+filename+"\",\"" \
-            +thumbnail_path+"\",\"" \
+            +"thumbnail_"+filename+"\",\"" \
             +filename+"\",\"" \
             +start_date+"\",\"" \
             +end_date+"\",\"" \
@@ -149,7 +153,6 @@ class Application(tornado.web.Application):
             "signin_url": "/signin",
             "template_path":os.path.join(base_dir,"template"),
             "static_path":os.path.join(base_dir,"static"),
-            "thumbnail_path":os.path.join(base_dir,"thumbnail"),
             "debug":True,
             "xsrf_cookies":True,
             "autoreload":True

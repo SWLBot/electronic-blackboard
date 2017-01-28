@@ -34,8 +34,37 @@
         </nav>
         <script type="text/javascript" src={{ static_url("js/jquery-3.1.1.min.js") }}></script>
         {% block body %}
-        {% if current_user %}
-            
+        {% if imgs %}
+        <table class="table">
+          <tr>
+            <th>圖片ID</th>
+            <th>圖片類型ID</th>
+            <th>圖片名稱</th>
+            <th>上傳時間</th>
+            <th>開始播放日期</th>
+            <th>結束播放日期</th>
+            <th>開始撥放時間</th>
+            <th>結束播放時間</th>
+            <th>單次撥放秒數</th>
+            <th>已撥放次數</th>
+            <th>縮圖</th>
+          </tr>
+          {% for img in imgs %}
+            <tr>
+              <td>{{img[0]}}</td>
+              <td>{{img[1]}}</td>
+              <td>{{img[4]}}</td>
+              <td>{{img[5]}}</td>
+              <td>{{img[6]}}</td>
+              <td>{{img[7]}}</td>
+              <td>{{img[8]}}</td>
+              <td>{{img[9]}}</td>
+              <td>{{img[11]}}</td>
+              <td>{{img[10]}}</td>
+              <td><img src="{{ static_url("thumbnail/"+img[3]) }}"/></td>
+            <tr>
+          {% end %}
+        </table>
         {% end %}
         {% end %}
     </body>
