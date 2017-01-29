@@ -34,6 +34,8 @@
         </nav>
         <script type="text/javascript" src={{ static_url("js/jquery-3.1.1.min.js") }}></script>
         {% block body %}
+        <div class="container">
+          <div class="jumbotron">
         {% if imgs %}
         <table class="table">
           <tr>
@@ -48,6 +50,7 @@
             <th>單次撥放秒數</th>
             <th>已撥放次數</th>
             <th>縮圖</th>
+            <th>修改</th>
           </tr>
           {% for img in imgs %}
             <tr>
@@ -62,9 +65,12 @@
               <td>{{img[11]}}</td>
               <td>{{img[10]}}</td>
               <td><img src="{{ static_url("thumbnail/"+img[3]) }}"/></td>
+              <td><a href="/edit?img_id={{img[0]}}" class="btn btn-link">Edit</a></td>
             <tr>
           {% end %}
         </table>
+          </div>
+        </div>
         {% end %}
         {% end %}
     </body>
