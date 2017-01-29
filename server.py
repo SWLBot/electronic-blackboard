@@ -127,7 +127,6 @@ class UploadHandler(BaseHandler):
             last_id = client.query("select img_id from image_data order by img_upload_time limit 1")
             if type(last_id) == type(tuple()):
                 last_id = last_id[0][0]
-                print(last_id)
                 next_id = int(last_id[4:]) + 1
             else:
                 next_id = 0
@@ -143,6 +142,29 @@ class UploadHandler(BaseHandler):
             +str(user_id)+"\")")
                 
         self.render("upload.html",flash="Upload finish!")
+
+class EditHandler(BaseHandler):
+    def get(self):
+        client = mysql()
+        client.connect()
+        img = client.query("select * from image_data where img_id = \""+self.get_argument("img_id")+"\"")[0]
+        self.render("edit.html",img=img,flash=None)
+
+    def post(self):
+        client = mysql()
+        client.connect()
+        sql = "UPDATE image_data SET "
+        for key,val in self.request.arguments.items():
+            if key != "img_id" and key != "_xsrf" :
+                sql += key + " = \"" + val[0].decode("utf-8") + "\" ,"
+        sql = sql[:-1]
+        sql += "where img_id = \"" + self.get_argument("img_id") + "\""
+        if client.cmd(sql) == -1:
+            flash = "Edit "+self.get_argument("img_id")+" failed "
+        else:
+            flash = "Edit "+self.get_argument("img_id")+" successed "
+        img = client.query("select * from image_data where img_id = \""+self.get_argument("img_id")+"\"")[0]
+        self.render("edit.html",img=img,flash=flash)
 
 class Application(tornado.web.Application):
     def __init__(self):
@@ -162,7 +184,8 @@ class Application(tornado.web.Application):
             tornado.web.url(r"/signin",LoginHandler,name="signin"),
             tornado.web.url(r"/signup",SignupHandler,name="signup"),
             tornado.web.url(r"/signout",LogoutHandler,name="signout"),
-            tornado.web.url(r"/upload",UploadHandler,name="upload")
+            tornado.web.url(r"/upload",UploadHandler,name="upload"),
+            tornado.web.url(r"/edit",EditHandler,name="edit")
         ],**settings)
 
 def main():
