@@ -4,7 +4,10 @@ import os.path
 import bcrypt
 from datetime import datetime
 from PIL import Image
-from mysql import mysql
+from mysql_class import mysql
+from server_api import upload_image_insert_db
+from server_api import edit_image_data
+from pprint import pprint
 
 class BaseHandler(tornado.web.RequestHandler):
     def get_current_user(self):
@@ -104,43 +107,36 @@ class UploadHandler(BaseHandler):
             self.redirect("/signin")
 
     def post(self):
+        send_msg = {}
+        receive_msg = {}
         upload_path = os.path.join(os.path.dirname(__file__),"static/img")
         thumbnail_path = os.path.join(os.path.dirname(__file__),"static/thumbnail")
         file_metas=self.request.files['file']
-        start_date = tornado.escape.xhtml_escape(self.get_argument("start_date"))
-        end_date = tornado.escape.xhtml_escape(self.get_argument("end_date"))
-        start_time = tornado.escape.xhtml_escape(self.get_argument("start_time"))
-        end_time = tornado.escape.xhtml_escape(self.get_argument("end_time"))
         user = self.get_current_user()
         client = mysql()
         client.connect()
-        user_id = client.query("select `user_id` from `user` where user_name = \""+user.decode("utf-8")+"\"")[0][0]
+        send_msg["server_dir"] = os.path.dirname(__file__)
+        send_msg["file_type"] = tornado.escape.xhtml_escape(self.get_argument("file_type"))
+        send_msg["file_dir"] = upload_path
+        send_msg["start_date"] = tornado.escape.xhtml_escape(self.get_argument("start_date"))
+        send_msg["end_date"] = tornado.escape.xhtml_escape(self.get_argument("end_date"))
+        send_msg["start_time"] = tornado.escape.xhtml_escape(self.get_argument("start_time"))
+        send_msg["end_time"] = tornado.escape.xhtml_escape(self.get_argument("end_time"))
+        send_msg["display_time"] = tornado.escape.xhtml_escape(self.get_argument("display_time"))
+        send_msg["user_id"] = client.query("select `user_id` from `user` where user_name = \""+user.decode("utf-8")+"\"")[0][0]
+        client.close()
         for meta in file_metas:
             filename=meta['filename']
             filepath=os.path.join(upload_path,filename)
+            send_msg["file_dir"] = filepath
             with open(filepath,"wb") as up:
                 up.write(meta['body'])
-            thumbnail_path=os.path.join(thumbnail_path,"thumbnail_"+filename)
+            receive_msg = upload_image_insert_db(send_msg)
+            filepath = receive_msg["img_system_dir"]
+            thumbnail_path=os.path.join(thumbnail_path,receive_msg["img_thumbnail_name"])
             im = Image.open(filepath)
             im.thumbnail((200,200))
             im.save(thumbnail_path) 
-            last_id = client.query("select img_id from image_data order by img_upload_time limit 1")
-            if type(last_id) == type(tuple()):
-                last_id = last_id[0][0]
-                next_id = int(last_id[4:]) + 1
-            else:
-                next_id = 0
-            client.cmd("insert `image_data` (`img_id`, `img_system_name`, `img_thumbnail_name`, `img_file_name`, `img_start_date`, `img_end_date`, `img_start_time`, `img_end_time`, `user_id`) values (" \
-            +"\"imge"+"{0:010d}".format(next_id) \
-            +"\",\""+filename+"\",\"" \
-            +"thumbnail_"+filename+"\",\"" \
-            +filename+"\",\"" \
-            +start_date+"\",\"" \
-            +end_date+"\",\"" \
-            +start_time+"\",\"" \
-            +end_time+"\",\"" \
-            +str(user_id)+"\")")
-                
         self.render("upload.html",flash="Upload finish!")
 
 class EditHandler(BaseHandler):
@@ -148,22 +144,31 @@ class EditHandler(BaseHandler):
         client = mysql()
         client.connect()
         img = client.query("select * from image_data where img_id = \""+self.get_argument("img_id")+"\"")[0]
+        client.close()
         self.render("edit.html",img=img,flash=None)
 
     def post(self):
+        send_msg = {}
+        receive_msg = {}
         client = mysql()
         client.connect()
-        sql = "UPDATE image_data SET "
-        for key,val in self.request.arguments.items():
-            if key != "img_id" and key != "_xsrf" :
-                sql += key + " = \"" + val[0].decode("utf-8") + "\" ,"
-        sql = sql[:-1]
-        sql += "where img_id = \"" + self.get_argument("img_id") + "\""
-        if client.cmd(sql) == -1:
-            flash = "Edit "+self.get_argument("img_id")+" failed "
-        else:
+        user = self.get_current_user()
+        send_msg["server_dir"] = os.path.dirname(__file__)
+        send_msg["file_type"] = tornado.escape.xhtml_escape(self.get_argument("img_type"))
+        send_msg["img_id"] = tornado.escape.xhtml_escape(self.get_argument("img_id"))
+        send_msg["start_date"] = tornado.escape.xhtml_escape(self.get_argument("img_start_date"))
+        send_msg["end_date"] = tornado.escape.xhtml_escape(self.get_argument("img_end_date"))
+        send_msg["start_time"] = tornado.escape.xhtml_escape(self.get_argument("img_start_time"))
+        send_msg["end_time"] = tornado.escape.xhtml_escape(self.get_argument("img_end_time"))
+        send_msg["display_time"] = tornado.escape.xhtml_escape(self.get_argument("img_display_time"))
+        send_msg["user_id"] = client.query("select `user_id` from `user` where user_name = \""+user.decode("utf-8")+"\"")[0][0]
+        receive_msg = edit_image_data(send_msg)
+        if 'result' in receive_msg:
             flash = "Edit "+self.get_argument("img_id")+" successed "
+        else:
+            flash = "Edit "+self.get_argument("img_id")+" failed "
         img = client.query("select * from image_data where img_id = \""+self.get_argument("img_id")+"\"")[0]
+        client.close()
         self.render("edit.html",img=img,flash=flash)
 
 class Application(tornado.web.Application):
