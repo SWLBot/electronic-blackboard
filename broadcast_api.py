@@ -1,4 +1,4 @@
-from mysql import mysql
+from mysql_class import mysql
 from random import sample
 from datetime import date
 from datetime import datetime
@@ -9,15 +9,20 @@ import os.path
 def arrange_schedule(json_obj):
 	schedule_dir = json_obj["schedule_dir"]
 	arrange_mode = json_obj["arrange_mode"]
+	mode_condition = []
+	if "mode_condition" in json_obj:
+		mode_condition = json_obj["mode_condition"]
 	return_msg = {}
 
 	update_fail = False
 	find_fail = False
 	deal_result = []
 	
+	file_name = "sql_token"
+	
 	#connect to mysql
 	db = mysql()
-	if db.connect() == -1:
+	if db.connect(file_name) == -1:
 		return_msg["num"] = 0
 		return return_msg
 	
@@ -31,12 +36,30 @@ def arrange_schedule(json_obj):
 		update_fail = True
 	
 	#find images that may be schedule
-	sql = "SELECT a0.img_id, a0.img_system_name, a0.img_display_time, a1.type_dir, a0.img_end_time FROM " \
+	if arrange_mode == 1 or arrange_mode == 2:
+		sql = "SELECT a0.img_id, a0.img_system_name, a0.img_display_time, a1.type_dir, a0.img_end_time FROM " \
 			+" (SELECT img_id, type_id, img_system_name, img_display_time, img_end_time " \
 			+" FROM image_data " \
 			+" WHERE img_is_expire=0 and TO_DAYS(NOW())-TO_DAYS(img_start_date)>=0 " \
 			+" and TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(img_start_time) and TIME_TO_SEC(img_end_time)) a0 " \
 			+" LEFT JOIN (SELECT type_id, type_dir FROM image_type) a1 on a0.type_id=a1.type_id "
+	elif arrange_mode == 3 or arrange_mode == 4:
+		sql = "SELECT a0.img_id, a0.img_system_name, a0.img_display_time, a1.type_dir, a0.img_end_time FROM " \
+			+" (SELECT img_id, type_id, img_system_name, img_display_time, img_end_time " \
+			+" FROM image_data " \
+			+" WHERE img_is_expire=0 "
+		for content in mode_condition:
+			sql = sql + " and type_id=" + content + " "
+		sql = sql + " and TO_DAYS(NOW())-TO_DAYS(img_start_date)>=0 " \
+			+" and TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(img_start_time) and TIME_TO_SEC(img_end_time)) a0 " \
+			+" LEFT JOIN (SELECT type_id, type_dir FROM image_type "
+		for content_num in range(len(mode_condition)):
+			if content_num == 0:
+				sql = sql + " WHERE type_id=" + mode_condition[content_num] + " "
+			else :
+				sql = sql + " and type_id=" + mode_condition[content_num] + " "
+		sql = sql + ") a1 on a0.type_id=a1.type_id "
+	#print(sql)
 	
 	pure_result = db.query(sql)
 	if pure_result == -1:
@@ -51,6 +74,11 @@ def arrange_schedule(json_obj):
 	if arrange_mode == 1:
 		"DO NOTHING"
 	elif arrange_mode == 2:
+		if len(deal_result)>20:
+			deal_result = sample(deal_result, 20)
+	elif arrange_mode == 3:
+		"DO NOTHING"
+	elif arrange_mode == 4:
 		if len(deal_result)>20:
 			deal_result = sample(deal_result, 20)
 	
@@ -168,7 +196,7 @@ def load_schedule(json_obj):
 #the api can only edit furtre schedule. 
 #It can edit schedule not to print image by setting img_check=0 or edit furtre schedule to print new image.
 def edit_schedule(json_obj):
-	schedule_dir = json_obj["dirr"]
+	schedule_dir = json_obj["schedule_dir"]
 	next_img = json_obj["next_img"]
 	img_check = json_obj["img_check"]
 	img_id = json_obj["img_id"]
