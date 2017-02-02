@@ -4,8 +4,10 @@
     <div class="jumbotron">
     <form method="post" enctype="multipart/form-data">
         <p><input type='file' name='file'/></p>
-        <p>播放日期: <input type='date' name='start_date'/> ~ <input type='date' name='end_date'/></p>
-        <p>播放時段: <input type='time' name='start_time'/> ~ <input type='time' name='end_time'/></p>
+        <p>圖片類型ID: <input type='text' name='file_type' value="1"/></p>
+        <p>播放日期: <input type='date' name='start_date' value="2012-12-21"/> ~ <input type='date' name='end_date' value="2048-10-24"/></p>
+        <p>播放時段: <input type='time' step="1" name='start_time' value="00:00:00"/> ~ <input type='time' step="1" name='end_time' value="23:59:59"/></p>
+        <p>單次撥放秒數: <input type='text' name='display_time' value="5"/></p>
         <p><input type='submit' value='上傳' class="btn btn-primary"/></p>
         {% module xsrf_form_html() %}
     </form>
