@@ -1,4 +1,4 @@
-from mysql_class import mysql
+from mysql import mysql
 from datetime import date
 from datetime import datetime
 from datetime import timedelta
