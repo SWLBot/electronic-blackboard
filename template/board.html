@@ -28,7 +28,7 @@
 		var time_count = 0;
 		var imgs = ["{{static_url("img/"+files[0]) }}","{{static_url("img/"+files[0]) }}"];
 		var limit_time = [5, 5];
-		var schedule_dir_txt = '/home/tim/Desktop/electronic-blackboard/';
+		var schedule_dir_txt = '/home/tim/Desktop/broadcast/';
 
 	
 		function inc_schedule()
@@ -127,7 +127,7 @@
 
 					if (objresponse['enough_schedule'] == 0)
 					{
-						console.log("call inc_schedule");
+						//console.log("call inc_schedule");
 						inc_schedule();
 					}
 				},
@@ -158,9 +158,11 @@
 			imgs_index = (imgs_index + 1) % 2;
 			$('img[name="pic"]').attr("src",imgs[imgs_index]);
 			console.log("change");
-		}
+			//document.pic.height = window.screen.height;
+			//document.pic.width = window.screen.width;
+		    }
 	
-		function timer()
+		function timerr()
 		{
 			if(time_count % limit_time[imgs_index] == limit_time[imgs_index]-1)
 			{
@@ -172,7 +174,7 @@
 		}
 	
 	
-		window.setInterval(timer,1000);
+		window.setInterval(timerr,1000);
         </script>
     </body>
 </html>

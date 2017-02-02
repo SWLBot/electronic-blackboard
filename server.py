@@ -4,7 +4,7 @@ import os.path
 import bcrypt
 from datetime import datetime
 from PIL import Image
-from mysql_class import mysql
+from mysql import mysql
 from server_api import upload_image_insert_db
 from server_api import edit_image_data
 from pprint import pprint
