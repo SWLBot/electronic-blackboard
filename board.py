@@ -67,7 +67,7 @@ class Application(tornado.web.Application):
 			"thumbnail_path":os.path.join(base_dir,"thumbnail"),
 			"debug":False,
 			"xsrf_cookies":True,
-			"autoreload":True
+			"autoreload":False
 		}
 		tornado.web.Application.__init__(self,[
 			tornado.web.url(r"/",MainHandler,name="main"),

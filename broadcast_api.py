@@ -1,4 +1,4 @@
-from mysql_class import mysql
+from mysql import mysql
 from random import sample
 from datetime import date
 from datetime import datetime
@@ -18,11 +18,9 @@ def arrange_schedule(json_obj):
 	find_fail = False
 	deal_result = []
 	
-	file_name = "sql_token"
-	
 	#connect to mysql
 	db = mysql()
-	if db.connect(file_name) == -1:
+	if db.connect() == -1:
 		return_msg["num"] = 0
 		return return_msg
 	
@@ -59,7 +57,6 @@ def arrange_schedule(json_obj):
 			else :
 				sql = sql + " and type_id=" + mode_condition[content_num] + " "
 		sql = sql + ") a1 on a0.type_id=a1.type_id "
-	#print(sql)
 	
 	pure_result = db.query(sql)
 	if pure_result == -1:
