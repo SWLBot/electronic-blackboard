@@ -5,8 +5,10 @@ from datetime import timedelta
 import os.path
 
 
+
 #The API load schedule.txt and find out the first image which has not print and the time limit still allow
 def load_schedule():
+
 	return_msg = {}
 	return_msg["result"] = "fail"
 	schedule_dir = ""
@@ -20,16 +22,21 @@ def load_schedule():
 		return_msg["error"] = "connect mysql fail"
 		return return_msg
 
+
 	#find schedule
 	sql = ("SELECT sche_id, sche_target_id, sche_display_time "\
 		+"FROM schedule WHERE sche_is_used=0 "\
 		+"ORDER BY sche_sn ASC LIMIT 1")
+
+	
+
 	pure_result = db.query(sql)
 	if pure_result == -1:
 		db.close()
 		return_msg["error"] = "sql error"
 		return return_msg
 	else:
+
 		try:
 			return_msg["schedule_id"] = pure_result[0][0]
 			sche_target_id = pure_result[0][1]
@@ -65,12 +72,14 @@ def load_schedule():
 			return_msg["error"] = "no file record"
 			return return_msg
 
+
 	#find type dir
 	sql = ("SELECT type_dir FROM data_type WHERE type_id=" + str(type_id))
 	pure_result = db.query(sql)
 	if pure_result == -1:
 		db.close()
 		return_msg["error"] = "sql error"
+
 		return return_msg
 	else:
 		try:
