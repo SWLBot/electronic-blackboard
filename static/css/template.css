@@ -1,0 +1,57 @@
+@import url(http://fonts.googleapis.com/earlyaccess/notosanstc.css);
+div.container {
+    position: relative;
+    left: 5%;
+    right: 5%;
+}
+div.header {
+    background-color: #CE0000;
+    position: relative;
+}
+div.content {
+    position: relative;
+}
+div.bar {
+    position:relative;
+    background-color: #CE0000;
+    bottom: 0%;
+}
+span#con {
+    position: absolute;
+    font-size: 750%;
+    color: #FFF;
+    bottom: 10%;
+    left: 5%;
+    font-weight: bold;
+}
+
+div.title {
+    position: relative;
+    padding-left: 5%;
+    font-size: 400%;
+}
+
+div#reward {
+    font-weight: bold;
+}
+
+div#description {
+    position: relative;
+    font-size: 150%;
+}
+div.congratulation {
+    position: relative;
+    font-size: 150%;
+    float: right;
+}
+div#footer {
+    position: absolute;
+    bottom: 0px;
+}
+html {
+    font-family: sans-serif, serif,'Noto Sans TC', Microsoft JhengHei, DFKai-sb,PMingLiU;
+    background: -webkit-linear-gradient(#FFF,#9D9D9D);
+    background: -o-linear-gradient(#FFF,#9D9D9D);
+    background: -moz-linear-gradient(#FFF,#9D9D9D);
+    background: linear-gradient(#FFF,#9D9D9D);
+}

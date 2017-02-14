@@ -26,10 +26,6 @@ class MainHandler(BaseHandler):
         else:
             self.redirect("/signin")
 
-
-    def post(self):
-        self.write("Hello Tornado! post")
-
 class SignupHandler(BaseHandler):
     def get(self):
         self.render('signup.html',flash=None)
@@ -111,7 +107,6 @@ class UploadHandler(BaseHandler):
         receive_msg = {}
         upload_path = os.path.join(os.path.dirname(__file__),"static/img")
         thumbnail_path = os.path.join(os.path.dirname(__file__),"static/thumbnail")
-        file_metas=self.request.files['file']
         user = self.get_current_user()
         client = mysql()
         client.connect()
@@ -125,20 +120,65 @@ class UploadHandler(BaseHandler):
         send_msg["display_time"] = tornado.escape.xhtml_escape(self.get_argument("display_time"))
         send_msg["user_id"] = client.query("select `user_id` from `user` where user_name = \""+user.decode("utf-8")+"\"")[0][0]
         client.close()
-        for meta in file_metas:
-            filename=meta['filename']
-            filepath=os.path.join(upload_path,filename)
-            send_msg["file_dir"] = filepath
-            with open(filepath,"wb") as up:
-                up.write(meta['body'])
-            receive_msg = upload_image_insert_db(send_msg)
-            filepath = receive_msg["img_system_dir"]
-            thumbnail_path=os.path.join(thumbnail_path,receive_msg["img_thumbnail_name"])
-            im = Image.open(filepath)
-            im.thumbnail((200,200))
-            im.save(thumbnail_path) 
-        self.render("upload.html",flash="Upload finish!")
-
+        if self.get_argument('type') == 'image':
+            try:
+                file_metas=self.request.files['file']
+                for meta in file_metas:
+                    filename=meta['filename']
+                    filepath=os.path.join(upload_path,filename)
+                    send_msg["file_dir"] = filepath
+                    with open(filepath,"wb") as up:
+                        up.write(meta['body'])
+                    receive_msg = upload_image_insert_db(send_msg)
+                    filepath = receive_msg["img_system_dir"]
+                    thumbnail_path=os.path.join(thumbnail_path,receive_msg["img_thumbnail_name"])
+                    im = Image.open(filepath)
+                    im.thumbnail((200,200))
+                    im.save(thumbnail_path) 
+                self.render("upload.html",flash="Upload finish!")
+            except:
+                self.redirect("/upload")
+        else:
+            person_name = self.get_argument('person_name')
+            reward = self.get_argument('reward')
+            description = self.get_argument('description')
+            year = self.get_argument('year')
+            month = self.get_argument('month')
+            client = mysql()
+            client.connect()
+            try:
+                old_text_id = client.query("SELECT `text_id` FROM text_data ORDER BY `text_upload_time` DESC LIMIT 1")[0][0]
+                new_text_id = int(old_text_id[4:])+1
+            except:
+                new_text_id = 0;
+            new_text_id = "text" + "{0:010d}".format(new_text_id)
+            type_dir = None
+            try:
+                type_dir = client.query("SELECT `type_dir` FROM data_type WHERE type_id = \""+send_msg['file_type']+"\"")[0][0]
+                if not os.path.exists(type_dir[:-1]):
+                    os.makedirs(type_dir[:-1])
+            except:
+                print("no such type_id")
+            filepath = os.path.join(send_msg['server_dir'],'static/'+str(type_dir)+new_text_id+'.txt')
+            with open(filepath,"w") as fp:
+                print(person_name,file=fp)
+                print(reward,file=fp)
+                print(description,file=fp)
+                print(year,file=fp)
+                print(month,file=fp)
+            sql = "INSERT INTO text_data (`text_id`, `type_id`, `text_invisible_title`, `text_system_name`, `text_start_date`, `text_end_date`, `text_start_time`, `text_end_time`, `text_display_time`, `user_id`) VALUES (\"" +new_text_id+"\",\"" \
+                                    +send_msg['file_type']+"\",\"" \
+                                    +new_text_id+"\",\"" \
+                                    +new_text_id+".txt"+"\",\"" \
+                                    +send_msg['start_date']+"\",\"" \
+                                    +send_msg['end_date']+"\",\"" \
+                                    +send_msg['start_time']+"\",\"" \
+                                    +send_msg['end_time']+"\",\"" \
+                                    +send_msg['display_time']+"\",\"" \
+                                    +str(send_msg['user_id'])+"\")"
+            result = client.cmd(sql)
+            client.close()
+            self.render("upload.html",flash="Upload finish!")
 class EditHandler(BaseHandler):
     def get(self):
         client = mysql()
