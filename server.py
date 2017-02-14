@@ -163,7 +163,7 @@ class EditHandler(BaseHandler):
         send_msg["display_time"] = tornado.escape.xhtml_escape(self.get_argument("img_display_time"))
         send_msg["user_id"] = client.query("select `user_id` from `user` where user_name = \""+user.decode("utf-8")+"\"")[0][0]
         receive_msg = edit_image_data(send_msg)
-        if 'result' in receive_msg:
+        if receive_msg["result"]=="success":
             flash = "Edit "+self.get_argument("img_id")+" successed "
         else:
             flash = "Edit "+self.get_argument("img_id")+" failed "

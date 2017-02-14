@@ -7,20 +7,26 @@ import os.path
 
 #
 def upload_image_insert_db(json_obj):
-	server_dir = json_obj["server_dir"]
-	type_id = json_obj["file_type"]
-	img_file_dir = json_obj["file_dir"]
-	img_start_date = json_obj["start_date"]
-	img_end_date = json_obj["end_date"]
-	img_start_time = json_obj["start_time"]
-	img_end_time = json_obj["end_time"]
-	img_display_time = json_obj["display_time"]
-	user_id = json_obj["user_id"]
+	return_msg = {}
+	return_msg["result"] = "fail"
+	try:
+		server_dir = json_obj["server_dir"]
+		type_id = json_obj["file_type"]
+		img_file_dir = json_obj["file_dir"]
+		img_start_date = json_obj["start_date"]
+		img_end_date = json_obj["end_date"]
+		img_start_time = json_obj["start_time"]
+		img_end_time = json_obj["end_time"]
+		img_display_time = json_obj["display_time"]
+		user_id = json_obj["user_id"]
+	except:
+		return_msg["error"] = "input parameter missing"
+		return return_msg
+
 	img_id = ""
 	img_file_name = os.path.split(img_file_dir)[1]
 	img_new_file_dir = ""
 	user_level_low_bound = 100
-	return_msg = {}
 	#default
 	if len(img_start_time)==0:
 		img_start_time = "00:00:00"
@@ -41,7 +47,7 @@ def upload_image_insert_db(json_obj):
 	pure_result = db.query(sql)
 	if pure_result == -1:
 		db.close()
-		return_msg["error"] = "mysql sql error"
+		return_msg["error"] = "mysql sql error1"
 		return return_msg
 	else:
 		try: 
@@ -56,13 +62,13 @@ def upload_image_insert_db(json_obj):
 	
 	#get new file place
 	sql = ("SELECT type_dir " \
-			+"FROM image_type " \
+			+"FROM data_type " \
 			+"WHERE type_id=" + str(type_id))
 	
 	pure_result = db.query(sql)
 	if pure_result == -1:
 		db.close()
-		return_msg["error"] = "mysql sql error"
+		return_msg["error"] = "mysql sql error2"
 		return return_msg
 	else:
 		try:
@@ -82,7 +88,7 @@ def upload_image_insert_db(json_obj):
 	pure_result = db.query(sql)
 	if pure_result == -1:
 		db.close()
-		return_msg["error"] = "mysql sql error"
+		return_msg["error"] = "mysql sql error3"
 		return return_msg
 	else:
 		try:
@@ -91,9 +97,10 @@ def upload_image_insert_db(json_obj):
 				img_id = '0' + img_id
 			img_id = "imge" + img_id
 		except:
-			db.close()
-			return_msg["error"] = "no basic image"
-			return return_msg
+			img_id = "imge0000000001"
+			#db.close()
+			#return_msg["error"] = "no basic image"
+			#return return_msg
 	
 
 	img_system_name = img_id + os.path.splitext(img_file_name)[1]
@@ -148,24 +155,31 @@ def upload_image_insert_db(json_obj):
 	return_msg["img_id"] = img_id
 	return_msg["img_system_dir"] = img_system_dir
 	return_msg["img_thumbnail_name"] = img_thumbnail_name
+	return_msg["result"] = "success"
 	return return_msg
 	
 	
 #
 def edit_image_data(json_obj):
-	server_dir = json_obj["server_dir"]
-	img_id = json_obj["img_id"]
-	type_id = json_obj["file_type"]
-	img_start_date = json_obj["start_date"]
-	img_end_date = json_obj["end_date"]
-	img_start_time = json_obj["start_time"]
-	img_end_time = json_obj["end_time"]
-	img_display_time = json_obj["display_time"]
-	user_id = json_obj["user_id"]
+	return_msg = {}
+	return_msg["result"] = "fail"
+	try:
+		server_dir = json_obj["server_dir"]
+		img_id = json_obj["img_id"]
+		type_id = json_obj["file_type"]
+		img_start_date = json_obj["start_date"]
+		img_end_date = json_obj["end_date"]
+		img_start_time = json_obj["start_time"]
+		img_end_time = json_obj["end_time"]
+		img_display_time = json_obj["display_time"]
+		user_id = json_obj["user_id"]
+	except:
+		return_msg["error"] = "input parameter missing"
+		return return_msg
+
 	user_level_low_bound = 100
 	user_level_high_bound = 10000
 	img_type_id = 0
-	return_msg = {}
 	
 	#connect to mysql
 	db = mysql()
@@ -244,7 +258,7 @@ def edit_image_data(json_obj):
 		
 		#get old image type dir
 		sql = ("SELECT type_dir " \
-				+"FROM image_type " \
+				+"FROM data_type " \
 				+"WHERE type_id=" + str(img_type_id))
 				
 		pure_result = db.query(sql)
@@ -262,7 +276,7 @@ def edit_image_data(json_obj):
 				
 		#get new image type dir		
 		sql = ("SELECT type_dir " \
-				+"FROM image_type " \
+				+"FROM data_type " \
 				+"WHERE type_id=" + str(type_id))
 				
 		pure_result = db.query(sql)
