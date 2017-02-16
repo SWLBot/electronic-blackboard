@@ -1,8 +1,69 @@
 {% extends "index.html" %}
 {% block head %}
     <style>
+        @import url(http://fonts.googleapis.com/earlyaccess/notosanstc.css);
         form {
             margin-top: 20px;
+        }
+        div.sample-page {
+            padding: 0px;
+            position: relative;
+            width: 400px;
+            height: 300px;
+            font-family: sans-serif, serif,'Noto Sans TC', Microsoft JhengHei, DFKai-sb,PMingLiU;
+            background: -webkit-linear-gradient(#FFF,#9D9D9D);
+            background: -o-linear-gradient(#FFF,#9D9D9D);
+            background: -moz-linear-gradient(#FFF,#9D9D9D);
+            background: linear-gradient(#FFF,#9D9D9D);
+            background-repeat: no-repeat;
+        }
+        div.header {
+            background-color: #CE0000;
+            width: 350px;
+            height: 100px;
+            margin-left: 25px;
+            margin-right: 25px;
+            position: relative;
+        }
+        div.content {
+            width: 350px;
+            height: 200px;
+            margin-left: 25px;
+            margin-right: 25px;
+            position: relative;
+        }
+        div#footer {
+            position: absolute;
+            bottom: 0px;
+        }
+        div.bar {
+            position: relative;
+            width: 350px;
+            height: 2px;
+            background-color: #CE0000;
+        }
+        span#con {
+            position: absolute;
+            color: #FFF;
+            bottom: 10%;
+            left: 5%;
+            font-weight: bold;
+        }
+        div.title {
+            position: relative;
+            padding-left: 5%;    
+            font-size: 250%;
+        }
+        div#reward {
+            font-weight: bold;
+        }
+        div#description {
+            position: relative;            
+            font-size: 200%;
+        }
+        div.congratulation {
+            position: relative;
+            float: right;
         }
     </style>
 {% end %}
@@ -13,54 +74,76 @@
         <button class='btn btn-success btn-lg' id='upload_image'>上傳圖片</button>
         <button class='btn btn-success btn-lg' id='upload_text'>上傳文字</button>
     </div>
-    <form id="image_form" style="display:none" method="post" enctype="multipart/form-data">
-        <p><input type='hidden' name='type' value='image'/></p>
-        <p><input type='file' name='file'/></p>
-        <p>圖片類型ID: <input type='text' name='file_type' value="1"/></p>
-        <p>播放日期: <input type='date' name='start_date' value="2012-12-21"/> ~ <input type='date' name='end_date' value="2048-10-24"/></p>
-        <p>播放時段: <input type='time' step="1" name='start_time' value="00:00:00"/> ~ <input type='time' step="1" name='end_time' value="23:59:59"/></p>
-        <p>單次撥放秒數: <input type='text' name='display_time' value="5"/></p>
-        <p><input type='submit' value='上傳' class="btn btn-primary"/></p>
-        {% module xsrf_form_html() %}
-    </form>
-    <form id="text_form" style="display:none" method="post">
-        <p><input type='hidden' name='type' value='text'/></p>
-        <p>獲獎人: <input type="text" name="person_name" /></p>
-        <p>獲得獎項: <input type="text" name="reward" /></p>
-        <p>附註: <textarea name="description" /></textarea></p>
-        <p>
-            獲獎時間:
-            <select id="year" name="year">
-            <script>
-            var myDate = new Date();
-            var year = myDate.getFullYear();
-            for(var i = year; i > year-11 ; i--){
-                document.write('<option value="'+i+'">'+i+'</option>');
-            }
-            </script>
-            </select>
-            <select name="month" id="month">
-                <option value = "1">01</option>
-                <option value = "2">02</option>
-                <option value = "3">03</option>
-                <option value = "4">04</option>
-                <option value = "5">05</option>
-                <option value = "6">06</option>
-                <option value = "7">07</option>
-                <option value = "8">08</option>
-                <option value = "9">09</option>
-                <option value = "10">10</option>
-                <option value = "11">11</option>
-                <option value = "12">12</option> 
-            </select>
-        </p>
-        <p>類型ID: <input type='text' name='file_type' value="1"/></p>
-        <p>播放日期: <input type='date' name='start_date' value="2012-12-21"/> ~ <input type='date' name='end_date' value="2048-10-24"/></p>
-        <p>播放時段: <input type='time' step="1" name='start_time' value="00:00:00"/> ~ <input type='time' step="1" name='end_time' value="23:59:59"/></p>
-        <p>單次撥放秒數: <input type='text' name='display_time' value="5"/></p>
-        <p><input type="submit" value="上傳" class="btn btn-primary"/></p>
-        {% module xsrf_form_html() %}
-    </form>
+    <div class="image_block" style="display:none">
+        <form id="image_form" method="post" enctype="multipart/form-data">
+            <p><input type='hidden' name='type' value='image'/></p>
+            <p><input type='file' name='file'/></p>
+            <p>圖片類型ID: <input type='text' name='file_type' value="1"/></p>
+            <p>播放日期: <input type='date' name='start_date' value="2012-12-21"/> ~ <input type='date' name='end_date' value="2048-10-24"/></p>
+            <p>播放時段: <input type='time' step="1" name='start_time' value="00:00:00"/> ~ <input type='time' step="1" name='end_time' value="23:59:59"/></p>
+            <p>單次撥放秒數: <input type='text' name='display_time' value="5"/></p>
+            <p><input type='submit' value='上傳' class="btn btn-primary"/></p>
+            {% module xsrf_form_html() %}
+        </form>
+    </div>
+    <div class="text_block" style="display:none" >
+        <div class='row'>
+            <div class='col-lg-6' >
+            <form id="text_form" method="post">
+                <p><input type='hidden' name='type' value='text'/></p>
+                <p>獲獎人: <input type="text" name="person_name" id="person_name"/></p>
+                <p>獲得獎項: <input type="text" name="reward" id="reward"/></p>
+                <p>附註: <textarea name="description" id="description"/></textarea></p>
+                <p>
+                    獲獎時間:
+                    <select id="year" name="year">
+                    <script>
+                    var myDate = new Date();
+                    var year = myDate.getFullYear();
+                    for(var i = year; i > year-11 ; i--){
+                        document.write('<option value="'+i+'">'+i+'</option>');
+                    }
+                    </script>
+                    </select>
+                    <select name="month" id="month">
+                        <option value = "1">01</option>
+                        <option value = "2">02</option>
+                        <option value = "3">03</option>
+                        <option value = "4">04</option>
+                        <option value = "5">05</option>
+                        <option value = "6">06</option>
+                        <option value = "7">07</option>
+                        <option value = "8">08</option>
+                        <option value = "9">09</option>
+                        <option value = "10">10</option>
+                        <option value = "11">11</option>
+                        <option value = "12">12</option> 
+                    </select>
+                </p>
+                <p>類型ID: <input type='text' name='file_type' value="1"/></p>
+                <p>播放日期: <input type='date' name='start_date' value="2012-12-21"/> ~ <input type='date' name='end_date' value="2048-10-24"/></p>
+                <p>播放時段: <input type='time' step="1" name='start_time' value="00:00:00"/> ~ <input type='time' step="1" name='end_time' value="23:59:59"/></p>
+                <p>單次撥放秒數: <input type='text' name='display_time' value="5"/></p>
+                <p><input type="submit" value="上傳" class="btn btn-primary"/></p>
+                {% module xsrf_form_html() %}
+            </form>
+            </div>
+            <div class='col-lg-6 sample-page'>
+                <div class='header'>
+                    <span id="con" >賀 !</span>
+                </div>
+                <div class='content'>
+                    <div class='title' id='person_name'></div>
+                    <div class='title' id='reward'></div>
+                    <div id='description'></div>
+                    <div id='footer'>
+                        <div class='bar'></div>
+                        <div class='congratulation'><span id='year'></span>年<span id='month'></span>月 資訊學院全體師生慶賀</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     {% if flash %}
     <p>{{flash}}</p>
     {% end %}
@@ -68,18 +151,33 @@
     </div>
     <script>
     $(window).on('load',function(){
+        $('span#year').text($('select#year').val());
+        $('span#month').text($('select#month').val());
         $('#upload_image').click(function(){
-            if($('#text_form').css('display') !== "none"){
-                $('#text_form').toggle();
+            if($('.text_block').css('display') !== "none"){
+                $('.text_block').toggle();
             }
-            $('#image_form').toggle();
+            $('.image_block').toggle();
         });
         $('#upload_text').click(function(){
-            if($('#image_form').css('display') !== "none"){
-                $('#image_form').toggle();
+            if($('.image_block').css('display') !== "none"){
+                $('.image_block').toggle();
             }
-            $('#text_form').toggle();
+            $('.text_block').toggle();
         });
+    });
+    $('input,textarea').on('keyup',function(){
+        var id = $(this).attr('id');
+        if( $('div#'+id).length ){
+            $('div#'+id).text($(this).val());
+        }
+    });
+    $('select').change(function(){
+        var id = $(this).attr('id');
+        console.log("HIIII");
+        if( $('span#'+id).length ){
+            $('span#'+id).text($(this).val());
+        }
     });
     </script>
 {% end %}

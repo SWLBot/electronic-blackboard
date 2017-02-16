@@ -139,11 +139,11 @@ class UploadHandler(BaseHandler):
             except:
                 self.redirect("/upload")
         else:
-            person_name = self.get_argument('person_name')
-            reward = self.get_argument('reward')
-            description = self.get_argument('description')
-            year = self.get_argument('year')
-            month = self.get_argument('month')
+            person_name = tornado.escape.xhtml_escape(self.get_argument('person_name'))
+            reward = tornado.escape.xhtml_escape(self.get_argument('reward'))
+            description = tornado.escape.xhtml_escape(self.get_argument('description'))
+            year = tornado.escape.xhtml_escape(self.get_argument('year'))
+            month = tornado.escape.xhtml_escape(self.get_argument('month'))
             client = mysql()
             client.connect()
             try:
@@ -160,7 +160,7 @@ class UploadHandler(BaseHandler):
             except:
                 print("no such type_id")
             filepath = os.path.join(send_msg['server_dir'],'static/'+str(type_dir)+new_text_id+'.txt')
-            with open(filepath,"wb") as fp:
+            with open(filepath,"w") as fp:
                 print(person_name,file=fp)
                 print(reward,file=fp)
                 print(description,file=fp)
