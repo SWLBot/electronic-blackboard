@@ -5,3 +5,7 @@ thumbnail
 __pycache__
 mysql_auth.txt
 log
+
+# for text data
+
+text*.txt

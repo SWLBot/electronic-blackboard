@@ -4,9 +4,7 @@ import os.path
 import json
 import pprint
 from PIL import Image
-from broadcast_api import arrange_schedule 
 from broadcast_api import load_schedule 
-from broadcast_api import edit_schedule 
 
 class BaseHandler(tornado.web.RequestHandler):
 	def get_current_user(self):
@@ -16,12 +14,8 @@ class BaseHandler(tornado.web.RequestHandler):
 class MainHandler(BaseHandler):
     
 	def get(self):
-		base_dir = os.path.dirname(__file__)
-		file_dir = os.path.join(base_dir,"static/img")
-		files = []
-		files.append("0.jpg")
 		self.set_cookie("_xsrf",self.xsrf_token)
-		self.render("board.html",files=files)
+		self.render("board.html")
 
 
 	def post(self):
@@ -29,31 +23,9 @@ class MainHandler(BaseHandler):
 
 class Get_DB_Data(BaseHandler):
 	def get(self):
-		self.write("")
+		self.write(load_schedule())
 
-	def post(self):
-		json_obj =  tornado.escape.json_decode(self.request.body)
-		response_to_send =  arrange_schedule(json_obj)
-		self.write(json.dumps(response_to_send))
 		
-class Get_txt_Data(BaseHandler):
-	def get(self):
-		self.render("")
-
-	def post(self):
-		json_obj =  tornado.escape.json_decode(self.request.body)
-		response_to_send = load_schedule(json_obj)
-		self.write(json.dumps(response_to_send))
-
-class Edit_txt_Data(BaseHandler):
-	def get(self):
-		self.render("")
-
-	def post(self):
-		json_obj =  tornado.escape.json_decode(self.request.body)
-		response_to_send = edit_schedule(json_obj)
-		self.write(json.dumps(response_to_send))
-
 
 class Application(tornado.web.Application):
 	def __init__(self):
@@ -65,15 +37,12 @@ class Application(tornado.web.Application):
 			"template_path":os.path.join(base_dir,"template"),
 			"static_path":os.path.join(base_dir,"static"),
 			"thumbnail_path":os.path.join(base_dir,"thumbnail"),
-			"debug":False,
+			"debug":True,
 			"xsrf_cookies":True,
-			"autoreload":True
 		}
 		tornado.web.Application.__init__(self,[
 			tornado.web.url(r"/",MainHandler,name="main"),
 			tornado.web.url(r"/db_schedule",Get_DB_Data),
-			tornado.web.url(r"/txt_schedule",Get_txt_Data),
-			tornado.web.url(r"/txt_edit",Edit_txt_Data)
 			],**settings)
 
 def main():

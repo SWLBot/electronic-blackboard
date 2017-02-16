@@ -54,4 +54,5 @@ html {
     background: -o-linear-gradient(#FFF,#9D9D9D);
     background: -moz-linear-gradient(#FFF,#9D9D9D);
     background: linear-gradient(#FFF,#9D9D9D);
+    background-repeat: no-repeat;
 }
