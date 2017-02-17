@@ -4,7 +4,6 @@ thumbnail
 *.jpge
 __pycache__
 mysql_auth.txt
-log
 
 # for text data
 
