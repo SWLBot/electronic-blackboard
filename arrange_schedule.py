@@ -2,6 +2,7 @@ from mysql import mysql
 from random import sample
 from datetime import date
 from time import sleep
+import signal
 import time
 import os.path
 
@@ -194,6 +195,7 @@ def load_next_schedule(json_obj):
 					target_sn = 0
 			continue
 		else :
+			return_msg["file"] = check_target_dir
 			break
 	
 	#check less activity number
@@ -968,6 +970,16 @@ def read_arrange_mode():
 	return_msg["result"] = "success"
 	return return_msg
 
+#deal with defunct 
+def CHLD_handler(para1, para2):
+	try:
+		os.waitpid(-1, os.WNOHANG)
+	except:
+		send_obj = {}
+		send_obj["result"] = "fail" 
+		send_obj["error"] = ("kill : ( " + str(para1) + ", " + str(para2)+" ) ")
+		set_system_log(send_obj)
+
 #future can write to log.txt. now just print it
 def set_system_log(json_obj):
 	return_msg = {}
@@ -1003,9 +1015,13 @@ def main():
 	arrange_mode_change = 0
 	arrange_sn = 0
 	arrange_mode = 0
+	check_file_dir = "NO_FILE"
 	condition = []
 	send_obj = {}
 	receive_obj = {}
+
+	#for non blocking fork
+	signal.signal(signal.SIGCHLD, CHLD_handler)
 
 	#read initial setting
 	raw_time = time.time()
@@ -1029,7 +1045,7 @@ def main():
 	alarm_expire_data_check = raw_time + 3.0
 	alarm_set_schedule_log = raw_time + 10.0
 	alarm_load_next_schedule = raw_time
-	alarm_add_schedule = 0 #int flag type (not time)
+	alarm_add_schedule = 1960380833.0
 
 	#start scheduling
 	while shutdown == 0:
@@ -1048,7 +1064,7 @@ def main():
 			else :
 				receive_obj["error"] = "read_system_setting : " + receive_obj["error"]
 				set_system_log(receive_obj)
-			alarm_read_system_setting += 3600.0
+			alarm_read_system_setting = raw_time + 3600.0
 		
 		#expire_data_check
 		if raw_time >= alarm_expire_data_check:
@@ -1064,12 +1080,12 @@ def main():
 						set_system_log(receive_obj)
 					os._exit(0)
 				else: #Parent
-					alarm_expire_data_check += 1800.0
+					alarm_expire_data_check = raw_time + 1800.0
 			except:
 				receive_obj["result"] = "fail"
 				receive_obj["error"] = "fork1 error"
 				set_system_log(receive_obj)
-				alarm_expire_data_check += 3.0
+				alarm_expire_data_check = raw_time + 3.0
 		
 		#set_schedule_log
 		if raw_time >= alarm_set_schedule_log:
@@ -1087,15 +1103,16 @@ def main():
 						set_system_log(receive_obj)
 					os._exit(0)
 				else: #Parent
-					alarm_set_schedule_log += 1800.0
+					alarm_set_schedule_log = raw_time + 1800.0
 			except:
 				receive_obj["result"] = "fail"
 				receive_obj["error"] = "fork2 error"
 				set_system_log(receive_obj)
-				alarm_set_schedule_log += 3.0
-		
+				alarm_set_schedule_log = raw_time + 3.0
+			
+
 		#load next schedule
-		if raw_time >= alarm_load_next_schedule:
+		if not os.path.isfile(check_file_dir) or raw_time >= alarm_load_next_schedule:
 			print("#4 "+str(raw_time))
 			#mark now activity
 			if just_startup == 0:
@@ -1115,18 +1132,19 @@ def main():
 			send_obj["board_py_dir"] = board_py_dir
 			receive_obj = load_next_schedule(send_obj)
 			if receive_obj["result"] == "success":
-				alarm_load_next_schedule += int(receive_obj["display_time"])
+				alarm_load_next_schedule = raw_time + int(receive_obj["display_time"])
+				check_file_dir = receive_obj["file"]
 				if int(receive_obj["last_activity"]) < min_db_activity:
-					alarm_add_schedule = 1
+					alarm_add_schedule = raw_time
 			else :
 				if receive_obj["error"] == "no schedule":
-					alarm_add_schedule = 1
-					alarm_load_next_schedule += 0.5
+					alarm_add_schedule = raw_time
+					alarm_load_next_schedule = raw_time + 0.5
 				receive_obj["error"] = "load_next_schedule : " + receive_obj["error"]
 				set_system_log(receive_obj)
-		
+
 		#add_schedule
-		if alarm_add_schedule == 1:
+		if raw_time >= alarm_add_schedule:
 			print("#5 "+str(raw_time))
 			#get arrange mode
 			receive_obj = read_arrange_mode()
@@ -1139,6 +1157,8 @@ def main():
 			else :
 				receive_obj["error"] = "read_arrange_mode : " + receive_obj["error"]
 				set_system_log(receive_obj)
+				arrange_mode_change = 0
+				
 			
 			try:
 				newpid = os.fork()
@@ -1171,13 +1191,14 @@ def main():
 						os._exit(0)
 					os._exit(0)
 				else: #Parent
-					alarm_add_schedule = 0
+					alarm_add_schedule = 1960380833.0
 					arrange_mode_change = 0
 			except:
 				receive_obj["result"] = "fail"
 				receive_obj["error"] = "fork3 error"
 				set_system_log(receive_obj)
 				arrange_mode_change = 0
+				alarm_add_schedule = raw_time + 3
 				
 		
 		#delay
