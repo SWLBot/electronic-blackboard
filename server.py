@@ -165,8 +165,8 @@ class UploadHandler(BaseHandler):
             type_dir = None
             try:
                 type_dir = client.query("SELECT `type_dir` FROM data_type WHERE type_id = \""+send_msg['file_type']+"\"")[0][0]
-                if not os.path.exists(type_dir[:-1]):
-                    os.makedirs(type_dir[:-1])
+                if not os.path.exists("static/"+type_dir[:-1]):
+                    os.makedirs("static/"+type_dir[:-1])
             except:
                 print("no such type_id")
             filepath = os.path.join(send_msg['server_dir'],'static/'+str(type_dir)+new_text_id+'.txt')
