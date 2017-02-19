@@ -96,8 +96,13 @@ class LogoutHandler(BaseHandler):
 class UploadHandler(BaseHandler):
     def get(self):
         user = self.get_current_user()
+        sql = "select type_id,type_name from data_type"
+        client = mysql()
+        client.connect()
+        data_types = client.query(sql)
+        client.close()
         if user:
-            self.render("upload.html",flash=None)
+            self.render("upload.html",flash=None,data_types=data_types)
         else:
             self.redirect("/signin")
 
@@ -134,7 +139,13 @@ class UploadHandler(BaseHandler):
                     im = Image.open(filepath)
                     im.thumbnail((200,200))
                     im.save(thumbnail_path) 
-                self.render("upload.html",flash="Upload finish!")
+
+                sql = "select type_id,type_name from data_type"
+                client = mysql()
+                client.connect()
+                data_types = client.query(sql)
+                client.close()
+                self.render("upload.html",flash="Upload finish!",data_types=data_types)
             except:
                 self.redirect("/upload")
         else:
@@ -176,8 +187,11 @@ class UploadHandler(BaseHandler):
                                     +send_msg['display_time']+"\",\"" \
                                     +str(send_msg['user_id'])+"\")"
             result = client.cmd(sql)
+            sql = "select type_id,type_name from data_type"
+            data_types = client.query(sql)
             client.close()
-            self.render("upload.html",flash="Upload finish!")
+            self.render("upload.html",flash="Upload finish!",data_types=data_types)
+
 class EditHandler(BaseHandler):
     def get(self):
         client = mysql()
