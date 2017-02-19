@@ -137,7 +137,7 @@ class UploadHandler(BaseHandler):
                     filepath = receive_msg["img_system_dir"]
                     thumbnail_path=os.path.join(thumbnail_path,receive_msg["img_thumbnail_name"])
                     im = Image.open(filepath)
-                    im.thumbnail((200,200))
+                    im.thumbnail((100,100))
                     im.save(thumbnail_path) 
 
                 sql = "select type_id,type_name from data_type"

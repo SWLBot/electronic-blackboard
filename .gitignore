@@ -3,6 +3,7 @@ thumbnail/*
 *.jpg
 *.jpge
 __pycache__
+*/log/*
 mysql_auth.txt
 
 # for text data
