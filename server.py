@@ -7,6 +7,7 @@ from PIL import Image
 from mysql import mysql
 from server_api import upload_image_insert_db
 from server_api import edit_image_data
+from display_api import display_image
 from pprint import pprint
 
 class BaseHandler(tornado.web.RequestHandler):
@@ -19,9 +20,7 @@ class MainHandler(BaseHandler):
     def get(self):
         user = self.get_current_user()
         if user:
-            client = mysql()
-            client.connect()
-            imgs = client.query("select * from image_data where user_id in ( select user_id from user where user_name = \""+user.decode("utf-8")+"\")")
+            imgs = display_image(user.decode("utf-8"))
             self.render("index.html",user = user,imgs=imgs)
         else:
             self.redirect("/signin")

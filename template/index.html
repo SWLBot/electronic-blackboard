@@ -55,16 +55,16 @@
           {% for img in imgs %}
             <tr>
               <td>{{img[0]}}</td>
+              <td>{{img[7]}}</td>
+              <td>{{img[2]}}</td>
               <td>{{img[1]}}</td>
-              <td>{{img[4]}}</td>
               <td>{{img[5]}}</td>
               <td>{{img[6]}}</td>
-              <td>{{img[7]}}</td>
-              <td>{{img[8]}}</td>
+              <td>{{img[3]}}</td>
+              <td>{{img[4]}}</td>
               <td>{{img[9]}}</td>
-              <td>{{img[11]}}</td>
               <td>{{img[10]}}</td>
-              <td><img src="{{ static_url("thumbnail/"+img[3]) }}"/></td>
+              <td><img src="{{ static_url("thumbnail/"+img[8]) }}"/></td>
               <td><a href="/edit?img_id={{img[0]}}" class="btn btn-link">Edit</a></td>
             <tr>
           {% end %}
