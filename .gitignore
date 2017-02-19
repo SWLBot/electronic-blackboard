@@ -1,5 +1,5 @@
 *.swp
-thumbnail
+thumbnail/*
 *.jpg
 *.jpge
 __pycache__
