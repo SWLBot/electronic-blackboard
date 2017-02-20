@@ -9,3 +9,7 @@ mysql_auth.txt
 # for text data
 
 text*.txt
+
+# for create table
+
+create_tables.sql
