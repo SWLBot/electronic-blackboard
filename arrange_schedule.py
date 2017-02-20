@@ -132,12 +132,12 @@ def load_next_schedule(json_obj):
 		if no_need_check_time == b'\x00':
 			if return_msg["file_type"]=="image":
 				sql = ("SELECT type_id FROM image_data WHERE img_id=\"" + sche_target_id + "\" "\
-					+" and img_is_expire=0 "\
+					+" and img_is_delete=0 and img_is_expire=0 "\
 					+" and (TO_DAYS(NOW()) between TO_DAYS(img_start_date) and TO_DAYS(img_end_date)) " \
 					+" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(img_start_time) and TIME_TO_SEC(img_end_time)) ")
 			elif return_msg["file_type"]=="text":
 				sql = ("SELECT type_id FROM text_data WHERE text_id=\"" + sche_target_id + "\" "\
-					+" and text_is_expire=0 "\
+					+" and text_is_delete=0 and text_is_expire=0 "\
 					+" and (TO_DAYS(NOW()) between TO_DAYS(text_start_date) and TO_DAYS(text_end_date)) " \
 					+" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(text_start_time) and TIME_TO_SEC(text_end_time)) ")
 			else:
@@ -239,13 +239,13 @@ def find_text_acticity(json_obj):
 	#find images that may be schedule
 	if arrange_mode == 0 :
 		sql = "SELECT text_id, text_display_time FROM text_data" \
-			+" WHERE text_is_expire=0 "\
+			+" WHERE text_is_delete=0 and text_is_expire=0 "\
 			+" and (TO_DAYS(NOW()) between TO_DAYS(text_start_date) and TO_DAYS(text_end_date)) " \
 			+" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(text_start_time) and TIME_TO_SEC(text_end_time)) " \
 			+" ORDER BY text_id ASC"
 	elif arrange_mode == 1 or arrange_mode == 2:
 		sql = "SELECT text_id, text_display_time FROM text_data" \
-			+" WHERE text_is_expire=0 "\
+			+" WHERE text_is_delete=0 and text_is_expire=0 "\
 			+" and (TO_DAYS(NOW()) between TO_DAYS(text_start_date) and TO_DAYS(text_end_date)) " \
 			+" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(text_start_time) and TIME_TO_SEC(text_end_time))" 
 	elif arrange_mode == 3 :
@@ -255,7 +255,7 @@ def find_text_acticity(json_obj):
 				sql = sql + " type_id=" + str(arrange_condition[num1]) + " "
 			else :
 				sql = sql + " or type_id=" + str(arrange_condition[num1]) + " "
-		sql = sql + " ) and text_is_expire=0 "\
+		sql = sql + " ) and text_is_delete=0 and text_is_expire=0 "\
 			+" and (TO_DAYS(NOW()) between TO_DAYS(text_start_date) and TO_DAYS(text_end_date)) " \
 			+" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(text_start_time) and TIME_TO_SEC(text_end_time))"\
 			+" ORDER BY text_id ASC"
@@ -266,13 +266,13 @@ def find_text_acticity(json_obj):
 				sql = sql + " type_id=" + str(arrange_condition[num1]) + " "
 			else :
 				sql = sql + " or type_id=" + str(arrange_condition[num1]) + " "
-		sql = sql + " ) and text_is_expire=0 "\
+		sql = sql + " ) and text_is_delete=0 and text_is_expire=0 "\
 			+" and (TO_DAYS(NOW()) between TO_DAYS(text_start_date) and TO_DAYS(text_end_date)) " \
 			+" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(text_start_time) and TIME_TO_SEC(text_end_time))"
 	elif arrange_mode == 6:
 		sql = "SELECT a0.text_id, a0.text_display_time, a1.type_weight FROM " \
 			+" (SELECT text_id, type_id, text_display_time FROM text_data WHERE " \
-			+" text_is_expire=0 "\
+			+" text_is_delete=0 and text_is_expire=0 "\
 			+" and (TO_DAYS(NOW()) between TO_DAYS(text_start_date) and TO_DAYS(text_end_date)) " \
 			+" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(text_start_time) and TIME_TO_SEC(text_end_time))) AS a0 "\
 			+" LEFT JOIN (SELECT type_id, type_weight FROM data_type ) AS a1 "\
@@ -285,7 +285,7 @@ def find_text_acticity(json_obj):
 				sql = sql + " type_id=" + str(arrange_condition[num1]) + " "
 			else :
 				sql = sql + " or type_id=" + str(arrange_condition[num1]) + " "
-		sql = sql + " ) and text_is_expire=0 "\
+		sql = sql + " ) and text_is_delete=0 and text_is_expire=0 "\
 			+" and (TO_DAYS(NOW()) between TO_DAYS(text_start_date) and TO_DAYS(text_end_date)) " \
 			+" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(text_start_time) and TIME_TO_SEC(text_end_time))) AS a0 "\
 			+" LEFT JOIN (SELECT type_id, type_weight FROM data_type WHERE ("
@@ -364,13 +364,13 @@ def find_image_acticity(json_obj):
 	#find images that may be schedule
 	if arrange_mode == 0 :
 		sql = "SELECT img_id, img_display_time FROM image_data" \
-			+" WHERE img_is_expire=0 "\
+			+" WHERE img_is_delete=0 and img_is_expire=0 "\
 			+" and (TO_DAYS(NOW()) between TO_DAYS(img_start_date) and TO_DAYS(img_end_date)) " \
 			+" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(img_start_time) and TIME_TO_SEC(img_end_time)) " \
 			+" ORDER BY img_id ASC"
 	elif arrange_mode == 1 or arrange_mode == 2:
 		sql = "SELECT img_id, img_display_time FROM image_data" \
-			+" WHERE img_is_expire=0 "\
+			+" WHERE img_is_delete=0 and img_is_expire=0 "\
 			+" and (TO_DAYS(NOW()) between TO_DAYS(img_start_date) and TO_DAYS(img_end_date)) " \
 			+" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(img_start_time) and TIME_TO_SEC(img_end_time))" 
 	elif arrange_mode == 3 :
@@ -380,7 +380,7 @@ def find_image_acticity(json_obj):
 				sql = sql + " type_id=" + str(arrange_condition[num1]) + " "
 			else :
 				sql = sql + " or type_id=" + str(arrange_condition[num1]) + " "
-		sql = sql + " ) and img_is_expire=0 "\
+		sql = sql + " ) and img_is_delete=0 and img_is_expire=0 "\
 			+" and (TO_DAYS(NOW()) between TO_DAYS(img_start_date) and TO_DAYS(img_end_date)) " \
 			+" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(img_start_time) and TIME_TO_SEC(img_end_time))"\
 			+" ORDER BY img_id ASC"
@@ -391,13 +391,13 @@ def find_image_acticity(json_obj):
 				sql = sql + " type_id=" + str(arrange_condition[num1]) + " "
 			else :
 				sql = sql + " or type_id=" + str(arrange_condition[num1]) + " "
-		sql = sql + " ) and img_is_expire=0 "\
+		sql = sql + " ) and img_is_delete=0 and img_is_expire=0 "\
 			+" and (TO_DAYS(NOW()) between TO_DAYS(img_start_date) and TO_DAYS(img_end_date)) " \
 			+" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(img_start_time) and TIME_TO_SEC(img_end_time))"
 	elif arrange_mode == 6:
 		sql = "SELECT a0.img_id, a0.img_display_time, a1.type_weight FROM " \
 			+" (SELECT img_id, type_id, img_display_time FROM image_data WHERE " \
-			+" img_is_expire=0 "\
+			+" img_is_delete=0 and img_is_expire=0 "\
 			+" and (TO_DAYS(NOW()) between TO_DAYS(img_start_date) and TO_DAYS(img_end_date)) " \
 			+" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(img_start_time) and TIME_TO_SEC(img_end_time))) AS a0 "\
 			+" LEFT JOIN (SELECT type_id, type_weight FROM data_type ) AS a1 "\
@@ -410,7 +410,7 @@ def find_image_acticity(json_obj):
 				sql = sql + " type_id=" + str(arrange_condition[num1]) + " "
 			else :
 				sql = sql + " or type_id=" + str(arrange_condition[num1]) + " "
-		sql = sql + " ) and img_is_expire=0 "\
+		sql = sql + " ) and img_is_delete=0 and img_is_expire=0 "\
 			+" and (TO_DAYS(NOW()) between TO_DAYS(img_start_date) and TO_DAYS(img_end_date)) " \
 			+" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(img_start_time) and TIME_TO_SEC(img_end_time))) AS a0 "\
 			+" LEFT JOIN (SELECT type_id, type_weight FROM data_type WHERE ("
@@ -562,7 +562,7 @@ def expire_data_check():
 
 	#find expire image data
 	sql = ("SELECT img_id FROM image_data "\
-		+"WHERE img_is_expire=0 and (TO_DAYS(NOW())>TO_DAYS(img_end_date) "\
+		+"WHERE img_is_delete=0 and img_is_expire=0 and (TO_DAYS(NOW())>TO_DAYS(img_end_date) "\
 		+"or (TO_DAYS(NOW())=TO_DAYS(img_end_date) and TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s'))>TIME_TO_SEC(img_end_time)))")	
 	pure_result = db.query(sql)
 	if pure_result == -1:
@@ -584,7 +584,7 @@ def expire_data_check():
 
 	#find expire text data
 	sql = ("SELECT text_id FROM text_data "\
-		+"WHERE text_is_expire=0 and ( TO_DAYS(NOW())>TO_DAYS(text_end_date) "\
+		+"WHERE text_is_delete=0 and text_is_expire=0 and ( TO_DAYS(NOW())>TO_DAYS(text_end_date) "\
 		+"or (TO_DAYS(NOW())=TO_DAYS(text_end_date) and TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s'))>TIME_TO_SEC(text_end_time)))")	
 	pure_result = db.query(sql)
 	if pure_result == -1:
@@ -943,7 +943,7 @@ def read_arrange_mode():
 		return return_msg
 
 	#find arrange mode
-	sql = ("SELECT armd_sn, armd_mode, armd_condition FROM arrange_mode WHERE armd_is_expire=0 and "\
+	sql = ("SELECT armd_sn, armd_mode, armd_condition FROM arrange_mode WHERE armd_is_delete=0 and armd_is_expire=0 and "\
 		+"(TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(armd_start_time) and TIME_TO_SEC(armd_end_time))"\
 		+" ORDER BY armd_set_time DESC LIMIT 1")
 	pure_result = db.query(sql)
@@ -984,14 +984,18 @@ def CHLD_handler(para1, para2):
 def set_system_log(json_obj):
 	return_msg = {}
 	return_msg["result"] = "fail"
-	file_name = "impossible_error.txt"
+	file_name = "static/log/impossible_error.txt"
 	debug = 1
+	file_pointer = ""
 
 	if debug == 1:
 		try:
 			if json_obj["result"]=="fail":
 				print("#error : " + json_obj["error"])
-				file_pointer = open(file_name,"a")
+				if not os.path.isfile(file_name) :
+					file_pointer = open(file_name, "w")
+				else :
+					file_pointer = open(file_name, "a")
 				str_write = str(time.time()) + " fail : " + str(json_obj["error"]) + "\n"
 				file_pointer.write(str_write)
 				file_pointer.close()
@@ -1041,7 +1045,7 @@ def main():
 	#time initial
 	raw_time = time.time()
 	now_time = time.localtime(raw_time)
-	alarm_read_system_setting = raw_time + 3600.0
+	alarm_read_system_setting = raw_time + 300.0
 	alarm_expire_data_check = raw_time + 3.0
 	alarm_set_schedule_log = raw_time + 10.0
 	alarm_load_next_schedule = raw_time
@@ -1064,7 +1068,7 @@ def main():
 			else :
 				receive_obj["error"] = "read_system_setting : " + receive_obj["error"]
 				set_system_log(receive_obj)
-			alarm_read_system_setting = raw_time + 3600.0
+			alarm_read_system_setting = raw_time + 300.0
 		
 		#expire_data_check
 		if raw_time >= alarm_expire_data_check:
@@ -1203,6 +1207,7 @@ def main():
 		
 		#delay
 		sleep(0.1)
+	sleep(10)
 	return 1
 
 if __name__ == "__main__":
