@@ -36,8 +36,12 @@
         {% block body %}
         <div class="container">
           <div class="jumbotron">
-        {% if imgs %}
-        <table class="table">
+              <ul class='nav nav-pills'>
+                <li class='active'><a href='#img_content' >已上傳圖片</a></li>
+                <li><a href='#text_content' >已上傳文字</a></li>
+              </ul>
+        <div id='img_content'>
+        <table class="table" id='img_table'>
           <tr>
             <th>圖片ID</th>
             <th>圖片類型ID</th>
@@ -52,6 +56,7 @@
             <th>縮圖</th>
             <th>修改</th>
           </tr>
+        {% if imgs %}
           {% for img in imgs %}
             <tr>
               <td>{{img[0]}}</td>
@@ -68,10 +73,57 @@
               <td><a href="/edit?img_id={{img[0]}}" class="btn btn-link">Edit</a></td>
             <tr>
           {% end %}
+        {% end %}
+
         </table>
+        </div>
+        <div id='text_content'style='display:none'>
+            <table class='table'>
+                <tr>
+                    <th>文字ID</th>
+                    <th>文字類型ID</th>
+                    <th>上傳時間</th>
+                    <th>開始播放日期</th>
+                    <th>結束播放日期</th>
+                    <th>開始播放時間</th>
+                    <th>結束播放時間</th>
+                    <th>單次播放時間</th>
+                    <th>已播放次數</th>
+                    <th>縮圖</th>
+                    <th>修改</th>
+                </tr>
+                {% if texts %}
+                    {% for text in texts %}
+                        <tr>
+                            <td>{{text[0]}}</td>
+                            <td>{{text[1]}}</td>
+                            <td>{{text[4]}}</td>
+                            <td>{{text[5]}}</td>
+                            <td>{{text[6]}}</td>
+                            <td>{{text[7]}}</td>
+                            <td>{{text[8]}}</td>
+                            <td>{{text[10]}}</td>
+                            <td>{{text[9]}}</td>
+                            <td></td>
+                            <td><a href="$">edit</a></td>
+                        </tr>
+                    {% end %}
+                {% end %}
+            </table>
+        </div>
+
           </div>
         </div>
-        {% end %}
+    <script>
+        $('.nav-pills li a').click(function(){
+            var href = $(this).attr('href');
+            $(this).parent().addClass('active');
+            $(href).css('display','inline');
+            var other = $(this).parent().siblings().children().attr('href');
+            $(this).parent().siblings().removeClass('active');
+            $(other).css('display','none');
+        });
+    </script>
         {% end %}
     </body>
 </html>

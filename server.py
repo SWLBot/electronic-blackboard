@@ -21,7 +21,13 @@ class MainHandler(BaseHandler):
         user = self.get_current_user()
         if user:
             imgs = display_image(user.decode("utf-8"))
-            self.render("index.html",user = user,imgs=imgs)
+            client = mysql()
+            client.connect()
+            sql = 'select user_id from user where user_name = \"'+user.decode('utf-8')+'\"'
+            user_id = client.query(sql)[0][0]
+            sql = 'select * from text_data where user_id =\"'+str(user_id)+'\"'
+            texts = client.query(sql)
+            self.render("index.html",user = user,imgs=imgs,texts=texts)
         else:
             self.redirect("/signin")
 
