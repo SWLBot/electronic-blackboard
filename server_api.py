@@ -4,6 +4,7 @@ from datetime import datetime
 from datetime import timedelta
 from shutil import copyfile
 import os.path
+import shutil
 
 #
 def upload_image_insert_db(json_obj):
@@ -204,7 +205,7 @@ def edit_image_data(json_obj):
 				db.close()
 				return_msg["error"] = "user right is too low"
 				return return_msg
-			
+			#check self image
 			sql = ("SELECT user_id, type_id " \
 					+"FROM image_data " \
 					+"WHERE img_id=\"" + img_id + "\"")
@@ -347,7 +348,8 @@ def edit_image_data(json_obj):
 	return_msg["result"] = "success"
 	return return_msg
 
-#
+
+#never debug this function
 def upload_text_insert_db(json_obj):
 	return_msg = {}
 	return_msg["result"] = "fail"
@@ -482,13 +484,131 @@ def upload_text_insert_db(json_obj):
 
 
 
+#
+def delete_image_or_text_data(json_obj):
+	return_msg = {}
+	return_msg["result"] = "fail"
+	server_dir = ""
+	target_id = ""
+	user_id = ""
+	target_dir = ""
+	trash_dir = ""
+	target_type_id = 0
+	user_level_low_bound = 100
+	user_level_high_bound = 10000
+	try:
+		server_dir = json_obj["server_dir"]
+		target_id = json_obj["target_id"]
+		user_id = json_obj["user_id"]
+	except:
+		return_msg["error"] = "input parameter missing"
+		return return_msg
 
+	#connect to mysql
+	db = mysql()
+	if db.connect() == -1:
+		return_msg["error"] = "connect mysql error"
+		return return_msg
+	
+	#check user level
+	sql = ("SELECT user_level " \
+			+"FROM user " \
+			+"WHERE user_id=" + str(user_id))
+			
+	pure_result = db.query(sql)
+	if pure_result == -1:
+		db.close()
+		return_msg["error"] = "mysql sql error1"
+		return return_msg
+	else:
+		try: 
+			user_level = int(pure_result[0][0])
+			if user_level < user_level_low_bound:
+				db.close()
+				return_msg["error"] = "user right is too low"
+				return return_msg
+			#check self data and get type_id
+			if target_id[0:4] == "imge":
+				sql = "SELECT type_id, img_system_name, user_id FROM image_data WHERE img_id='" + target_id + "'"
+			elif target_id[0:4] == "text":
+				sql = "SELECT type_id, text_system_name, user_id FROM text_data WHERE text_id='" + target_id + "'"
+			else :
+				db.close()
+				return_msg["error"] = "target id type error"
+				return return_msg
+			pure_result = db.query(sql)
+			if pure_result == -1:
+				db.close()
+				return_msg["error"] = "mysql sql error"
+				return return_msg
+			else:
+				try:
+					if pure_result[0][2] != user_id and user_level < user_level_high_bound:
+						db.close()
+						return_msg["error"] = "can not modify other user image or text"
+						return return_msg
+					target_type_id =  int(pure_result[0][0])
+					target_dir = pure_result[0][1]
+				except:
+					db.close()
+					return_msg["error"] = "no such target id : " + str(target_id)
+					return return_msg
+		except:
+			db.close()
+			return_msg["error"] = "no such user id : " + str(user_id)
+			return return_msg
+	
+	#get file place
+	sql = "SELECT type_dir FROM data_type WHERE type_id=" + str(target_type_id)
+	pure_result = db.query(sql)
+	if pure_result == -1:
+		db.close()
+		return_msg["error"] = "mysql sql error"
+		return return_msg
+	else:
+		try:
+			trash_dir = os.path.join(server_dir, "static/img/trash_data/"+target_dir)
+			system_file_dir = os.path.join(server_dir, "static/"+str(pure_result[0][0]))
+			target_dir = os.path.join(system_file_dir, target_dir)
+		except:
+			db.close()
+			return_msg["error"] = "no such type id : " + str(type_id)
+			return return_msg
 
+	#check trash_data 
+	if not os.path.exists(os.path.split(trash_dir)[0]):
+		try:
+			os.makedirs(os.path.split(trash_dir)[0])
+		except:
+			db.close()
+			return_msg["error"] = "no trash_data folder"
+			return return_msg
 
+	#move to trash
+	if os.path.isfile(target_dir):
+		try:
+			shutil.move(target_dir, trash_dir)
+		except:
+			db.close()
+			return_msg["error"] = "move fail"
+			return return_msg
 
+	if target_id[0:4] == "imge":
+		sql = "UPDATE image_data SET img_is_delete=1, img_last_edit_user_id="+str(user_id)+" WHERE img_id='"+ target_id + "'"
+	elif target_id[0:4] == "text":
+		sql = "UPDATE text_data SET text_is_delete=1, text_last_edit_user_id="+str(user_id)+" WHERE text_id='"+target_id+"'"
+	else :
+		sql = ""
+	if db.cmd(sql) == -1:
+		db.close()
+		return_msg["error"] = "update fail"
+		return return_msg
 
+	
+	db.close()
 
-
-
+	return_msg["result"] = "success"
+	return return_msg
+	
 
 
