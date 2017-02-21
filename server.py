@@ -7,6 +7,7 @@ from PIL import Image
 from mysql import mysql
 from server_api import upload_image_insert_db
 from server_api import edit_image_data
+from display_api import display_image
 from pprint import pprint
 
 class BaseHandler(tornado.web.RequestHandler):
@@ -19,10 +20,14 @@ class MainHandler(BaseHandler):
     def get(self):
         user = self.get_current_user()
         if user:
+            imgs = display_image(user.decode("utf-8"))
             client = mysql()
             client.connect()
-            imgs = client.query("select * from image_data where user_id in ( select user_id from user where user_name = \""+user.decode("utf-8")+"\")")
-            self.render("index.html",user = user,imgs=imgs)
+            sql = 'select user_id from user where user_name = \"'+user.decode('utf-8')+'\"'
+            user_id = client.query(sql)[0][0]
+            sql = 'select * from text_data where user_id =\"'+str(user_id)+'\"'
+            texts = client.query(sql)
+            self.render("index.html",user = user,imgs=imgs,texts=texts)
         else:
             self.redirect("/signin")
 
@@ -97,8 +102,13 @@ class LogoutHandler(BaseHandler):
 class UploadHandler(BaseHandler):
     def get(self):
         user = self.get_current_user()
+        sql = "select type_id,type_name from data_type"
+        client = mysql()
+        client.connect()
+        data_types = client.query(sql)
+        client.close()
         if user:
-            self.render("upload.html",flash=None)
+            self.render("upload.html",flash=None,data_types=data_types)
         else:
             self.redirect("/signin")
 
@@ -133,9 +143,15 @@ class UploadHandler(BaseHandler):
                     filepath = receive_msg["img_system_dir"]
                     thumbnail_path=os.path.join(thumbnail_path,receive_msg["img_thumbnail_name"])
                     im = Image.open(filepath)
-                    im.thumbnail((200,200))
+                    im.thumbnail((100,100))
                     im.save(thumbnail_path) 
-                self.render("upload.html",flash="Upload finish!")
+
+                sql = "select type_id,type_name from data_type"
+                client = mysql()
+                client.connect()
+                data_types = client.query(sql)
+                client.close()
+                self.render("upload.html",flash="Upload finish!",data_types=data_types)
             except:
                 self.redirect("/upload")
         else:
@@ -155,8 +171,8 @@ class UploadHandler(BaseHandler):
             type_dir = None
             try:
                 type_dir = client.query("SELECT `type_dir` FROM data_type WHERE type_id = \""+send_msg['file_type']+"\"")[0][0]
-                if not os.path.exists(type_dir[:-1]):
-                    os.makedirs(type_dir[:-1])
+                if not os.path.exists("static/"+type_dir[:-1]):
+                    os.makedirs("static/"+type_dir[:-1])
             except:
                 print("no such type_id")
             filepath = os.path.join(send_msg['server_dir'],'static/'+str(type_dir)+new_text_id+'.txt')
@@ -177,8 +193,11 @@ class UploadHandler(BaseHandler):
                                     +send_msg['display_time']+"\",\"" \
                                     +str(send_msg['user_id'])+"\")"
             result = client.cmd(sql)
+            sql = "select type_id,type_name from data_type"
+            data_types = client.query(sql)
             client.close()
-            self.render("upload.html",flash="Upload finish!")
+            self.render("upload.html",flash="Upload finish!",data_types=data_types)
+
 class EditHandler(BaseHandler):
     def get(self):
         client = mysql()

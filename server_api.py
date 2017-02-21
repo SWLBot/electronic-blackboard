@@ -348,6 +348,7 @@ def edit_image_data(json_obj):
 	return_msg["result"] = "success"
 	return return_msg
 
+
 #never debug this function
 def upload_text_insert_db(json_obj):
 	return_msg = {}
@@ -479,6 +480,7 @@ def upload_text_insert_db(json_obj):
 	return_msg["result"] = "success"
 	return return_msg
 	
+
 
 
 
