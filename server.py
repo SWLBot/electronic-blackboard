@@ -7,6 +7,7 @@ from PIL import Image
 from mysql import mysql
 from server_api import upload_image_insert_db
 from server_api import edit_image_data
+from server_api import upload_text_insert_db
 from display_api import display_image
 from pprint import pprint
 
@@ -140,6 +141,7 @@ class UploadHandler(BaseHandler):
                     with open(filepath,"wb") as up:
                         up.write(meta['body'])
                     receive_msg = upload_image_insert_db(send_msg)
+
                     filepath = receive_msg["img_system_dir"]
                     thumbnail_path=os.path.join(thumbnail_path,receive_msg["img_thumbnail_name"])
                     im = Image.open(filepath)
@@ -155,6 +157,7 @@ class UploadHandler(BaseHandler):
             except:
                 self.redirect("/upload")
         else:
+            receive_msg = upload_text_insert_db(send_msg)
             person_name = tornado.escape.xhtml_escape(self.get_argument('person_name'))
             reward = tornado.escape.xhtml_escape(self.get_argument('reward'))
             description = tornado.escape.xhtml_escape(self.get_argument('description'))
@@ -162,37 +165,13 @@ class UploadHandler(BaseHandler):
             month = tornado.escape.xhtml_escape(self.get_argument('month'))
             client = mysql()
             client.connect()
-            try:
-                old_text_id = client.query("SELECT `text_id` FROM text_data ORDER BY `text_upload_time` DESC LIMIT 1")[0][0]
-                new_text_id = int(old_text_id[4:])+1
-            except:
-                new_text_id = 0;
-            new_text_id = "text" + "{0:010d}".format(new_text_id)
-            type_dir = None
-            try:
-                type_dir = client.query("SELECT `type_dir` FROM data_type WHERE type_id = \""+send_msg['file_type']+"\"")[0][0]
-                if not os.path.exists("static/"+type_dir[:-1]):
-                    os.makedirs("static/"+type_dir[:-1])
-            except:
-                print("no such type_id")
-            filepath = os.path.join(send_msg['server_dir'],'static/'+str(type_dir)+new_text_id+'.txt')
-            with open(filepath,"w") as fp:
+            with open(receive_msg["text_system_dir"],"w") as fp:
                 print(person_name,file=fp)
                 print(reward,file=fp)
                 print(description,file=fp)
                 print(year,file=fp)
                 print(month,file=fp)
-            sql = "INSERT INTO text_data (`text_id`, `type_id`, `text_invisible_title`, `text_system_name`, `text_start_date`, `text_end_date`, `text_start_time`, `text_end_time`, `text_display_time`, `user_id`) VALUES (\"" +new_text_id+"\",\"" \
-                                    +send_msg['file_type']+"\",\"" \
-                                    +new_text_id+"\",\"" \
-                                    +new_text_id+".txt"+"\",\"" \
-                                    +send_msg['start_date']+"\",\"" \
-                                    +send_msg['end_date']+"\",\"" \
-                                    +send_msg['start_time']+"\",\"" \
-                                    +send_msg['end_time']+"\",\"" \
-                                    +send_msg['display_time']+"\",\"" \
-                                    +str(send_msg['user_id'])+"\")"
-            result = client.cmd(sql)
+
             sql = "select type_id,type_name from data_type"
             data_types = client.query(sql)
             client.close()
@@ -202,7 +181,7 @@ class EditHandler(BaseHandler):
     def get(self):
         client = mysql()
         client.connect()
-        img = client.query("select * from image_data where img_id = \""+self.get_argument("img_id")+"\"")[0]
+        img = client.query("select * from image_data where img_is_delete=0 and img_id = \""+self.get_argument("img_id")+"\"")[0]
         client.close()
         self.render("edit.html",img=img,flash=None)
 

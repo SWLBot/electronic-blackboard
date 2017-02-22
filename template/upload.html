@@ -78,7 +78,7 @@
         <form id="image_form" method="post" enctype="multipart/form-data">
             <p><input type='hidden' name='type' value='image'/></p>
             <p><input type='file' name='file'/></p>
-            <p>圖片類型ID:
+            <p>圖片類型:
                 <select name='file_type' id='file_type'>
                     {% for type in data_types %}
                     <option value='{{type[0]}}'>{{type[1]}}</option>

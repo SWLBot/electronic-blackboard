@@ -48,7 +48,7 @@ def upload_image_insert_db(json_obj):
 	pure_result = db.query(sql)
 	if pure_result == -1:
 		db.close()
-		return_msg["error"] = "mysql sql error1"
+		return_msg["error"] = "mysql sql error"
 		return return_msg
 	else:
 		try: 
@@ -69,7 +69,7 @@ def upload_image_insert_db(json_obj):
 	pure_result = db.query(sql)
 	if pure_result == -1:
 		db.close()
-		return_msg["error"] = "mysql sql error2"
+		return_msg["error"] = "mysql sql error"
 		return return_msg
 	else:
 		try:
@@ -89,14 +89,12 @@ def upload_image_insert_db(json_obj):
 	pure_result = db.query(sql)
 	if pure_result == -1:
 		db.close()
-		return_msg["error"] = "mysql sql error3"
+		return_msg["error"] = "mysql sql error"
 		return return_msg
 	else:
 		try:
-			img_id =  str(int(pure_result[0][0][4:]) + 1)
-			for length_count in range(10 - len(img_id)):
-				img_id = '0' + img_id
-			img_id = "imge" + img_id
+			img_id =  int(pure_result[0][0][4:]) + 1
+			img_id = "imge" + "{0:010d}".format(img_id)
 		except:
 			img_id = "imge0000000001"
 			#db.close()
@@ -137,7 +135,7 @@ def upload_image_insert_db(json_obj):
 			+ "\"" + img_end_time + "\", " \
 			+ str(img_display_time) + ", " \
 			+ str(user_id) + " ) " 
-	
+
 	pure_result = db.cmd(sql)
 	if pure_result == -1:
 		return_msg["error"] = "insert mysql error please check file system " + img_system_dir
@@ -309,7 +307,7 @@ def edit_image_data(json_obj):
 				except:
 					"DO NOTHING"
 				db.close()
-				return_msg["error"] = "move file error1 : " + old_dir
+				return_msg["error"] = "move file error : " + old_dir
 				return return_msg
 	
 	#start to modify mysql
@@ -338,7 +336,7 @@ def edit_image_data(json_obj):
 				return_msg["error"] = "move file error : duplicate files : " + old_dir
 				return return_msg
 			db.close()
-			return_msg["error"] = "move file error2 : " + new_dir
+			return_msg["error"] = "move file error : " + new_dir
 			return return_msg
 		db.close()
 		return_msg["error"] = "update mysql error"
@@ -398,11 +396,11 @@ def upload_text_insert_db(json_obj):
 	pure_result = db.query(sql)
 	if pure_result == -1:
 		db.close()
-		return_msg["error"] = "mysql sql error1"
+		return_msg["error"] = "mysql sql error"
 		return return_msg
 	else:
 		try: 
-			if pure_result[0][0] < user_level_low_bound:
+			if int(pure_result[0][0]) < user_level_low_bound:
 				db.close()
 				return_msg["error"] = "user right is too low"
 				return return_msg
@@ -420,7 +418,7 @@ def upload_text_insert_db(json_obj):
 	pure_result = db.query(sql)
 	if pure_result == -1:
 		db.close()
-		return_msg["error"] = "mysql sql error3"
+		return_msg["error"] = "mysql sql error"
 		return return_msg
 	else:
 		try:
@@ -440,7 +438,7 @@ def upload_text_insert_db(json_obj):
 	pure_result = db.query(sql)
 	if pure_result == -1:
 		db.close()
-		return_msg["error"] = "mysql sql error2"
+		return_msg["error"] = "mysql sql error"
 		return return_msg
 	else:
 		try:
@@ -454,7 +452,7 @@ def upload_text_insert_db(json_obj):
 	
 	#insert images data to mysql
 	sql = "INSERT text_data " \
-			+" (`text_id`, `type_id`, `text_system_name`, `text_file_name`, `text_start_date`, `text_end_date`, `text_start_time`, `text_end_time`, `text_display_time`, `user_id`) " \
+			+" (`text_id`, `type_id`, `text_system_name`, `text_invisible_title`, `text_start_date`, `text_end_date`, `text_start_time`, `text_end_time`, `text_display_time`, `user_id`) " \
 			+" VALUE " \
 			+" ( \"" + text_id + "\", " \
 			+ str(type_id) + ", " \
@@ -466,7 +464,7 @@ def upload_text_insert_db(json_obj):
 			+ "\"" + text_end_time + "\", " \
 			+ str(text_display_time) + ", " \
 			+ str(user_id) + " ) " 
-	
+
 	pure_result = db.cmd(sql)
 	if pure_result == -1:
 		return_msg["error"] = "insert mysql error"
@@ -518,7 +516,7 @@ def delete_image_or_text_data(json_obj):
 	pure_result = db.query(sql)
 	if pure_result == -1:
 		db.close()
-		return_msg["error"] = "mysql sql error1"
+		return_msg["error"] = "mysql sql error"
 		return return_msg
 	else:
 		try: 

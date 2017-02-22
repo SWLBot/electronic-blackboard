@@ -14,6 +14,11 @@ def main():
 	middle_bug = 5
 	big_bug = 10
 
+	#check file exist
+	if not os.path.isfile(error_dir_txt):
+		create_file = open(error_dir_txt, 'w')
+		create_file.close()
+
 	#initial
 	with open(error_dir_txt, 'r') as file_pointer :
 		for line_content in file_pointer:
@@ -23,10 +28,14 @@ def main():
 	while shutdown == 0:
 		sleep(300)
 		line_count = 0
-		with open(error_dir_txt, 'r') as file_pointer :
-			for line_content in file_pointer:
-				line_count += 1
 		msg_content = ""
+		try:
+			with open(error_dir_txt, 'r') as file_pointer :
+				for line_content in file_pointer:
+					line_count += 1
+		except:
+			line_count = 0
+
 		if last_line_count < line_count:
 			if last_line_count + small_bug >= line_count:
 				msg_content = ("arrange_schedule got "+ str(small_bug) +" error last 5 minute \r\n")
