@@ -26,7 +26,7 @@ cursor.execute("DROP DATABASE IF EXISTS "+dbname)
 print("Creating database \"%s\"..." % dbname)
 cursor.execute("CREATE DATABASE %s character set utf8" % dbname)
 try:
-    with open("create_tables1.sql","r") as file:
+    with open("create_tables.sql","r") as file:
         subprocess.call(["mysql","-u",user,"-p"+passwd],stdin=file)
 except:
     print("Open sql file failed")
@@ -44,7 +44,7 @@ print("create user \"admin\"...")
 user_name = 'admin'
 user_hashed_passwd = bcrypt.hashpw('admin'.encode('utf-8'),bcrypt.gensalt())
 try:
-    ret = cursor.execute("insert into `user` (`user_name`,`user_password`) values (%s,%s)", (user_name,user_hashed_passwd))
+    ret = cursor.execute("insert into `user` (`user_name`,`user_password`,`user_level`) values (%s,%s,10000)", (user_name,user_hashed_passwd))
 except:
     print("Insert user failed")
 
