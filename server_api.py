@@ -614,7 +614,10 @@ def add_new_data_type(json_obj):
 	return_msg = {}
 	type_name = json_obj['type_name']
 	db = mysql()
-	db.connect()
+	if db.connect() == -1:
+		return_msg["error"] = "connect mysql error"
+		return return_msg
+
 	sql = "SELECT count(*) FROM data_type WHERE type_name = \""+type_name+"\""
 	if db.query(sql)[0][0] == 1:
 		return_msg["error"] = "Type name has existed"
