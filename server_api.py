@@ -3,6 +3,7 @@ from datetime import date
 from datetime import datetime
 from datetime import timedelta
 from shutil import copyfile
+import os
 import os.path
 import shutil
 
@@ -609,4 +610,29 @@ def delete_image_or_text_data(json_obj):
 	return return_msg
 	
 
+def add_new_data_type(json_obj):
+	return_msg = {}
+	type_name = json_obj['type_name']
+	db = mysql()
+	db.connect()
+	sql = "SELECT count(*) FROM data_type WHERE type_name = \""+type_name+"\""
+	if db.query(sql)[0][0] == 1:
+		return_msg["error"] = "Type name has existed"
+		return return_msg
+
+	sql = "INSERT INTO data_type (type_name,type_dir) VALUES (\"" \
+		+type_name+"\",\"" \
+		+type_name+"/\")"
+	if db.cmd(sql) == -1:
+		db.close()
+		return_msg["error"] = "add type fail"
+		return return_msg
+
+	db.close()
+
+	if not os.path.exists("static/"+type_name):
+		os.makedirs("static/"+type_name)
+
+	return_msg["result"] = "success"
+	return return_msg
 

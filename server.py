@@ -8,6 +8,7 @@ from mysql import mysql
 from server_api import upload_image_insert_db
 from server_api import edit_image_data
 from server_api import upload_text_insert_db
+from server_api import add_new_data_type
 from display_api import display_image
 from pprint import pprint
 
@@ -35,6 +36,7 @@ class MainHandler(BaseHandler):
 class SignupHandler(BaseHandler):
     def get(self):
         self.render('signup.html',flash=None)
+
     def post(self):
         client = mysql()
         client.connect()
@@ -209,6 +211,20 @@ class EditHandler(BaseHandler):
         client.close()
         self.render("edit.html",img=img,flash=flash)
 
+class addTypeHandler(BaseHandler):
+    def get(self):
+        self.render("add_type.html",flash=None)
+
+    def post(self):
+        send_msg = {}
+        send_msg["type_name"] = tornado.escape.xhtml_escape(self.get_argument('type_name'))
+        receive_msg = add_new_data_type(send_msg)
+        if 'result' in receive_msg:
+            flash = 'ADD TYPE SUCCESS!'
+        else:
+            flash = 'ADD TYPE FAILED! '+receive_msg["error"]
+        self.render('add_type.html',flash=flash)
+
 class Application(tornado.web.Application):
     def __init__(self):
         base_dir = os.path.dirname(__file__)
@@ -228,7 +244,8 @@ class Application(tornado.web.Application):
             tornado.web.url(r"/signup",SignupHandler,name="signup"),
             tornado.web.url(r"/signout",LogoutHandler,name="signout"),
             tornado.web.url(r"/upload",UploadHandler,name="upload"),
-            tornado.web.url(r"/edit",EditHandler,name="edit")
+            tornado.web.url(r"/edit",EditHandler,name="edit"),
+            tornado.web.url(r"/addType",addTypeHandler,name="addType")
         ],**settings)
 
 def main():

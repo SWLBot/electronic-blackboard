@@ -1,0 +1,17 @@
+{% extends "index.html" %}
+
+{% block body %}
+    <div class="container">
+        <div class="jumbotron">
+            <h2><b>新增種類</b></h2>
+            <form id='type_form' method='post'>
+                <p>種類名稱:<input type='text' name='type_name'/></p>
+                <input class='btn btn-primary' type='submit'/>
+                {% module xsrf_form_html() %}
+            </form>
+            {% if flash %}
+                <p>{{flash}}</p>
+            {% end %}
+        </div>
+    </div>
+{% end %}
