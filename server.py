@@ -7,6 +7,7 @@ from PIL import Image
 from mysql import mysql
 from server_api import upload_image_insert_db
 from server_api import edit_image_data
+from server_api import edit_text_data
 from server_api import upload_text_insert_db
 from server_api import add_new_data_type
 from server_api import delete_image_or_text_data
@@ -180,35 +181,54 @@ class UploadHandler(BaseHandler):
 
 class EditHandler(BaseHandler):
     def get(self):
+        img = None
+        text = None
         client = mysql()
         client.connect()
-        img = client.query("select * from image_data where img_is_delete=0 and img_id = \""+self.get_argument("img_id")+"\"")[0]
+        img_id = self.get_argument("img_id",default=None)
+        if img_id:
+            img = client.query("select * from image_data where img_is_delete = 0 and img_id = \""+img_id+"\"")[0]
+        else:
+            text_id = self.get_argument("text_id")
+            text = client.query("select * from text_data where text_is_delete = 0 and text_id = \""+text_id+"\"")[0]
         client.close()
-        self.render("edit.html",img=img,flash=None)
+        self.render("edit.html",img=img,text=text,flash=None)
 
     def post(self):
+        img = None
+        text = None
         send_msg = {}
         receive_msg = {}
         client = mysql()
         client.connect()
         user = self.get_current_user()
         send_msg["server_dir"] = os.path.dirname(__file__)
-        send_msg["file_type"] = tornado.escape.xhtml_escape(self.get_argument("img_type"))
-        send_msg["img_id"] = tornado.escape.xhtml_escape(self.get_argument("img_id"))
-        send_msg["start_date"] = tornado.escape.xhtml_escape(self.get_argument("img_start_date"))
-        send_msg["end_date"] = tornado.escape.xhtml_escape(self.get_argument("img_end_date"))
-        send_msg["start_time"] = tornado.escape.xhtml_escape(self.get_argument("img_start_time"))
-        send_msg["end_time"] = tornado.escape.xhtml_escape(self.get_argument("img_end_time"))
-        send_msg["display_time"] = tornado.escape.xhtml_escape(self.get_argument("img_display_time"))
+        send_msg["file_type"] = tornado.escape.xhtml_escape(self.get_argument("data_type"))
+        send_msg["start_date"] = tornado.escape.xhtml_escape(self.get_argument("start_date"))
+        send_msg["end_date"] = tornado.escape.xhtml_escape(self.get_argument("end_date"))
+        send_msg["start_time"] = tornado.escape.xhtml_escape(self.get_argument("start_time"))
+        send_msg["end_time"] = tornado.escape.xhtml_escape(self.get_argument("end_time"))
+        send_msg["display_time"] = tornado.escape.xhtml_escape(self.get_argument("display_time"))
         send_msg["user_id"] = client.query("select `user_id` from `user` where user_name = \""+user.decode("utf-8")+"\"")[0][0]
-        receive_msg = edit_image_data(send_msg)
-        if 'result' in receive_msg:
-            flash = "Edit "+self.get_argument("img_id")+" successed "
+        if self.get_argument("type") == "image":
+            send_msg["img_id"] = tornado.escape.xhtml_escape(self.get_argument("img_id"))
+            receive_msg = edit_image_data(send_msg)
+            if 'result' in receive_msg:
+                flash = "Edit "+self.get_argument("img_id")+" successed "
+            else:
+                flash = "Edit "+self.get_argument("img_id")+" failed "
+            img = client.query("select * from image_data where img_id = \""+self.get_argument("img_id")+"\"")[0]
         else:
-            flash = "Edit "+self.get_argument("img_id")+" failed "
-        img = client.query("select * from image_data where img_id = \""+self.get_argument("img_id")+"\"")[0]
+            send_msg["text_id"] = tornado.escape.xhtml_escape(self.get_argument("text_id"))
+            send_msg["invisible_title"] = send_msg["text_id"]
+            receive_msg = edit_text_data(send_msg)
+            if 'result' in receive_msg:
+                flash = "Edit "+self.get_argument("text_id")+" successed "
+            else:
+                flash = "Edit "+self.get_argument("text_id")+" failed "
+            text = client.query("select * from text_data where text_id = \""+self.get_argument("text_id")+"\"")[0]
         client.close()
-        self.render("edit.html",img=img,flash=flash)
+        self.render("edit.html",img=img,text=text,flash=flash)
 
 class DeleteHandler(BaseHandler):
     def get(self):

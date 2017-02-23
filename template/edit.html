@@ -4,30 +4,49 @@
   <div class="jumbotron">
   <div class="row">
     <div class="col-lg-4">
+  {% if img %}
   <form class="form" method="post" enctype="multipart/form-data">
+    <input type="hidden" name="type" value="image"/>
     <label><strong>圖片ID :</strong>{{img[0]}}</label><br>
-    <label><strong>圖片類型ID:</strong><input type="text" name="img_type" value="{{img[1]}}"/></label><br>
+    <label><strong>圖片類型ID:</strong><input type="text" name="data_type" value="{{img[1]}}"/></label><br>
     <label><strong>圖片名稱:</strong>{{img[4]}}</label><br>
     <label><strong>上傳時間:</strong>{{img[5]}}</label><br>
-    <label><strong>開始撥放日期:</strong><input type="date" name="img_start_date" value="{{img[6]}}"/></label><br>
-    <label><strong>結束播放日期:</strong><input type="date" name="img_end_date" value="{{img[7]}}"/></label><br>
+    <label><strong>開始播放日期:</strong><input type="date" name="start_date" value="{{img[6]}}"/></label><br>
+    <label><strong>結束播放日期:</strong><input type="date" name="end_date" value="{{img[7]}}"/></label><br>
     {% if img[8] < datetime.timedelta(days=0, seconds=0, microseconds=0, milliseconds=0, minutes=0, hours=10, weeks=0) %}
-    <label><strong>開始撥放時間:</strong><input type="time" step="1" name="img_start_time" value="0{{img[8]}}"/></label><br>
+    <label><strong>開始播放時間:</strong><input type="time" step="1" name="start_time" value="0{{img[8]}}"/></label><br>
     {% else %}
-    <label><strong>開始撥放時間:</strong><input type="time" step="1" name="img_start_time" value="{{img[8]}}"/></label><br>
+    <label><strong>開始播放時間:</strong><input type="time" step="1" name="start_time" value="{{img[8]}}"/></label><br>
     {% end %}
     {% if img[9] < datetime.timedelta(days=0, seconds=0, microseconds=0, milliseconds=0, minutes=0, hours=10, weeks=0) %}
-    <label><strong>結束播放時間:</strong><input type="time" step="1" name="img_end_time" value="0{{img[9]}}"/></label><br>
+    <label><strong>結束播放時間:</strong><input type="time" step="1" name="end_time" value="0{{img[9]}}"/></label><br>
     {% else %}
-    <label><strong>結束播放時間:</strong><input type="time" step="1" name="img_end_time" value="{{img[9]}}"/></label><br>
+    <label><strong>結束播放時間:</strong><input type="time" step="1" name="end_time" value="{{img[9]}}"/></label><br>
     {% end %}
-    <label><strong>單次撥放秒數:</strong><input type="text" name="img_display_time" value="{{img[11]}}"/></label><br>
+    <label><strong>單次播放秒數:</strong><input type="text" name="display_time" value="{{img[11]}}"/></label><br>
     {% module xsrf_form_html() %}
     <input type="submit" class="btn btn-primary"/>
   </form>
+  {% else %}
+  <form class="form" method="post" enctype="multipart/form-data">
+    <input type="hidden" name="type" value="text"/>
+    <label><strong>文字ID:</strong>{{text[0]}}</label><br>
+    <label><strong>圖片類型ID:</strong><input type="text" name="data_type" value="{{text[1]}}"/></label><br>
+    <label><strong>上傳時間:</strong>{{text[4]}}</label><br>
+    <label><strong>開始播放日期:</strong><input type="date" name="start_date" value="{{text[5]}}"/></label><br>
+    <label><strong>結束播放日期:</strong><input type="date" name="end_date" value="{{text[6]}}"/></label><br>
+    <label><strong>開始播放時間:</strong><input type="time" name="start_time" value="{{text[7]}}"/></label><br>
+    <label><strong>結束播放時間:</strong><input type="time" name="end_time" value="{{text[8]}}"/></label><br>
+    <label><strong>單次播放秒數:</strong><input type="text" name="display_time" value="{{text[10]}}"/></label><br>
+    {% module xsrf_form_html() %}
+    <input type="submit" class="btn btn-primary"/>
+  </form>
+  {% end %}
     </div>
     <div class="col-lg-8">
+    {% if img %}
       <img src="{{ static_url("thumbnail/"+img[3]) }}"/>
+    {% end %}
     </div>
   </div>
   {% if flash %}
