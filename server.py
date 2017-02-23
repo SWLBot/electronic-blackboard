@@ -9,6 +9,7 @@ from server_api import upload_image_insert_db
 from server_api import edit_image_data
 from server_api import upload_text_insert_db
 from server_api import add_new_data_type
+from server_api import delete_image_or_text_data
 from display_api import display_image
 from pprint import pprint
 
@@ -35,7 +36,10 @@ class MainHandler(BaseHandler):
 
 class SignupHandler(BaseHandler):
     def get(self):
-        self.render('signup.html',flash=None)
+        if self.get_current_user().decode('utf-8') == 'admin':
+            self.render('signup.html',flash=None)
+        else:
+            self.redirect('/')
 
     def post(self):
         client = mysql()
@@ -49,10 +53,9 @@ class SignupHandler(BaseHandler):
             hashed = bcrypt.hashpw(getpassword.encode('utf-8'),bcrypt.gensalt())
             ret = cursor.execute("insert into `user` (`user_name`,`user_password`) values (%s,%s)",(getusername,hashed))
             client.db.commit()
-            self.set_secure_cookie("user",getusername)
             self.set_secure_cookie("incorrect","0")
             client.close()
-            self.redirect(self.reverse_url("main"))
+            self.redirect(self.reverse_url("signup"))
         else:
             client.close()
             self.render("signup.html",flash=["The name \""+getusername+"\" has been used"])
@@ -211,6 +214,23 @@ class EditHandler(BaseHandler):
         client.close()
         self.render("edit.html",img=img,flash=flash)
 
+class DeleteHandler(BaseHandler):
+    def get(self):
+        send_msg = {}
+        client = mysql()
+        client.connect()
+        user_name = self.get_current_user().decode("utf-8")
+        user_id = client.query("select user_id from user where user_name = \""+user_name+"\"")[0][0]
+        send_msg["server_dir"] = os.path.dirname(__file__)
+        send_msg["target_id"] = tornado.escape.xhtml_escape(self.get_argument("target_id"))
+        send_msg["user_id"] = user_id
+        receive_msg = delete_image_or_text_data(send_msg)
+        if 'result' in receive_msg:
+            flash = "delete "+send_msg["target_id"]+" success!"
+        else:
+            flash = receive_msg["error"]
+        self.redirect("/")
+
 class addTypeHandler(BaseHandler):
     def get(self):
         self.render("add_type.html",flash=None)
@@ -245,6 +265,7 @@ class Application(tornado.web.Application):
             tornado.web.url(r"/signout",LogoutHandler,name="signout"),
             tornado.web.url(r"/upload",UploadHandler,name="upload"),
             tornado.web.url(r"/edit",EditHandler,name="edit"),
+            tornado.web.url(r"/delete",DeleteHandler,name="delete"),
             tornado.web.url(r"/addType",addTypeHandler,name="addType")
         ],**settings)
 
