@@ -6,6 +6,7 @@ from shutil import copyfile
 import os
 import os.path
 import shutil
+import bcrypt
 
 #
 def upload_image_insert_db(json_obj):
@@ -813,6 +814,7 @@ def delete_image_or_text_data(json_obj):
 
 def add_new_data_type(json_obj):
 	return_msg = {}
+	return_msg["result"] = "fail"
 	type_name = json_obj['type_name']
 	db = mysql()
 	if db.connect() == -1:
@@ -839,4 +841,60 @@ def add_new_data_type(json_obj):
 
 	return_msg["result"] = "success"
 	return return_msg
+
+
+#
+def change_password(json_obj):
+	return_msg = {}
+	return_msg["result"] = "fail"
+	user_id = 0
+	old_password = ""
+	new_password = ""
+	try:
+		user_id = json_obj["user_id"]
+		old_password = json_obj["old_password"]
+		new_password = json_obj["new_password"]
+	except:
+		return_msg["error"] = "input parameter missing"
+		return return_msg
+
+	#connect to mysql
+	db = mysql()
+	if db.connect() == -1:
+		return_msg["error"] = "connect mysql error"
+		return return_msg
+	
+	#check user
+	sql = "SELECT user_password FROM user WHERE user_id=" + str(user_id)
+	pure_result = db.query(sql)
+	if pure_result == -1:
+		db.close()
+		return_msg["error"] = "mysql sql error"
+		return return_msg
+	else:
+		hashed_key = ""
+		try:
+			hashed_key = pure_result[0][0].encode('utf-8')
+			if bcrypt.checkpw(old_password.encode('utf-8'),hashed_key):
+				# old password correct
+				hashed_key = bcrypt.hashpw(new_password.encode('utf-8'),bcrypt.gensalt())
+				sql = "UPDATE user SET user_password=" + str(hashed_key)[1:] + " WHERE user_id=" + str(user_id)
+				if db.cmd(sql) == -1:
+					db.close()
+					return_msg["error"] = "update error"
+					return return_msg
+			else:
+				db.close()
+				return_msg["error"] = "old password incorrect"
+				return return_msg
+		except:
+			db.close()
+			return_msg["error"] = "no such user id : " + str(user_id)
+			return return_msg
+	
+	db.close()
+
+	return_msg["result"] = "success"
+	return return_msg
+
 

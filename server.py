@@ -213,7 +213,7 @@ class EditHandler(BaseHandler):
         if self.get_argument("type") == "image":
             send_msg["img_id"] = tornado.escape.xhtml_escape(self.get_argument("img_id"))
             receive_msg = edit_image_data(send_msg)
-            if 'result' in receive_msg:
+            if receive_msg["result"] == "success":
                 flash = "Edit "+self.get_argument("img_id")+" successed "
             else:
                 flash = "Edit "+self.get_argument("img_id")+" failed "
@@ -222,7 +222,7 @@ class EditHandler(BaseHandler):
             send_msg["text_id"] = tornado.escape.xhtml_escape(self.get_argument("text_id"))
             send_msg["invisible_title"] = send_msg["text_id"]
             receive_msg = edit_text_data(send_msg)
-            if 'result' in receive_msg:
+            if receive_msg["result"] == "success":
                 flash = "Edit "+self.get_argument("text_id")+" successed "
             else:
                 flash = "Edit "+self.get_argument("text_id")+" failed "
@@ -241,7 +241,7 @@ class DeleteHandler(BaseHandler):
         send_msg["target_id"] = tornado.escape.xhtml_escape(self.get_argument("target_id"))
         send_msg["user_id"] = user_id
         receive_msg = delete_image_or_text_data(send_msg)
-        if 'result' in receive_msg:
+        if receive_msg["result"] == "success":
             flash = "delete "+send_msg["target_id"]+" success!"
         else:
             flash = receive_msg["error"]
@@ -255,7 +255,7 @@ class addTypeHandler(BaseHandler):
         send_msg = {}
         send_msg["type_name"] = tornado.escape.xhtml_escape(self.get_argument('type_name'))
         receive_msg = add_new_data_type(send_msg)
-        if 'result' in receive_msg:
+        if receive_msg["result"] == "success":
             flash = 'ADD TYPE SUCCESS!'
         else:
             flash = 'ADD TYPE FAILED! '+receive_msg["error"]
