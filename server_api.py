@@ -9,6 +9,55 @@ import shutil
 import bcrypt
 
 #
+def check_user_level(json_obj):
+	return_msg = {}
+	return_msg["result"] = "fail"
+	user_id = 0
+	user_level = 0
+	compare_level = []
+	compare_ans = []
+	try:
+		user_id = json_obj["user_id"]
+		compare_level = json_obj["compare_level"]
+	except:
+		return_msg["error"] = "input parameter missing"
+		return return_msg
+
+	#connect to mysql
+	db = mysql()
+	if db.connect() == -1:
+		return_msg["error"] = "connect mysql error"
+		return return_msg
+	
+	#check user level
+	sql = "SELECT user_level FROM user WHERE user_id=" + str(user_id)
+			
+	pure_result = db.query(sql)
+	if pure_result == -1:
+		db.close()
+		return_msg["error"] = "mysql sql error"
+		return return_msg
+	else:
+		try:
+			user_level = int(pure_result[0][0])
+		except:
+			db.close()
+			return_msg["error"] = "no such user id : " + str(user_id)
+			return return_msg
+
+	for num1 in range(len(compare_level)):
+		if int(compare_level[num1]) >= user_level:
+			compare_ans.append("pass")
+		else :
+			compare_ans.append("fail")
+
+	db.close()
+
+	return_msg["compare_ans"] = compare_ans
+	return_msg["result"] = "success"
+	return return_msg
+
+#
 def upload_image_insert_db(json_obj):
 	return_msg = {}
 	return_msg["result"] = "fail"
