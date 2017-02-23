@@ -36,7 +36,10 @@ class MainHandler(BaseHandler):
 
 class SignupHandler(BaseHandler):
     def get(self):
-        self.render('signup.html',flash=None)
+        if self.get_current_user().decode('utf-8') == 'admin':
+            self.render('signup.html',flash=None)
+        else:
+            self.redirect('/')
 
     def post(self):
         client = mysql()
@@ -50,10 +53,9 @@ class SignupHandler(BaseHandler):
             hashed = bcrypt.hashpw(getpassword.encode('utf-8'),bcrypt.gensalt())
             ret = cursor.execute("insert into `user` (`user_name`,`user_password`) values (%s,%s)",(getusername,hashed))
             client.db.commit()
-            self.set_secure_cookie("user",getusername)
             self.set_secure_cookie("incorrect","0")
             client.close()
-            self.redirect(self.reverse_url("main"))
+            self.redirect(self.reverse_url("signup"))
         else:
             client.close()
             self.render("signup.html",flash=["The name \""+getusername+"\" has been used"])
