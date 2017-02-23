@@ -480,7 +480,208 @@ def upload_text_insert_db(json_obj):
 	return return_msg
 	
 
+#
+def edit_text_data(json_obj):
+	return_msg = {}
+	return_msg["result"] = "fail"
+	server_dir = ""
+	text_id = ""
+	invisible_title = ""
+	type_id = 0
+	text_start_date = ""
+	text_end_date = ""
+	text_start_time = ""
+	text_end_time = ""
+	text_display_time = 5
+	user_id = ""
+	try:
+		server_dir = json_obj["server_dir"]
+		text_id = json_obj["text_id"]
+		invisible_title = json_obj["invisible_title"]
+		type_id = json_obj["file_type"]
+		text_start_date = json_obj["start_date"]
+		text_end_date = json_obj["end_date"]
+		text_start_time = json_obj["start_time"]
+		text_end_time = json_obj["end_time"]
+		text_display_time = json_obj["display_time"]
+		user_id = json_obj["user_id"]
+	except:
+		return_msg["error"] = "input parameter missing"
+		return return_msg
 
+	user_level_low_bound = 100
+	user_level_high_bound = 10000
+	text_type_id = 0
+	
+	#connect to mysql
+	db = mysql()
+	if db.connect() == -1:
+		return_msg["error"] = "connect mysql error"
+		return return_msg
+	
+	#check user level
+	sql = ("SELECT user_level " \
+			+"FROM user " \
+			+"WHERE user_id=" + str(user_id))
+			
+	pure_result = db.query(sql)
+	if pure_result == -1:
+		db.close()
+		return_msg["error"] = "mysql sql error"
+		return return_msg
+	else:
+		try: 
+			user_level = int(pure_result[0][0])
+			if user_level < user_level_low_bound:
+				db.close()
+				return_msg["error"] = "user right is too low"
+				return return_msg
+			#check self text
+			sql = ("SELECT user_id, type_id " \
+					+"FROM text_data " \
+					+"WHERE text_id=\"" + text_id + "\"")
+					
+			pure_result = db.query(sql)
+			if pure_result == -1:
+				db.close()
+				return_msg["error"] = "mysql sql error"
+				return return_msg
+			else:
+				try:
+					if pure_result[0][0] != user_id and user_level < user_level_high_bound:
+						db.close()
+						return_msg["error"] = "can not modify other user text"
+						return return_msg
+					text_type_id = int(pure_result[0][1])
+				except:
+					db.close()
+					return_msg["error"] = "no such text id : " + text_id
+					return return_msg
+		except:
+			db.close()
+			return_msg["error"] = "no such user id : " + str(user_id)
+			return return_msg
+	
+	
+	
+	old_dir = ""
+	new_dir = ""
+	#get text_system_name
+	sql = ("SELECT text_system_name " \
+			+"FROM text_data " \
+			+"WHERE text_id=\"" + text_id + "\"")
+			
+	pure_result = db.query(sql)
+	if pure_result == -1:
+		db.close()
+		return_msg["error"] = "mysql sql error"
+		return return_msg
+	else:
+		try: 
+			old_dir = pure_result[0][0]
+			new_dir = pure_result[0][0]
+		except:
+			db.close()
+			return_msg["error"] = "no such text id : " + text_id
+			return return_msg
+	
+	#get old text type dir
+	sql = ("SELECT type_dir " \
+			+"FROM data_type " \
+			+"WHERE type_id=" + str(text_type_id))
+			
+	pure_result = db.query(sql)
+	if pure_result == -1:
+		db.close()
+		return_msg["error"] = "mysql sql error"
+		return return_msg
+	else:
+		try: 
+			old_dir = pure_result[0][0] + old_dir
+		except:
+			db.close()
+			return_msg["error"] = "no such text type : " + str(text_type_id)
+			return return_msg
+
+	#check if we need to move the file
+	if text_type_id == type_id:
+		old_dir = os.path.join(server_dir,"static/"+old_dir)
+		new_dir = old_dir
+	else :	
+		#get new text type dir		
+		sql = ("SELECT type_dir " \
+				+"FROM data_type " \
+				+"WHERE type_id=" + str(type_id))
+				
+		pure_result = db.query(sql)
+		if pure_result == -1:
+			db.close()
+			return_msg["error"] = "mysql sql error"
+			return return_msg
+		else:
+			try: 
+				new_dir = pure_result[0][0] + new_dir
+			except:
+				db.close()
+				return_msg["error"] = "no such text type : " + str(type_id)
+				return return_msg
+
+		#check if we need to move the file
+		if old_dir == new_dir:
+			"DO NOTHING"
+		else :
+			try:
+				old_dir = os.path.join(server_dir,"static/"+old_dir)
+				new_dir = os.path.join(server_dir,"static/"+new_dir)
+				copyfile(old_dir, new_dir)
+				if os.path.isfile(old_dir) and os.path.isfile(new_dir):
+					os.remove(old_dir)
+			except:
+				try:
+					if os.path.isfile(old_dir) and os.path.isfile(new_dir):
+						os.remove(new_dir)
+				except:
+					"DO NOTHING"
+				db.close()
+				return_msg["error"] = "move file error : " + old_dir
+				return return_msg
+	
+	#start to modify mysql
+	sql = ("UPDATE text_data " \
+			+" SET type_id=" + str(type_id) + ", " \
+			+" text_invisible_title='" + invisible_title + "', "\
+			+" text_start_date=\"" + text_start_date + "\", " \
+			+" text_end_date=\"" + text_end_date + "\", " \
+			+" text_start_time=\"" + text_start_time + "\", " \
+			+" text_end_time=\"" + text_end_time + "\", " \
+			+" text_display_time=" + str(text_display_time) + ", " \
+			+" text_last_edit_user_id=\"" + str(user_id) + "\" " \
+			+" WHERE text_id=\"" + text_id + "\"")
+
+	if db.cmd(sql) == -1:
+		try:
+			copyfile(new_dir, old_dir)
+			if os.path.isfile(old_dir) and os.path.isfile(new_dir):
+				os.remove(new_dir)
+		except:
+			try:
+				if os.path.isfile(old_dir) and os.path.isfile(new_dir):
+					os.remove(old_dir)
+			except:
+				db.close()
+				return_msg["error"] = "move file error : duplicate files : " + old_dir
+				return return_msg
+			db.close()
+			return_msg["error"] = "move file error : " + new_dir
+			return return_msg
+		db.close()
+		return_msg["error"] = "update mysql error"
+		return return_msg
+
+	db.close()
+	return_msg["result"] = "success"
+	return_msg["text_system_dir"] = new_dir
+	return return_msg
 
 
 #
