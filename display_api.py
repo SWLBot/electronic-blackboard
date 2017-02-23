@@ -3,6 +3,35 @@ from datetime import date
 from datetime import datetime
 from datetime import timedelta
 import os.path
+#
+def get_user_id(argu_user):
+	user_name = argu_user
+	return_msg = {}
+
+	#connect to mysql
+	db = mysql()
+	if db.connect() == -1:
+		return_msg["error"] = "Cannot connect database"
+		return return_msg
+
+	sql = "SELECT user_id FROM user WHERE user_name = \""+user_name+"\""
+
+	if db.cmd(sql) == -1:
+		db.close()
+		return_msg["error"] = "sql error 1"
+		return return_msg
+	
+	result = db.query(sql)[0][0]
+	if result == -1:
+		db.close()
+		return_msg["error"] = "sql error 2"
+		return return_msg
+	
+	db.close()
+
+	return result
+	
+
 
 #The API connect mysql and list all upload images' information
 def display_image(argu_user):
@@ -17,11 +46,13 @@ def display_image(argu_user):
 	if db.connect() == -1:
 		return_msg["error"] = "Cannot connect database"
 		return return_msg
-	
+
+	user_id = get_user_id(user_name)
 
 	#display image data from the same user
 	sql = "SELECT img_id, img_upload_time, img_file_name, img_start_time, img_end_time, img_start_date, img_end_date, type_id, img_thumbnail_name, img_display_time, img_display_count " \
-			+ "FROM image_data WHERE user_id in ( select user_id from user where user_name = \""+user_name+"\")"
+			+ "FROM image_data WHERE user_id  = %d" % (user_id)
+
 
 
 
@@ -64,6 +95,50 @@ def display_image(argu_user):
 			return_msg_list.append(return_msg.copy())
 			print (return_msg["img_id"])
 	'''
+	
+	db.close()
+
+	return return_msg_list
+
+
+#The API connect mysql and list all upload texts' information
+def display_text(argu_user):
+	user_name = argu_user
+
+	return_msg = {}
+	return_msg_list = []
+
+	
+	#connect to mysql
+	db = mysql()
+	if db.connect() == -1:
+		return_msg["error"] = "Cannot connect database"
+		return return_msg
+	
+	user_id = get_user_id(user_name)
+
+	#display text data from the same user
+	sql = "SELECT text_id, type_id, text_upload_time, text_start_date, text_end_date, text_start_time, text_end_time, text_display_time, text_display_count " \
+			+ "FROM text_data WHERE user_id = %d" % (user_id)
+
+
+
+	if db.cmd(sql) == -1:
+		db.close()
+		return_msg["error"] = "sql error 1"
+		return return_msg
+	
+	
+	pure_result = db.query(sql)
+	if pure_result == -1:
+		db.close()
+		return_msg["error"] = "sql error 2"
+		return return_msg
+	else:
+		#restruct results of query
+		for result_row in pure_result:
+			return_msg_list.append([result_row[0],result_row[1],result_row[2],result_row[3],result_row[4],result_row[5],result_row[6],result_row[7],result_row[8]])
+			#text_id, type_id, text_upload_time, text_start_date, text_end_date, text_start_time, text_end_time, text_display_time, text_display_count
 	
 	db.close()
 
