@@ -71,7 +71,10 @@
               <td>{{img[9]}}</td>
               <td>{{img[10]}}</td>
               <td><img src="{{ static_url("thumbnail/"+img[8]) }}"/></td>
-              <td><a href="/edit?img_id={{img[0]}}" class="btn btn-link">Edit</a></td>
+              <td>
+                  <a href="/edit?img_id={{img[0]}}" class="btn btn-link">Edit</a>
+                  <a href="/delete?target_id={{img[0]}}" class="btn btn-link" onclick="deleteConfirm()">Delete</a>
+              </td>
             <tr>
           {% end %}
         {% end %}
@@ -106,7 +109,10 @@
                             <td>{{text[10]}}</td>
                             <td>{{text[9]}}</td>
                             <td></td>
-                            <td><a href="$">edit</a></td>
+                            <td>
+                                <a href="$">edit</a>
+                                <a href="/delete?target_id={{text[0]}}" class="btn btn-link" onclick="deleteConfirm()"></a>
+                            </td>
                         </tr>
                     {% end %}
                 {% end %}
@@ -124,6 +130,9 @@
             $(this).parent().siblings().removeClass('active');
             $(other).css('display','none');
         });
+        function deleteConfirm(){
+            confirm("確定要刪除嗎?")
+        }
     </script>
         {% end %}
     </body>
