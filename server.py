@@ -10,6 +10,7 @@ from server_api import edit_image_data
 from server_api import edit_text_data
 from server_api import upload_text_insert_db
 from server_api import add_new_data_type
+from server_api import change_password
 from server_api import delete_image_or_text_data
 from display_api import display_image
 from display_api import display_text
@@ -96,6 +97,21 @@ class LoginHandler(BaseHandler):
             self.set_secure_cookie("incorrect",increased)
             self.render("signin.html",flash=["No such user","You can still try "+str(20-int(increased))+" times"])
             
+class ChangePasswdHandler(BaseHandler):
+    def get(self):
+        self.render("changepasswd.html",flash=None)
+
+    def post(self):
+        send_msg = {}
+        send_msg['user_name'] = self.get_current_user()
+        send_msg['old_password'] = self.get_argument('old_password')
+        send_msg['new_password'] = self.get_argument('new_password')
+        receive_msg = change_password(send_msg)
+        if receive_msg['result'] == "success":
+            flash = "Change password success"
+        else:
+            flash = "Change password failed "+receive_msg['error']
+        self.render("changepasswd.html",flash=flash)
 
 class LogoutHandler(BaseHandler):
     def get(self):
@@ -278,6 +294,7 @@ class Application(tornado.web.Application):
             tornado.web.url(r"/",MainHandler,name="main"),
             tornado.web.url(r"/signin",LoginHandler,name="signin"),
             tornado.web.url(r"/signup",SignupHandler,name="signup"),
+            tornado.web.url(r"/changepw",ChangePasswdHandler,name="changepw"),
             tornado.web.url(r"/signout",LogoutHandler,name="signout"),
             tornado.web.url(r"/upload",UploadHandler,name="upload"),
             tornado.web.url(r"/edit",EditHandler,name="edit"),

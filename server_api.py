@@ -900,7 +900,7 @@ def change_password(json_obj):
 	old_password = ""
 	new_password = ""
 	try:
-		user_id = json_obj["user_id"]
+		user_name = json_obj["user_name"]
 		old_password = json_obj["old_password"]
 		new_password = json_obj["new_password"]
 	except:
@@ -913,6 +913,16 @@ def change_password(json_obj):
 		return_msg["error"] = "connect mysql error"
 		return return_msg
 	
+	#get user_id 
+	sql = "SELECT user_id FROM user WHERE user_name = \""+user_name.decode("utf-8")+"\""
+	pure_result = db.query(sql)
+	if pure_result == -1:
+		db.close()
+		return_msg["error"] = "no such user name \"%s\"" % user_name
+		return return_msg
+	else:
+		user_id = pure_result[0][0]
+
 	#check user
 	sql = "SELECT user_password FROM user WHERE user_id=" + str(user_id)
 	pure_result = db.query(sql)
