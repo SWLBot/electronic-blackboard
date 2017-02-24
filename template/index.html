@@ -46,7 +46,7 @@
         <table class="table" id='img_table'>
           <tr>
             <th>圖片ID</th>
-            <th>圖片類型ID</th>
+            <th>圖片類型</th>
             <th>圖片名稱</th>
             <th>上傳時間</th>
             <th>開始播放日期</th>
@@ -62,7 +62,13 @@
           {% for img in imgs %}
             <tr>
               <td>{{img[0]}}</td>
-              <td>{{img[7]}}</td>
+              <td>
+                  {% for type in data_types %}
+                  {% if type[0] == img[7] %}
+                    {{ type[1] }}
+                  {% end %}
+                  {% end %}
+              </td>
               <td>{{img[2]}}</td>
               <td>{{img[1]}}</td>
               <td>{{img[5]}}</td>
@@ -86,7 +92,7 @@
             <table class='table'>
                 <tr>
                     <th>文字ID</th>
-                    <th>文字類型ID</th>
+                    <th>文字類型</th>
                     <th>上傳時間</th>
                     <th>開始播放日期</th>
                     <th>結束播放日期</th>
@@ -101,7 +107,13 @@
                     {% for text in texts %}
                         <tr>
                             <td>{{text[0]}}</td>
-                            <td>{{text[1]}}</td>
+                            <td>
+                                {% for type in data_types %}
+                                    {% if type[0] == text[1] %}
+                                        {{ type[1] }}
+                                    {% end %}
+                                {% end %}
+                            </td>
                             <td>{{text[2]}}</td>
                             <td>{{text[3]}}</td>
                             <td>{{text[4]}}</td>
