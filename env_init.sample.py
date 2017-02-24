@@ -58,6 +58,11 @@ if not os.path.exists("static/圖片"):
     print("create dir \"圖片\"")
     os.makedirs("static/圖片")
 
+print("create arrage_mode 0...")
+try:
+    ret = cursor.execute('insert into `arrange_mode` (`armd_mode`) values (0)')
+except:
+    print("Insert arrange mode failed")
 
 client.commit()
 client.close()
