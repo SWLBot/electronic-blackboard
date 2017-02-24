@@ -201,6 +201,8 @@ class EditHandler(BaseHandler):
         text = None
         client = mysql()
         client.connect()
+        sql = "select type_id,type_name from data_type"
+        data_types = client.query(sql)
         img_id = self.get_argument("img_id",default=None)
         if img_id:
             img = client.query("select * from image_data where img_is_delete = 0 and img_id = \""+img_id+"\"")[0]
@@ -208,7 +210,7 @@ class EditHandler(BaseHandler):
             text_id = self.get_argument("text_id")
             text = client.query("select * from text_data where text_is_delete = 0 and text_id = \""+text_id+"\"")[0]
         client.close()
-        self.render("edit.html",img=img,text=text,flash=None)
+        self.render("edit.html",img=img,text=text,data_types=data_types,flash=None)
 
     def post(self):
         img = None
@@ -243,8 +245,10 @@ class EditHandler(BaseHandler):
             else:
                 flash = "Edit "+self.get_argument("text_id")+" failed "
             text = client.query("select * from text_data where text_id = \""+self.get_argument("text_id")+"\"")[0]
+        sql = "select type_id,type_name from data_type"
+        data_types = client.query(sql)
         client.close()
-        self.render("edit.html",img=img,text=text,flash=flash)
+        self.render("edit.html",img=img,text=text,data_types=data_types,flash=flash)
 
 class DeleteHandler(BaseHandler):
     def get(self):

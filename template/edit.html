@@ -8,7 +8,13 @@
   <form class="form" method="post" enctype="multipart/form-data">
     <input type="hidden" name="type" value="image"/>
     <label><strong>圖片ID :</strong>{{img[0]}}</label><br>
-    <label><strong>圖片類型ID:</strong><input type="text" name="data_type" value="{{img[1]}}"/></label><br>
+    <label><strong>圖片類型ID:</strong>
+        <select name='data_type' id='data_type'>
+            {% for type in  data_types %}
+            <option value={{type[0]}} {% if img[1] == type[0] %} selected="selectd" {% end %}>{{type[1]}}</option>
+            {% end %}
+        </select>
+    </label><br>
     <label><strong>圖片名稱:</strong>{{img[4]}}</label><br>
     <label><strong>上傳時間:</strong>{{img[5]}}</label><br>
     <label><strong>開始播放日期:</strong><input type="date" name="start_date" value="{{img[6]}}"/></label><br>
@@ -31,7 +37,13 @@
   <form class="form" method="post" enctype="multipart/form-data">
     <input type="hidden" name="type" value="text"/>
     <label><strong>文字ID:</strong>{{text[0]}}</label><br>
-    <label><strong>圖片類型ID:</strong><input type="text" name="data_type" value="{{text[1]}}"/></label><br>
+    <label><strong>圖片類型ID:</strong>
+        <select name='data_type' id='data_type'>
+            {% for type in  data_types %}
+            <option value={{type[0]}} {% if text[1] == type[0] %} selected="selectd" {% end %}>{{type[1]}}</option>
+            {% end %}
+        </select>
+    </label><br>
     <label><strong>上傳時間:</strong>{{text[4]}}</label><br>
     <label><strong>開始播放日期:</strong><input type="date" name="start_date" value="{{text[5]}}"/></label><br>
     <label><strong>結束播放日期:</strong><input type="date" name="end_date" value="{{text[6]}}"/></label><br>
