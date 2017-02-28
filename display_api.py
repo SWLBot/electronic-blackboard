@@ -68,10 +68,10 @@ def display_image(argu_user):
 	#display image data from the same user
 	if current_user_level == 10000:
 		sql = "SELECT img_id, img_upload_time, img_file_name, img_start_time, img_end_time, img_start_date, img_end_date, type_id, img_thumbnail_name, img_display_time, img_display_count " \
-				+ "FROM image_data"
+				+ "FROM image_data WHERE img_is_delete=0"
 	else:
 		sql = "SELECT img_id, img_upload_time, img_file_name, img_start_time, img_end_time, img_start_date, img_end_date, type_id, img_thumbnail_name, img_display_time, img_display_count " \
-				+ "FROM image_data WHERE user_id  = %d" % (user_id)
+				+ "FROM image_data WHERE user_id  = %d AND img_is_delete=0" % (user_id)
 
 	if db.cmd(sql) == -1:
 		db.close()
@@ -153,10 +153,10 @@ def display_text(argu_user):
 	#display text data from the same user
 	if current_user_level == 10000:
 		sql = "SELECT text_id, type_id, text_upload_time, text_start_date, text_end_date, text_start_time, text_end_time, text_display_time, text_display_count " \
-				+ "FROM text_data"
+				+ "FROM text_data WHERE text_is_delete=0"
 	else:
 		sql = "SELECT text_id, type_id, text_upload_time, text_start_date, text_end_date, text_start_time, text_end_time, text_display_time, text_display_count " \
-				+ "FROM text_data WHERE user_id = %d" % (user_id)
+				+ "FROM text_data WHERE user_id = %d AND text_is_delete=0" % (user_id)
 
 	if db.cmd(sql) == -1:
 		db.close()
