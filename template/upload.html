@@ -25,6 +25,14 @@
             margin-right: 25px;
             position: relative;
         }
+        div.header-activity {
+            background-color: #2894FF;
+            width: 350px;
+            height: 100px;
+            margin-left: 25px;
+            margin-right: 25px;
+            position: relative;
+        }
         div.content {
             width: 350px;
             height: 200px;
@@ -72,7 +80,8 @@
     <div class="jumbotron">
     <div id="options">
         <button class='btn btn-success btn-lg' id='upload_image'>上傳圖片</button>
-        <button class='btn btn-success btn-lg' id='upload_text'>上傳文字</button>
+        <button class='btn btn-success btn-lg' id='upload_text'>上傳獲獎公告</button>
+        <button class='btn btn-success btn-lg' id='upload_activity'>上傳活動公告</button>
     </div>
     <div class="image_block" style="display:none">
         <form id="image_form" method="post" enctype="multipart/form-data">
@@ -97,8 +106,8 @@
             <div class='col-lg-6' >
             <form id="text_form" method="post">
                 <p><input type='hidden' name='type' value='text'/></p>
-                <p>獲獎人: <input type="text" name="person_name" id="person_name"/></p>
-                <p>獲得獎項: <input type="text" name="reward" id="reward"/></p>
+                <p>獲獎人: <input type="text" name="title1" id="person_name"/></p>
+                <p>獲得獎項: <input type="text" name="title2" id="reward"/></p>
                 <p>附註: <textarea name="description" id="description"/></textarea></p>
                 <p>
                     獲獎時間:
@@ -126,10 +135,12 @@
                         <option value = "12">12</option> 
                     </select>
                 </p>
-                <p>類型ID:
+                <p>類型:
                     <select name='file_type' id='file_type'>
                         {% for type in data_types %}
-                        <option value='{{type[0]}}'>{{type[1]}}</option>
+                            {% if type[1] == "獲獎公告" %}
+                                <option value='{{type[0]}}'>{{type[1]}}</option>
+                            {% end %}
                         {% end %}
                     </select>
                 </p>
@@ -156,6 +167,44 @@
             </div>
         </div>
     </div>
+    <div class="activity_block" style="display:none" >
+        <div class='row'>
+            <div class='col-lg-6' >
+            <form id="text_form" method="post">
+                <p><input type='hidden' name='type' value='text'/></p>
+                <p>活動名稱: <input type="text" name="title1" id="person_name"/></p>
+                <input type="hidden" name="title2" id="reward" value=""/>
+                <p>活動內容: <textarea name="description" id="description"/></textarea></p>
+                    <input type="hidden" name="year" id="year">
+                    <input type="hidden" name="month" id="month">
+                <p>類型:
+                    <select name='file_type' id='file_type'>
+                        {% for type in data_types %}
+                            {% if type[1] == "活動公告" %}
+                                <option value='{{type[0]}}'>{{type[1]}}</option>
+                            {% end %}
+                        {% end %}
+                    </select>
+                </p>
+                <p>播放日期: <input type='date' name='start_date' value="2012-12-21"/> ~ <input type='date' name='end_date' value="2048-10-24"/></p>
+                <p>播放時段: <input type='time' step="1" name='start_time' value="00:00:00"/> ~ <input type='time' step="1" name='end_time' value="23:59:59"/></p>
+                <p>單次撥放秒數: <input type='text' name='display_time' value="5"/></p>
+                <p><input type="submit" value="上傳" class="btn btn-primary"/></p>
+                {% module xsrf_form_html() %}
+            </form>
+            </div>
+            <div class='col-lg-6 sample-page'>
+                <div class='header-activity'>
+                    <span id="con" >活動公告</span>
+                </div>
+                <div class='content'>
+                    <div class='title' id='person_name'></div>
+                    <div class='title' id='reward'></div>
+                    <div id='description'></div>
+                </div>
+            </div>
+        </div>
+    </div>
     {% if flash %}
     <p>{{flash}}</p>
     {% end %}
@@ -169,13 +218,28 @@
             if($('.text_block').css('display') !== "none"){
                 $('.text_block').toggle();
             }
+            if($('.activity_block').css('display') !== "none"){
+                $('.activity_block').toggle();
+            }
             $('.image_block').toggle();
         });
         $('#upload_text').click(function(){
             if($('.image_block').css('display') !== "none"){
                 $('.image_block').toggle();
             }
+            if($('.activity_block').css('display') !== "none"){
+                $('.activity_block').toggle();
+            }
             $('.text_block').toggle();
+        });
+        $('#upload_activity').click(function(){
+            if($('.image_block').css('display') !== "none"){
+                $('.imgae_block').toggle();
+            }
+            if($('.text_block').css('display') !== "none"){
+                $('.text_block').toggle();
+            }
+            $('.activity_block').toggle();
         });
     });
     $('input,textarea').on('keyup',function(){

@@ -58,6 +58,26 @@ if not os.path.exists("static/圖片"):
     print("create dir \"圖片\"")
     os.makedirs("static/圖片")
 
+print("create data_type \"獲獎公告\"...")
+try:
+    ret = cursor.execute('insert into `data_type` (`type_name`,`type_dir`) values ("獲獎公告","獲獎公告/")')
+except:
+    print("Insert type failed")
+
+if not os.path.exists("static/獲獎公告"):
+    print("create dir \"獲獎公告\"")
+    os.makedirs("static/獲獎公告")
+
+print("create data_type \"活動公告\"...")
+try:
+    ret = cursor.execute('insert into `data_type` (`type_name`,`type_dir`) values ("活動公告","活動公告/")')
+except:
+    print("Insert type failed")
+
+if not os.path.exists("static/活動公告"):
+    print("create dir \"活動公告\"")
+    os.makedirs("static/活動公告")
+
 print("create arrage_mode 0...")
 try:
     ret = cursor.execute('insert into `arrange_mode` (`armd_mode`) values (0)')
