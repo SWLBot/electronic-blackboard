@@ -74,7 +74,7 @@ def load_schedule():
 
 
 	#find type dir
-	sql = ("SELECT type_dir FROM data_type WHERE type_id=" + str(type_id))
+	sql = ("SELECT type_dir, type_name FROM data_type WHERE type_id=" + str(type_id))
 	pure_result = db.query(sql)
 	if pure_result == -1:
 		db.close()
@@ -87,6 +87,7 @@ def load_schedule():
 			schedule_dir = os.path.join(schedule_dir, pure_result[0][0])
 			schedule_dir = os.path.join(schedule_dir, system_file_name)
 			return_msg["file"] = os.path.join(pure_result[0][0], system_file_name)
+			return_msg["type_name"] = str(pure_result[0][1])
 		except:
 			db.close()
 			return_msg["error"] = "no type record"
