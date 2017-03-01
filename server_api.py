@@ -817,7 +817,7 @@ def delete_image_or_text_data(json_obj):
 		return return_msg
 	else:
 		try:
-			trash_dir = os.path.join(server_dir, "static/img/trash_data/"+target_dir)
+			trash_dir = os.path.join(server_dir, "static/trash_data/"+target_dir)
 			system_file_dir = os.path.join(server_dir, "static/"+str(pure_result[0][0]))
 			target_dir = os.path.join(system_file_dir, target_dir)
 		except:

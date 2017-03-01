@@ -78,6 +78,16 @@ if not os.path.exists("static/活動公告"):
     print("create dir \"活動公告\"")
     os.makedirs("static/活動公告")
 
+print("create data_type \"氣像雲圖\"...")
+try:
+    ret = cursor.execute('insert into `data_type` (`type_name`,`type_dir`) values ("氣像雲圖","圖片/氣像雲圖/")')
+except:
+    print("Insert type failed")
+
+if not os.path.exists("static/圖片/氣像雲圖"):
+    print("create dir \"圖片/氣像雲圖\"")
+    os.makedirs("static/圖片/氣像雲圖")
+
 print("create arrage_mode 0...")
 try:
     ret = cursor.execute('insert into `arrange_mode` (`armd_mode`) values (0)')
