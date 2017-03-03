@@ -187,10 +187,18 @@ class UploadHandler(BaseHandler):
             month = tornado.escape.xhtml_escape(self.get_argument('month'))
             client = mysql()
             client.connect()
+            oneline_description = ""
+            description_list = description.split('\r\n')
+            for i in range(len(description_list)):
+                oneline_description = oneline_description + description_list[i] + "<br/>"
+
+            title1_blank = title1.replace(' ','&nbsp')
+            title2_blank = title2.replace(' ','&nbsp')
+            oneline_description_blank = oneline_description.replace(' ','&nbsp')
             with open(receive_msg["text_system_dir"],"w") as fp:
-                print(title1,file=fp)
-                print(title2,file=fp)
-                print(description,file=fp)
+                print(title1_blank,file=fp)
+                print(title2_blank,file=fp)
+                print(oneline_description_blank,file=fp)
                 print(year,file=fp)
                 print(month,file=fp)
 
