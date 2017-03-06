@@ -1,79 +1,6 @@
 {% extends "index.html" %}
 {% block head %}
-    <style>
-        @import url(http://fonts.googleapis.com/earlyaccess/notosanstc.css);
-        form {
-            margin-top: 20px;
-        }
-        div.sample-page {
-            padding: 0px;
-            position: relative;
-            width: 400px;
-            height: 300px;
-            font-family: sans-serif, serif,'Noto Sans TC', Microsoft JhengHei, DFKai-sb,PMingLiU;
-            background: -webkit-linear-gradient(#FFF,#9D9D9D);
-            background: -o-linear-gradient(#FFF,#9D9D9D);
-            background: -moz-linear-gradient(#FFF,#9D9D9D);
-            background: linear-gradient(#FFF,#9D9D9D);
-            background-repeat: no-repeat;
-        }
-        div.header {
-            background-color: #CE0000;
-            width: 350px;
-            height: 100px;
-            margin-left: 25px;
-            margin-right: 25px;
-            position: relative;
-        }
-        div.header-activity {
-            background-color: #2894FF;
-            width: 350px;
-            height: 100px;
-            margin-left: 25px;
-            margin-right: 25px;
-            position: relative;
-        }
-        div.content {
-            width: 350px;
-            height: 200px;
-            margin-left: 25px;
-            margin-right: 25px;
-            position: relative;
-        }
-        div#footer {
-            position: absolute;
-            bottom: 0px;
-        }
-        div.bar {
-            position: relative;
-            width: 350px;
-            height: 2px;
-            background-color: #CE0000;
-        }
-        span#con {
-            position: absolute;
-            color: #FFF;
-            bottom: 10%;
-            left: 5%;
-            font-weight: bold;
-        }
-        div.title {
-            position: relative;
-            padding-left: 5%;    
-            font-size: 250%;
-        }
-        div#reward {
-            font-weight: bold;
-        }
-        div#description {
-            position: relative;            
-            font-size: 200%;
-        }
-        div.congratulation {
-            position: relative;
-            float: right;
-        }
-    </style>
+    <link href={{ static_url("css/upload.css") }} rel="stylesheet">
 {% end %}
 {% block body %}
     <div class="container">
@@ -81,7 +8,7 @@
     <div id="options">
         <button class='btn btn-success btn-lg' id='upload_image'>上傳圖片</button>
         <button class='btn btn-success btn-lg' id='upload_text'>上傳獲獎公告</button>
-        <button class='btn btn-success btn-lg' id='upload_activity'>上傳活動公告</button>
+        <button class='btn btn-success btn-lg' id='upload_activity'>上傳演講公告</button>
     </div>
     <div class="image_block" style="display:none">
         <form id="image_form" method="post" enctype="multipart/form-data">

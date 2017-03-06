@@ -13,3 +13,7 @@ text*.txt
 # for create table
 
 create_tables.sql
+
+# for weather image
+
+static/img/*
