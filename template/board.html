@@ -55,23 +55,23 @@
 				url: '/db_schedule',
 				type: 'GET',
 				contentType : 'application/text',
-				success: function (jsonResponse) 
+				success: function (jsonRes) 
 				{
-                    if(jsonResponse.file_type == "text"){
+                    if(jsonRes.file_type == "text"){
                         console.log("text");
                         $('img').css('display','none');
                         $('footer').css('display','inline');
                         $('div.title2').css('display','inline');
-                        $('#title1').html(jsonResponse.file_text[0]);
-                        $('#title2').html(jsonResponse.file_text[1]);
-                        $('#description').html(jsonResponse.file_text[2]);
-                        if(jsonResponse.type_name === "獲獎公告"){
+                        $('#title1').html(jsonRes.file_text.title1);
+                        $('#title2').html(jsonRes.file_text.title2);
+                        $('#description').html(jsonRes.file_text.description);
+                        if(jsonRes.type_name === "獲獎公告"){
                             console.log('reward');
                             $('span#con').html('賀 !');
                             $('div.header').css('background-color','#CE0000');
                             $('div#footer').css('display','inline');
-                            $('#congratulation').html(jsonResponse.file_text[3]+"年"+jsonResponse.file_text[4]+"月 資訊學院全體師生慶賀");
-                        }else if(jsonResponse.type_name === "活動公告"){
+                            $('div.congratulation').html(jsonRes.file_text.year+"年"+jsonRes.file_text.month+"月 資訊學院全體師生慶賀");
+                        }else if(jsonRes.type_name === "活動公告"){
                             console.log('activity');
                             $('span#con').html('活動公告');
                             $('div.header').css('background-color','#2894FF');
@@ -81,7 +81,7 @@
                         console.log("image");
                         $('div.title2').css('display','none');
                         $('img').css('display','inline');
-                        $('img').attr('src',"/static/"+jsonResponse.file);
+                        $('img').attr('src',"/static/"+jsonRes.file);
                         $('img').height(screen.height * 0.98);
                     }
 				},

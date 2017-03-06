@@ -14,8 +14,8 @@ from server_api import change_password
 from server_api import delete_image_or_text_data
 from display_api import display_image
 from display_api import display_text
-from pprint import pprint
 import argparse
+import json
 
 class BaseHandler(tornado.web.RequestHandler):
     def get_current_user(self):
@@ -181,27 +181,21 @@ class UploadHandler(BaseHandler):
                 self.redirect("/upload")
         else:
             receive_msg = upload_text_insert_db(send_msg)
-            title1 = tornado.escape.xhtml_escape(self.get_argument('title1'))
-            title2 = tornado.escape.xhtml_escape(self.get_argument('title2'))
-            description = tornado.escape.xhtml_escape(self.get_argument('description'))
-            year = tornado.escape.xhtml_escape(self.get_argument('year'))
-            month = tornado.escape.xhtml_escape(self.get_argument('month'))
+            text_file = {} 
+            text_file['title1'] = tornado.escape.xhtml_escape(self.get_argument('title1')).replace(' ','&nbsp')
+            text_file['title2'] = tornado.escape.xhtml_escape(self.get_argument('title2')).replace(' ','&nbsp')
+            text_file['description'] = tornado.escape.xhtml_escape(self.get_argument('description')).replace(' ','&nbsp')
+            text_file['year'] = tornado.escape.xhtml_escape(self.get_argument('year'))
+            text_file['month'] = tornado.escape.xhtml_escape(self.get_argument('month'))
             client = mysql()
             client.connect()
-            oneline_description = ""
-            description_list = description.split('\r\n')
+            description_list = text_file['description'].split('\r\n')
+            text_file['description'] = ""
             for i in range(len(description_list)):
-                oneline_description = oneline_description + description_list[i] + "<br/>"
+                text_file['description'] = text_file['description'] + description_list[i] + "<br/>"
 
-            title1_blank = title1.replace(' ','&nbsp')
-            title2_blank = title2.replace(' ','&nbsp')
-            oneline_description_blank = oneline_description.replace(' ','&nbsp')
             with open(receive_msg["text_system_dir"],"w") as fp:
-                print(title1_blank,file=fp)
-                print(title2_blank,file=fp)
-                print(oneline_description_blank,file=fp)
-                print(year,file=fp)
-                print(month,file=fp)
+                print(json.dumps(text_file),file=fp)
 
             sql = "select type_id,type_name from data_type"
             data_types = client.query(sql)
