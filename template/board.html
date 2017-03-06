@@ -36,7 +36,7 @@
                 $('div.bar').width(screen.width * 0.9);
             </script>
         <script>
-
+		var last_schedule_id = "no_id"
 		function load_schedule()
 		{
 			$.ajaxSetup({
@@ -57,8 +57,11 @@
 				contentType : 'application/text',
 				success: function (jsonRes) 
 				{
-                    if(jsonRes.file_type == "text"){
+                    if(jsonRes.result == "fail"){console.log("fail");}
+                    else if(last_schedule_id == jsonRes.schedule_id){console.log("same");}
+                    else if(jsonRes.file_type == "text"){
                         console.log("text");
+                        last_schedule_id = jsonRes.schedule_id;
                         $('img').css('display','none');
                         $('footer').css('display','inline');
                         $('div.title2').css('display','inline');
@@ -79,6 +82,7 @@
                         }
                     }else{
                         console.log("image");
+                        last_schedule_id = jsonRes.schedule_id;
                         $('div.title2').css('display','none');
                         $('img').css('display','inline');
                         $('img').attr('src',"/static/"+jsonRes.file);
@@ -95,13 +99,6 @@
 			});
 		
 		}
-
-		function slideshow()
-		{
-			imgs_index = (imgs_index + 1) % 2;
-			$('img[name="pic"]').attr("src",imgs[imgs_index]);
-			console.log("change");
-		    }
 	
 		function timer()
 		{

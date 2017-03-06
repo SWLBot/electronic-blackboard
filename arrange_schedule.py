@@ -1331,6 +1331,7 @@ def main():
 		#delay
 		sleep(0.1)
 	sleep(10)
+	print("arrange_schedule shutdown")
 	return 1
 
 if __name__ == "__main__":
