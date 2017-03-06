@@ -172,7 +172,8 @@
     $('input,textarea').on('keyup',function(){
         var id = $(this).attr('id');
         if( $('div#'+id).length ){
-            $('div#'+id).text($(this).val());
+            var str = $(this).val().replace(' ','&nbsp').replace('\n','<br>');
+            $('div#'+id).html(str);
         }
     });
     $('select').change(function(){
