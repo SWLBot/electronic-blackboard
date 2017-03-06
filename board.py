@@ -5,6 +5,7 @@ import json
 import pprint
 from PIL import Image
 from broadcast_api import load_schedule 
+import argparse
 
 class BaseHandler(tornado.web.RequestHandler):
 	def get_current_user(self):
@@ -46,8 +47,16 @@ class Application(tornado.web.Application):
 			],**settings)
 
 def main():
-	Application().listen(4000)
-	tornado.ioloop.IOLoop.instance().start()
+  parser = argparse.ArgumentParser()
+  parser.add_argument("--port",help="The port for electronic-blackboard")
+  
+  args = parser.parse_args()
+
+  if args.port:
+  	Application().listen(args.port)
+  else:
+  	Application().listen(4000)
+  tornado.ioloop.IOLoop.instance().start()
 
 if __name__ == "__main__":
 	main()

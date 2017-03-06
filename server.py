@@ -15,6 +15,7 @@ from server_api import delete_image_or_text_data
 from display_api import display_image
 from display_api import display_text
 from pprint import pprint
+import argparse
 
 class BaseHandler(tornado.web.RequestHandler):
     def get_current_user(self):
@@ -319,7 +320,16 @@ class Application(tornado.web.Application):
         ],**settings)
 
 def main():
-    Application().listen(3000)
+    
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--port",help="The port for backend sever")
+    
+    args = parser.parse_args()
+
+    if args.port:
+        Application().listen(args.port)
+    else:
+        Application().listen(3000)
     tornado.ioloop.IOLoop.instance().start()
 
 if __name__ == "__main__":
