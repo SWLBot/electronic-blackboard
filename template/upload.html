@@ -28,10 +28,18 @@
             {% module xsrf_form_html() %}
         </form>
     </div>
+    <script type="text/javascript">
+        function deal_space(){
+            document.getElementById("person_name").value = document.getElementById("person_name").value.replace(/ /g,'&nbsp').replace(/\n/g,'<br>');
+            document.getElementById("reward").value = document.getElementById("reward").value.replace(/ /g,'&nbsp').replace(/\n/g,'<br>');
+            document.getElementById("description").value = document.getElementById("description").value.replace(/ /g,'&nbsp').replace(/\n/g,'<br>');
+            
+        }
+    </script>
     <div class="text_block" style="display:none" >
         <div class='row'>
             <div class='col-lg-6' >
-            <form id="text_form" method="post">
+            <form name="send_post" id="text_form" method="post">
                 <p><input type='hidden' name='type' value='text'/></p>
                 <p>獲獎人: <input type="text" name="title1" id="person_name"/></p>
                 <p>獲得獎項: <input type="text" name="title2" id="reward"/></p>
@@ -74,7 +82,7 @@
                 <p>播放日期: <input type='date' name='start_date' value="2012-12-21"/> ~ <input type='date' name='end_date' value="2048-10-24"/></p>
                 <p>播放時段: <input type='time' step="1" name='start_time' value="00:00:00"/> ~ <input type='time' step="1" name='end_time' value="23:59:59"/></p>
                 <p>單次撥放秒數: <input type='text' name='display_time' value="5"/></p>
-                <p><input type="submit" value="上傳" class="btn btn-primary"/></p>
+                <p><input type="submit" value="上傳" class="btn btn-primary" onClick="deal_space();"/></p>
                 {% module xsrf_form_html() %}
             </form>
             </div>
@@ -97,7 +105,7 @@
     <div class="activity_block" style="display:none" >
         <div class='row'>
             <div class='col-lg-6' >
-            <form id="text_form" method="post">
+            <form name="send_post" id="text_form" method="post">
                 <p><input type='hidden' name='type' value='text'/></p>
                 <p>活動名稱: <input type="text" name="title1" id="person_name"/></p>
                 <input type="hidden" name="title2" id="reward" value=""/>
@@ -116,7 +124,7 @@
                 <p>播放日期: <input type='date' name='start_date' value="2012-12-21"/> ~ <input type='date' name='end_date' value="2048-10-24"/></p>
                 <p>播放時段: <input type='time' step="1" name='start_time' value="00:00:00"/> ~ <input type='time' step="1" name='end_time' value="23:59:59"/></p>
                 <p>單次撥放秒數: <input type='text' name='display_time' value="5"/></p>
-                <p><input type="submit" value="上傳" class="btn btn-primary"/></p>
+                <p><input type="submit" value="上傳" class="btn btn-primary" onClick="deal_space();"/></p>
                 {% module xsrf_form_html() %}
             </form>
             </div>

@@ -182,18 +182,14 @@ class UploadHandler(BaseHandler):
         else:
             receive_msg = upload_text_insert_db(send_msg)
             text_file = {} 
-            text_file['title1'] = tornado.escape.xhtml_escape(self.get_argument('title1')).replace(' ','&nbsp')
-            text_file['title2'] = tornado.escape.xhtml_escape(self.get_argument('title2')).replace(' ','&nbsp')
-            text_file['description'] = tornado.escape.xhtml_escape(self.get_argument('description')).replace(' ','&nbsp')
+            text_file['title1'] = tornado.escape.xhtml_escape(self.get_argument('title1')).replace('&amp;nbsp','&nbsp').replace('&lt;br&gt;','<br>')
+            text_file['title2'] = tornado.escape.xhtml_escape(self.get_argument('title2')).replace('&amp;nbsp','&nbsp').replace('&lt;br&gt;','<br>')
+            text_file['description'] = tornado.escape.xhtml_escape(self.get_argument('description')).replace('&lt;br&gt;','<br>').replace('&amp;nbsp','&nbsp')
             text_file['year'] = tornado.escape.xhtml_escape(self.get_argument('year'))
             text_file['month'] = tornado.escape.xhtml_escape(self.get_argument('month'))
             client = mysql()
             client.connect()
-            description_list = text_file['description'].split('\r\n')
-            text_file['description'] = ""
-            for i in range(len(description_list)):
-                text_file['description'] = text_file['description'] + description_list[i] + "<br/>"
-
+            
             with open(receive_msg["text_system_dir"],"w") as fp:
                 print(json.dumps(text_file),file=fp)
 
