@@ -33,6 +33,9 @@
             document.getElementById("person_name").value = document.getElementById("person_name").value.replace(/ /g,'&nbsp').replace(/\n/g,'<br>');
             document.getElementById("reward").value = document.getElementById("reward").value.replace(/ /g,'&nbsp').replace(/\n/g,'<br>');
             document.getElementById("description").value = document.getElementById("description").value.replace(/ /g,'&nbsp').replace(/\n/g,'<br>');
+            document.getElementById("person_name2").value = document.getElementById("person_name2").value.replace(/ /g,'&nbsp').replace(/\n/g,'<br>');
+            document.getElementById("reward2").value = document.getElementById("reward2").value.replace(/ /g,'&nbsp').replace(/\n/g,'<br>');
+            document.getElementById("description2").value = document.getElementById("description2").value.replace(/ /g,'&nbsp').replace(/\n/g,'<br>');
             
         }
     </script>
@@ -107,9 +110,9 @@
             <div class='col-lg-6' >
             <form name="send_post" id="text_form" method="post">
                 <p><input type='hidden' name='type' value='text'/></p>
-                <p>活動名稱: <input type="text" name="title1" id="person_name"/></p>
-                <input type="hidden" name="title2" id="reward" value=""/>
-                <p>活動內容: <textarea name="description" id="description"/></textarea></p>
+                <p>活動名稱: <input type="text" name="title1" id="person_name2"/></p>
+                <input type="hidden" name="title2" id="reward2" value=""/>
+                <p>活動內容: <textarea name="description" id="description2"/></textarea></p>
                     <input type="hidden" name="year" id="year">
                     <input type="hidden" name="month" id="month">
                 <p>類型:
@@ -133,9 +136,9 @@
                     <span id="con" >活動公告</span>
                 </div>
                 <div class='content'>
-                    <div class='title' id='person_name'></div>
-                    <div class='title' id='reward'></div>
-                    <div id='description'></div>
+                    <div class='title' id='person_name2'></div>
+                    <div class='title' id='reward2'></div>
+                    <div id='description2'></div>
                 </div>
             </div>
         </div>
@@ -186,7 +189,6 @@
     });
     $('select').change(function(){
         var id = $(this).attr('id');
-        console.log("HIIII");
         if( $('span#'+id).length ){
             $('span#'+id).text($(this).val());
         }
