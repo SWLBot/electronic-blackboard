@@ -5,6 +5,7 @@ from time import sleep
 from PIL import Image
 from urllib import request
 from server_api import upload_image_insert_db
+from server_api import delete_image_or_text_data
 import signal
 import time
 import os.path
@@ -1028,12 +1029,34 @@ def crawler_cwb_img(json_obj):
 			now_time -= 60
 			continue
 
-		#mark old cwb img
-		sql = "UPDATE image_data SET img_is_expire=1 WHERE img_is_expire=0 and img_is_delete=0 and img_file_name like 'CV1_TW_3600_%'" 
-		if db.cmd(sql) == -1:
+		#delete old cwb img
+		error_list_id = []
+		sql = "SELECT img_id FROM image_data WHERE img_is_delete=0 and img_file_name like 'CV1_TW_3600_%'" 
+		pure_result = db.query(sql)
+		if pure_result == -1:
 			db.close()
-			return_msg["error"] = "sql error"
+			return_msg["error"] = "mysql sql error"
 			return return_msg
+		else:
+			for num2 in range(len(pure_result)):
+				try:				
+					send_obj["server_dir"] = server_dir
+					send_obj["target_id"] = str(pure_result[num2][0])
+					send_obj["user_id"] = user_id
+					receive_obj = delete_image_or_text_data(send_obj)
+					if receive_obj["result"] == "fail":
+						error_list_id.append(send_obj["target_id"])
+				except:
+					error_list_id.append(send_obj["target_id"])
+					continue
+
+		#mark old cwb img
+		for num2 in range(len(error_list_id)):
+			sql = "UPDATE image_data SET img_is_expire=1 WHERE img_is_expire=0 and img_is_delete=0 and img_id='" + str(error_list_id[num2]) + "'" 
+			if db.cmd(sql) == -1:
+				db.close()
+				return_msg["error"] = "sql error"
+				return return_msg
 
 		#upload new file
 		send_obj["server_dir"] = server_dir
