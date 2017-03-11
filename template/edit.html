@@ -37,6 +37,54 @@
   <form class="form" method="post" enctype="multipart/form-data">
     <input type="hidden" name="type" value="text"/>
     <label><strong>文字ID:</strong>{{text[0]}}</label><br>
+    {% if text_content %}
+        {% if text[1] == 3 %}
+            <label><strong>活動名稱:</strong><input type='text' name='title1' value="{{text_content['title1']}}"/></label><br>
+            <input type=hidden value="{{text_content['title2']}}"/>
+            <label><strong>活動內容:</strong><textarea name='description' />{{text_content['description']}}</textarea></label><br>
+            <input type=hidden value="{{text_content['year']}}"/>
+            <input type=hidden value="{{text_content['month']}}"/>
+        {% elif text[1] == 2 %}
+            <label><strong>獲獎人:</strong><input type='text' name='title1' id='person_name2' value="{{text_content['title1']}}"/></label><br>
+            <label><strong>獲得獎項:</strong><input type='text' name='title2' id='reward' value="{{text_content['title2']}}"/></label><br>
+            <label><strong>附註:</strong><textarea name='description' id='description'/>{{text_content['description']}}</textarea></label><br>
+            <label><strong>獲獎時間:</strong>
+                    <select id="year" name="year">
+                    <script>
+                    var myDate = new Date();
+                    var year = myDate.getFullYear();
+                    var selected_year = {{ text_content['year'] }};
+                    for(var i = year; i > year-11 ; i--){
+                        document.write('<option value="'+i+'">'+i+'</option>');
+                    }
+                    $('select#year').val(selected_year);
+                    </script>
+                    </select>
+                    <select name="month" id="month">
+                        <option value = "1">01</option>
+                        <option value = "2">02</option>
+                        <option value = "3">03</option>
+                        <option value = "4">04</option>
+                        <option value = "5">05</option>
+                        <option value = "6">06</option>
+                        <option value = "7">07</option>
+                        <option value = "8">08</option>
+                        <option value = "9">09</option>
+                        <option value = "10">10</option>
+                        <option value = "11">11</option>
+                        <option value = "12">12</option> 
+                        <script>
+                            var selected_month = "{{ text_content['month'] }}";
+                            $('select#month').children().each(function(){
+                                if($(this).val() === selected_month){
+                                    $(this).attr('selected','selected');
+                                }
+                            });
+                        </script>
+                    </select>
+                    </label>
+        {% end %}
+    {% end %}
     <label><strong>圖片類型ID:</strong>
         <select name='data_type' id='data_type'>
             {% for type in  data_types %}

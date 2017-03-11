@@ -12,6 +12,7 @@ from server_api import upload_text_insert_db
 from server_api import add_new_data_type
 from server_api import change_password
 from server_api import delete_image_or_text_data
+from server_api import read_text_data
 from display_api import display_image
 from display_api import display_text
 import argparse
@@ -202,6 +203,7 @@ class EditHandler(BaseHandler):
     def get(self):
         img = None
         text = None
+        text_content = None
         client = mysql()
         client.connect()
         sql = "select type_id,type_name from data_type"
@@ -211,13 +213,15 @@ class EditHandler(BaseHandler):
             img = client.query("select * from image_data where img_is_delete = 0 and img_id = \""+img_id+"\"")[0]
         else:
             text_id = self.get_argument("text_id")
+            text_content = read_text_data(text_id)
             text = client.query("select * from text_data where text_is_delete = 0 and text_id = \""+text_id+"\"")[0]
         client.close()
-        self.render("edit.html",img=img,text=text,data_types=data_types,flash=None)
+        self.render("edit.html",img=img,text=text,data_types=data_types,flash=None,text_content=text_content)
 
     def post(self):
         img = None
         text = None
+        text_content = None
         send_msg = {}
         receive_msg = {}
         client = mysql()
@@ -242,16 +246,23 @@ class EditHandler(BaseHandler):
         else:
             send_msg["text_id"] = tornado.escape.xhtml_escape(self.get_argument("text_id"))
             send_msg["invisible_title"] = send_msg["text_id"]
+            send_msg["text_file"] = {}
+            send_msg["text_file"]['title1'] = tornado.escape.xhtml_escape(self.get_argument('title1'))
+            send_msg["text_file"]['title2'] = tornado.escape.xhtml_escape(self.get_argument('title2'))
+            send_msg["text_file"]['description'] = tornado.escape.xhtml_escape(self.get_argument('description'))
+            send_msg["text_file"]['year'] = tornado.escape.xhtml_escape(self.get_argument('year'))
+            send_msg["text_file"]['month'] = tornado.escape.xhtml_escape(self.get_argument('month'))
             receive_msg = edit_text_data(send_msg)
             if receive_msg["result"] == "success":
                 flash = "Edit "+self.get_argument("text_id")+" successed "
             else:
                 flash = "Edit "+self.get_argument("text_id")+" failed "
             text = client.query("select * from text_data where text_id = \""+self.get_argument("text_id")+"\"")[0]
+            text_content = read_text_data(send_msg["text_id"])
         sql = "select type_id,type_name from data_type"
         data_types = client.query(sql)
         client.close()
-        self.render("edit.html",img=img,text=text,data_types=data_types,flash=flash)
+        self.render("edit.html",img=img,text=text,data_types=data_types,flash=flash,text_content=text_content)
 
 class DeleteHandler(BaseHandler):
     def get(self):
