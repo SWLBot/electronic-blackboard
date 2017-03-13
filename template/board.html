@@ -86,7 +86,10 @@
                         $('div.title2').css('display','none');
                         $('img').css('display','inline');
                         $('img').attr('src',"/static/"+jsonRes.file);
+                        var width = $('img').width();
+                        var height = $('img').height();
                         $('img').height(screen.height * 0.98);
+                        $('img').css('maxWidth',($(window).width() * 0.85 | 0 ) + "px");
                     }
 				},
 				error: function (xhr, textStatus, error) 
