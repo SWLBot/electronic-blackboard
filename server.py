@@ -1,5 +1,7 @@
 import tornado.ioloop
 import tornado.web
+import tornado.options
+import tornado.httpserver
 import os.path
 import bcrypt
 from PIL import Image
@@ -9,6 +11,7 @@ from display_api import display_image
 from display_api import display_text
 import argparse
 import json
+import config.settings
 
 class BaseHandler(tornado.web.RequestHandler):
     def get_current_user(self):
@@ -273,42 +276,38 @@ class addTypeHandler(BaseHandler):
             flash = 'ADD TYPE FAILED! '+receive_msg["error"]
         self.render('add_type.html',flash=flash)
 
-class Application(tornado.web.Application):
-    def __init__(self):
-        base_dir = os.path.dirname(__file__)
-
-        settings = {
-            "cookie_secret": "bZJc2sWbQLKos6GkHn/VB9oXwQt8S0R0kRvJ5/xJ89E=",
-            "signin_url": "/signin",
-            "template_path":os.path.join(base_dir,"template"),
-            "static_path":os.path.join(base_dir,"static"),
-            "debug":True,
-            "xsrf_cookies":True,
-            "autoreload":True
-        }
-        tornado.web.Application.__init__(self,[
-            tornado.web.url(r"/",MainHandler,name="main"),
-            tornado.web.url(r"/signin",LoginHandler,name="signin"),
-            tornado.web.url(r"/signup",SignupHandler,name="signup"),
-            tornado.web.url(r"/changepw",ChangePasswdHandler,name="changepw"),
-            tornado.web.url(r"/signout",LogoutHandler,name="signout"),
-            tornado.web.url(r"/upload",UploadHandler,name="upload"),
-            tornado.web.url(r"/edit",EditHandler,name="edit"),
-            tornado.web.url(r"/delete",DeleteHandler,name="delete"),
-            tornado.web.url(r"/addType",addTypeHandler,name="addType")
-        ],**settings)
-
 def main():
     
     parser = argparse.ArgumentParser()
     parser.add_argument("--port",help="The port for backend sever")
-    
     args = parser.parse_args()
 
+    base_dir = os.path.dirname(__file__)
+    settings = {
+        "cookie_secret": config.settings.server['cookie_secret'],
+        "template_path":os.path.join(base_dir,"template"),
+        "static_path":os.path.join(base_dir,"static"),
+        "debug":True,
+        "xsrf_cookies":True,
+        "autoreload":True
+    }
+    application = tornado.web.Application([
+        tornado.web.url(r"/",MainHandler,name="main"),
+        tornado.web.url(r"/signin",LoginHandler,name="signin"),
+        tornado.web.url(r"/signup",SignupHandler,name="signup"),
+        tornado.web.url(r"/changepw",ChangePasswdHandler,name="changepw"),
+        tornado.web.url(r"/signout",LogoutHandler,name="signout"),
+        tornado.web.url(r"/upload",UploadHandler,name="upload"),
+        tornado.web.url(r"/edit",EditHandler,name="edit"),
+        tornado.web.url(r"/delete",DeleteHandler,name="delete"),
+        tornado.web.url(r"/addType",addTypeHandler,name="addType")
+    ],**settings)
+    http_server = tornado.httpserver.HTTPServer(application)
     if args.port:
-        Application().listen(args.port)
+        http_server.listen(args.port)
     else:
-        Application().listen(3000)
+        http_server.listen(3000)
+
     tornado.ioloop.IOLoop.instance().start()
 
 if __name__ == "__main__":
