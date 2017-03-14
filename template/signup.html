@@ -34,9 +34,7 @@
             
             <p><input type="submit" id="submit" value="Sign up" class="btn btn-primary"/></p>
             {% if flash %}
-                {% for msg in flash %}
-                    <div>{{msg}}</div>
-                {% end %}
+                <div>{{flash}}</div>
             {% end %}
             {% module xsrf_form_html() %}
 

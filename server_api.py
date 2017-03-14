@@ -1,15 +1,47 @@
 from mysql import mysql
-from datetime import date
-from datetime import datetime
-from datetime import timedelta
 from shutil import copyfile
 import os
 import os.path
 import shutil
 import bcrypt
 import json
+import tornado
 
 #
+def get_user_name_and_password(handler):
+    return_msg = {}
+    return_msg['user_name'] = tornado.escape.xhtml_escape(handler.get_argument("username"))
+    return_msg['user_password'] = tornado.escape.xhtml_escape(handler.get_argument("password"))
+    return return_msg
+
+def check_user_existed_or_signup(user_info):
+    return_msg = {}
+    db = mysql()
+    if db.connect() == -1:
+        return_msg["error"] = "connect mysql error"
+
+    sql = 'select Count(*) from `user` where `user_name`="%s"' % user_info['user_name']
+    pure_result = db.query(sql)
+    if pure_result == -1:
+        return_msg["error"] = "mysql sql error"
+        return return_msg
+
+    is_existed = pure_result[0][0]
+    if is_existed:
+        return_msg['flash'] = 'The name "%s" has been used' % user_info['user_name']
+        return return_msg
+
+    hashed_passwd = bcrypt.hashpw(user_info['user_password'].encode('utf-8'),bcrypt.gensalt())
+    sql = 'insert into `user` (`user_name`,`user_password`) values ("%s","%s")' % \
+            (user_info['user_name'],hashed_passwd)
+    if db.cmd(sql) == -1:
+        return_msg["error"] = "insert into mysql error"
+        return return_msg
+
+    return_msg['flash'] = 'User "%s" create success!' % user_info['user_name']
+    return return_msg
+
+
 def check_user_level(json_obj):
     return_msg = {}
     return_msg["result"] = "fail"

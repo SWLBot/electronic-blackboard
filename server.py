@@ -2,17 +2,9 @@ import tornado.ioloop
 import tornado.web
 import os.path
 import bcrypt
-from datetime import datetime
 from PIL import Image
 from mysql import mysql
-from server_api import upload_image_insert_db
-from server_api import edit_image_data
-from server_api import edit_text_data
-from server_api import upload_text_insert_db
-from server_api import add_new_data_type
-from server_api import change_password
-from server_api import delete_image_or_text_data
-from server_api import read_text_data
+from server_api import *
 from display_api import display_image
 from display_api import display_text
 import argparse
@@ -46,26 +38,12 @@ class SignupHandler(BaseHandler):
             self.redirect('/')
 
     def post(self):
-        client = mysql()
-        client.connect()
-        cursor = client.cursor
-        getusername = tornado.escape.xhtml_escape(self.get_argument("username"))
-        getpassword = tornado.escape.xhtml_escape(self.get_argument("password"))
-        cursor.execute("select Count(*) from `user` where `user_name`=%s",(getusername,))
-        is_existed = cursor.fetchone()[0]
-        if is_existed == 0:
-            hashed = bcrypt.hashpw(getpassword.encode('utf-8'),bcrypt.gensalt())
-            ret = cursor.execute("insert into `user` (`user_name`,`user_password`) values (%s,%s)",(getusername,hashed))
-            client.db.commit()
-            self.set_secure_cookie("incorrect","0")
-            client.close()
-            self.redirect(self.reverse_url("signup"))
+        user_info = get_user_name_and_password(self)
+        ret = check_user_existed_or_signup(user_info)
+        if 'error' in ret:
+            self.render('signup.html',flash=ret['error'])
         else:
-            client.close()
-            self.render("signup.html",flash=["The name \""+getusername+"\" has been used"])
-
-
-        
+            self.render('signup.html',flash=ret['flash'])
 
 class LoginHandler(BaseHandler):
     def get(self):

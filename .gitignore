@@ -17,3 +17,5 @@ create_tables.sql
 # for weather image
 
 static/img/*
+static/thumbnail/*
+static/trash_data/*
