@@ -47,8 +47,8 @@
             <label><strong>活動名稱:</strong><input type='text' name='title1' id='person_name2' value="{{text_content['title1']}}"/></label><br>
             <input type=hidden name='title2' id='reward2' value="{{text_content['title2']}}"/>
             <label><strong>活動內容:</strong><textarea name='description' id='description2'/>{{text_content['description']}}</textarea></label><br>
-            <input type=hidden value="{{text_content['year']}}"/>
-            <input type=hidden value="{{text_content['month']}}"/>
+            <input type=hidden name='year' value="{{text_content['year']}}"/>
+            <input type=hidden name='month' value="{{text_content['month']}}"/>
         {% elif text[1] == 2 %}
             <label><strong>獲獎人:</strong><input type='text' name='title1' id='person_name' value="{{text_content['title1']}}"/></label><br>
             <label><strong>獲得獎項:</strong><input type='text' name='title2' id='reward' value="{{text_content['title2']}}"/></label><br>
@@ -133,6 +133,14 @@
                 <div class='title' id='person_name2'>{{text_content['title1']}}</div>
                 <div class='title' id='reward2'>{{text_content['title2']}}</div>
                 <div id='description2'>{{text_content['description']}}</div>
+                <script>
+                    var person_name2 = $('div#person_name2').html().replace(/ /g,'&nbsp').replace(/\n/g,'<br>');
+                    var reward2 = $('div#reward2').html().replace(/ /g,'&nbsp').replace(/\n/g,'<br>');
+                    var description2 = $('div#description2').html().replace(/ /g,'&nbsp').replace(/\n/g,'<br>');
+                    $('div#person_name2').html(person_name2);
+                    $('div#reward2').html(reward2);
+                    $('div#description2').html(description2);
+                </script>
             </div>
         {% elif text[1] == 2 %}
             <div class='header'>
@@ -145,6 +153,14 @@
                 <div id='footer'>
                     <div class='bar'></div>
                     <div class='congratulation'><span id='year'>{{text_content['year']}}</span>年<span id='month'>{{text_content['month']}}</span>月 資訊學院全體師生慶賀</div>
+                <script>
+                    var person_name = $('div#person_name').html().replace(/ /g,'&nbsp').replace(/\n/g,'<br>');
+                    var reward = $('div#reward').html().replace(/ /g,'&nbsp').replace(/\n/g,'<br>');
+                    var description = $('div#description').html().replace(/ /g,'&nbsp').replace(/\n/g,'<br>');
+                    $('div#person_name').html(person_name);
+                    $('div#reward').html(reward);
+                    $('div#description').html(description);
+                </script>
                 </div>
             </div>
         {% end %}

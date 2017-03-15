@@ -15,7 +15,7 @@
             <p><input type='hidden' name='type' value='image'/></p>
             <p><input type='file' name='file'/></p>
             <p>圖片類型:
-                <select name='file_type' id='file_type'>
+                <select name='data_type' id='data_type'>
                     {% for type in data_types %}
                     <option value='{{type[0]}}'>{{type[1]}}</option>
                     {% end %}
@@ -74,7 +74,7 @@
                     </select>
                 </p>
                 <p>類型:
-                    <select name='file_type' id='file_type'>
+                    <select name='data_type' id='data_type'>
                         {% for type in data_types %}
                             {% if type[1] == "獲獎公告" %}
                                 <option value='{{type[0]}}'>{{type[1]}}</option>
@@ -116,7 +116,7 @@
                     <input type="hidden" name="year" id="year">
                     <input type="hidden" name="month" id="month">
                 <p>類型:
-                    <select name='file_type' id='file_type'>
+                    <select name='data_type' id='data_type'>
                         {% for type in data_types %}
                             {% if type[1] == "活動公告" %}
                                 <option value='{{type[0]}}'>{{type[1]}}</option>

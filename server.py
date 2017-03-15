@@ -94,11 +94,7 @@ class LogoutHandler(BaseHandler):
 class UploadHandler(BaseHandler):
     def get(self):
         user = self.get_current_user()
-        sql = "select type_id,type_name from data_type"
-        client = mysql()
-        client.connect()
-        data_types = client.query(sql)
-        client.close()
+        data_types = display_data_types()
         if user:
             self.render("upload.html",flash=None,data_types=data_types)
         else:
@@ -109,19 +105,8 @@ class UploadHandler(BaseHandler):
         receive_msg = {}
         upload_path = os.path.join(os.path.dirname(__file__),"static/img")
         thumbnail_path = os.path.join(os.path.dirname(__file__),"static/thumbnail")
-        user = self.get_current_user()
-        client = mysql()
-        client.connect()
-        send_msg["server_dir"] = os.path.dirname(__file__)
-        send_msg["file_type"] = tornado.escape.xhtml_escape(self.get_argument("file_type"))
+        send_msg = get_upload_meta_data(self) 
         send_msg["file_dir"] = upload_path
-        send_msg["start_date"] = tornado.escape.xhtml_escape(self.get_argument("start_date"))
-        send_msg["end_date"] = tornado.escape.xhtml_escape(self.get_argument("end_date"))
-        send_msg["start_time"] = tornado.escape.xhtml_escape(self.get_argument("start_time"))
-        send_msg["end_time"] = tornado.escape.xhtml_escape(self.get_argument("end_time"))
-        send_msg["display_time"] = tornado.escape.xhtml_escape(self.get_argument("display_time"))
-        send_msg["user_id"] = client.query("select `user_id` from `user` where user_name = \""+user.decode("utf-8")+"\"")[0][0]
-        client.close()
         if self.get_argument('type') == 'image':
             try:
                 file_metas=self.request.files['file']
@@ -149,12 +134,7 @@ class UploadHandler(BaseHandler):
                 self.redirect("/upload")
         else:
             receive_msg = upload_text_insert_db(send_msg)
-            text_file = {} 
-            text_file['title1'] = tornado.escape.xhtml_escape(self.get_argument('title1')).replace('&amp;nbsp','&nbsp').replace('&lt;br&gt;','<br>')
-            text_file['title2'] = tornado.escape.xhtml_escape(self.get_argument('title2')).replace('&amp;nbsp','&nbsp').replace('&lt;br&gt;','<br>')
-            text_file['description'] = tornado.escape.xhtml_escape(self.get_argument('description')).replace('&lt;br&gt;','<br>').replace('&amp;nbsp','&nbsp')
-            text_file['year'] = tornado.escape.xhtml_escape(self.get_argument('year'))
-            text_file['month'] = tornado.escape.xhtml_escape(self.get_argument('month'))
+            text_file = get_upload_text_data(self)
             client = mysql()
             client.connect()
             
@@ -191,17 +171,9 @@ class EditHandler(BaseHandler):
         text_content = None
         send_msg = {}
         receive_msg = {}
+        send_msg = get_upload_meta_data(self)
         client = mysql()
         client.connect()
-        user = self.get_current_user()
-        send_msg["server_dir"] = os.path.dirname(__file__)
-        send_msg["file_type"] = tornado.escape.xhtml_escape(self.get_argument("data_type"))
-        send_msg["start_date"] = tornado.escape.xhtml_escape(self.get_argument("start_date"))
-        send_msg["end_date"] = tornado.escape.xhtml_escape(self.get_argument("end_date"))
-        send_msg["start_time"] = tornado.escape.xhtml_escape(self.get_argument("start_time"))
-        send_msg["end_time"] = tornado.escape.xhtml_escape(self.get_argument("end_time"))
-        send_msg["display_time"] = tornado.escape.xhtml_escape(self.get_argument("display_time"))
-        send_msg["user_id"] = client.query("select `user_id` from `user` where user_name = \""+user.decode("utf-8")+"\"")[0][0]
         if self.get_argument("type") == "image":
             send_msg["img_id"] = tornado.escape.xhtml_escape(self.get_argument("img_id"))
             receive_msg = edit_image_data(send_msg)
@@ -213,12 +185,7 @@ class EditHandler(BaseHandler):
         else:
             send_msg["text_id"] = tornado.escape.xhtml_escape(self.get_argument("text_id"))
             send_msg["invisible_title"] = send_msg["text_id"]
-            send_msg["text_file"] = {}
-            send_msg["text_file"]['title1'] = tornado.escape.xhtml_escape(self.get_argument('title1'))
-            send_msg["text_file"]['title2'] = tornado.escape.xhtml_escape(self.get_argument('title2'))
-            send_msg["text_file"]['description'] = tornado.escape.xhtml_escape(self.get_argument('description'))
-            send_msg["text_file"]['year'] = tornado.escape.xhtml_escape(self.get_argument('year'))
-            send_msg["text_file"]['month'] = tornado.escape.xhtml_escape(self.get_argument('month'))
+            send_msg["text_file"] = get_upload_text_data(self)
             receive_msg = edit_text_data(send_msg)
             if receive_msg["result"] == "success":
                 flash = "Edit "+self.get_argument("text_id")+" successed "

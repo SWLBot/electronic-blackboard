@@ -1,5 +1,6 @@
 from mysql import mysql
 from shutil import copyfile
+from display_api import get_user_id
 import os
 import os.path
 import shutil
@@ -62,6 +63,32 @@ def check_user_password(user_info):
         return_msg['fail'] = 'Wrong password'
 
     return return_msg
+
+def get_upload_meta_data(handler):
+    meta_data = {}
+    user_name = handler.get_current_user().decode('utf-8')
+
+    meta_data["server_dir"] = os.path.dirname(__file__)
+    meta_data["file_type"] = tornado.escape.xhtml_escape(handler.get_argument("data_type"))
+    meta_data["start_date"] = tornado.escape.xhtml_escape(handler.get_argument("start_date"))
+    meta_data["end_date"] = tornado.escape.xhtml_escape(handler.get_argument("end_date"))
+    meta_data["start_time"] = tornado.escape.xhtml_escape(handler.get_argument("start_time"))
+    meta_data["end_time"] = tornado.escape.xhtml_escape(handler.get_argument("end_time"))
+    meta_data["display_time"] = tornado.escape.xhtml_escape(handler.get_argument("display_time"))
+    meta_data["user_id"] = get_user_id(user_name)
+
+    return meta_data
+
+def get_upload_text_data(handler):
+    text_file = {}
+
+    text_file['title1'] = tornado.escape.xhtml_escape(handler.get_argument('title1')).replace('&amp;nbsp','&nbsp').replace('&lt;br&gt;','<br>')
+    text_file['title2'] = tornado.escape.xhtml_escape(handler.get_argument('title2')).replace('&amp;nbsp','&nbsp').replace('&lt;br&gt;','<br>')
+    text_file['description'] = tornado.escape.xhtml_escape(handler.get_argument('description')).replace('&lt;br&gt;','<br>').replace('&amp;nbsp','&nbsp')
+    text_file['year'] = tornado.escape.xhtml_escape(handler.get_argument('year'))
+    text_file['month'] = tornado.escape.xhtml_escape(handler.get_argument('month'))
+
+    return text_file
 
 def check_user_level(json_obj):
     return_msg = {}
@@ -1044,6 +1071,6 @@ def read_text_data(text_id):
         text_content = json.load(fp)
 
     for key in text_content:
-        text_content[key] = text_content[key].replace('<br/>','\n').replace('&nbsp',' ')
+        text_content[key] = text_content[key].replace('<br/>','\n').replace('&nbsp',' ').replace('<br>','\n')
 
     return text_content
