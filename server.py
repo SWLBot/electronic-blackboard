@@ -7,8 +7,7 @@ import bcrypt
 from PIL import Image
 from mysql import mysql
 from server_api import *
-from display_api import display_image
-from display_api import display_text
+from display_api import *
 import argparse
 import json
 import config.settings
@@ -25,10 +24,7 @@ class MainHandler(BaseHandler):
         if user:
             imgs = display_image(user.decode("utf-8"))
             texts = display_text(user.decode("utf-8"))
-            client = mysql()
-            client.connect()
-            sql = "select type_id,type_name from data_type"
-            data_types = client.query(sql)
+            data_types = display_data_types()
             self.render("index.html",user = user,imgs=imgs,data_types=data_types,texts=texts)
         else:
             self.redirect("/signin")
@@ -61,28 +57,18 @@ class LoginHandler(BaseHandler):
             self.write('<center>Blocked</center>')
             return
 
-        client = mysql()
-        client.connect()
-        cursor = client.cursor
-        getusername = tornado.escape.xhtml_escape(self.get_argument("username"))
-        getpassword = tornado.escape.xhtml_escape(self.get_argument("password"))
-        ret = cursor.execute("select `user_password` from user where `user_name` = %s",(getusername,))
-        if ret != 0:
-            hashed = cursor.fetchone()[0].encode('utf-8')
-            if bcrypt.checkpw(getpassword.encode('utf-8'),hashed):
-                self.set_secure_cookie("user",self.get_argument("username"))
-                self.set_secure_cookie("incorrect","0")
-                self.redirect(self.reverse_url("main"))
-            else:
-                incorrect = self.get_secure_cookie("incorrect") or 0
-                increased = str(int(incorrect)+1)
-                self.set_secure_cookie("incorrect",increased)
-                self.render("signin.html",flash=["wrong password","You can still try "+str(20-int(increased))+" times"])                
-        else:
+        user_info = get_user_name_and_password(self)
+        ret = check_user_password(user_info)
+
+        if 'success' in ret:
+            self.set_secure_cookie("user",self.get_argument("username"))
+            self.set_secure_cookie("incorrect","0")
+            self.redirect(self.reverse_url("main"))
+        elif 'fail' in ret:
             incorrect = self.get_secure_cookie("incorrect") or 0
             increased = str(int(incorrect)+1)
             self.set_secure_cookie("incorrect",increased)
-            self.render("signin.html",flash=["No such user","You can still try "+str(20-int(increased))+" times"])
+            self.render('signin.html',flash=[ret['fail'],"You can still try"+str(20-int(increased))+" times"])
             
 class ChangePasswdHandler(BaseHandler):
     def get(self):

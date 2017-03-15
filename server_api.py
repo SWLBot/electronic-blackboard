@@ -20,6 +20,8 @@ def check_user_existed_or_signup(user_info):
     if db.connect() == -1:
         return_msg["error"] = "connect mysql error"
 
+    cursor = db.cursor
+
     sql = 'select Count(*) from `user` where `user_name`="%s"' % user_info['user_name']
     pure_result = db.query(sql)
     if pure_result == -1:
@@ -32,15 +34,34 @@ def check_user_existed_or_signup(user_info):
         return return_msg
 
     hashed_passwd = bcrypt.hashpw(user_info['user_password'].encode('utf-8'),bcrypt.gensalt())
-    sql = 'insert into `user` (`user_name`,`user_password`) values ("%s","%s")' % \
-            (user_info['user_name'],hashed_passwd)
-    if db.cmd(sql) == -1:
-        return_msg["error"] = "insert into mysql error"
-        return return_msg
+    ret = cursor.execute('insert into `user` (`user_name`,`user_password`) values (%s,%s)',(user_info['user_name'],hashed_passwd))
+    db.db.commit()
 
     return_msg['flash'] = 'User "%s" create success!' % user_info['user_name']
     return return_msg
 
+def check_user_password(user_info):
+    return_msg = {}
+    db = mysql()
+    db.connect()
+
+    sql = 'select `user_password` from user where `user_name` = "%s"' % user_info['user_name']
+    pure_result = db.query(sql)
+    if pure_result == -1:
+        return_msg['error'] = 'mysql sql error'
+        return return_msg
+
+    if len(pure_result) == 0:
+        return_msg['fail'] = 'No such user'
+        return return_msg
+
+    hashed_passwd = pure_result[0][0].encode('utf-8')
+    if bcrypt.checkpw(user_info['user_password'].encode('utf-8'),hashed_passwd):
+        return_msg['success'] = 'Hello %s' % user_info['user_name']
+    else:
+        return_msg['fail'] = 'Wrong password'
+
+    return return_msg
 
 def check_user_level(json_obj):
     return_msg = {}

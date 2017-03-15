@@ -222,3 +222,10 @@ def display_data_type(type_id=None, type_name=None, type_dir=None, type_weight=N
     db.close()
 
     return return_msg_list
+
+def display_data_types():
+    db = mysql()
+    db.connect()
+    sql = "select type_id,type_name from data_type"
+    data_types = db.query(sql)
+    return data_types
