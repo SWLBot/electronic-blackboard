@@ -140,17 +140,14 @@ class EditHandler(BaseHandler):
         img = None
         text = None
         text_content = None
-        client = mysql()
-        client.connect()
         data_types = display_data_types()
         img_id = self.get_argument("img_id",default=None)
         if img_id:
-            img = client.query("select * from image_data where img_is_delete = 0 and img_id = \""+img_id+"\"")[0]
+            img = get_img_meta(img_id)
         else:
             text_id = self.get_argument("text_id")
             text_content = read_text_data(text_id)
-            text = client.query("select * from text_data where text_is_delete = 0 and text_id = \""+text_id+"\"")[0]
-        client.close()
+            text = get_text_meta(text_id)
         self.render("edit.html",img=img,text=text,data_types=data_types,flash=None,text_content=text_content)
 
     def post(self):
@@ -160,8 +157,6 @@ class EditHandler(BaseHandler):
         send_msg = {}
         receive_msg = {}
         send_msg = get_upload_meta_data(self)
-        client = mysql()
-        client.connect()
         if self.get_argument("type") == "image":
             send_msg["img_id"] = tornado.escape.xhtml_escape(self.get_argument("img_id"))
             receive_msg = edit_image_data(send_msg)
@@ -169,7 +164,7 @@ class EditHandler(BaseHandler):
                 flash = "Edit "+self.get_argument("img_id")+" successed "
             else:
                 flash = "Edit "+self.get_argument("img_id")+" failed "
-            img = client.query("select * from image_data where img_id = \""+self.get_argument("img_id")+"\"")[0]
+            img = get_img_meta(self.get_argument("img_id"))
         else:
             send_msg["text_id"] = tornado.escape.xhtml_escape(self.get_argument("text_id"))
             send_msg["invisible_title"] = send_msg["text_id"]
@@ -179,10 +174,9 @@ class EditHandler(BaseHandler):
                 flash = "Edit "+self.get_argument("text_id")+" successed "
             else:
                 flash = "Edit "+self.get_argument("text_id")+" failed "
-            text = client.query("select * from text_data where text_id = \""+self.get_argument("text_id")+"\"")[0]
+            text = get_text_meta(self.get_argument("text_id"))
             text_content = read_text_data(send_msg["text_id"])
         data_types = display_data_types()
-        client.close()
         self.render("edit.html",img=img,text=text,data_types=data_types,flash=flash,text_content=text_content)
 
 class DeleteHandler(BaseHandler):

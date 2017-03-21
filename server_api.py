@@ -100,6 +100,18 @@ def store_thumbnail_image(file_path,thumbnail_path):
     img.thumbnail((100,100))
     img.save(thumbnail_path)
 
+def get_img_meta(img_id):
+    db = mysql()
+    db.connect()
+    sql = 'select * from image_data where img_is_delete = 0 and img_id = "%s"' % img_id
+    return db.query(sql)[0]
+
+def get_text_meta(text_id):
+    db = mysql()
+    db.connect()
+    sql = 'select * from text_data where text_is_delete = 0 and text_id = "%s"' % text_id
+    return db.query(sql)[0]
+
 def check_user_level(json_obj):
     return_msg = {}
     return_msg["result"] = "fail"
