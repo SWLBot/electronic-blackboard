@@ -1,6 +1,7 @@
 from mysql import mysql
 from shutil import copyfile
 from display_api import get_user_id
+from PIL import Image
 import os
 import os.path
 import shutil
@@ -89,6 +90,15 @@ def get_upload_text_data(handler):
     text_file['month'] = tornado.escape.xhtml_escape(handler.get_argument('month'))
 
     return text_file
+
+def store_image(filepath,file_content):
+    with open(filepath,'wb') as fp:
+        fp.write(file_content)
+    
+def store_thumbnail_image(file_path,thumbnail_path):
+    img = Image.open(file_path)
+    img.thumbnail((100,100))
+    img.save(thumbnail_path)
 
 def check_user_level(json_obj):
     return_msg = {}

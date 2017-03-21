@@ -114,15 +114,12 @@ class UploadHandler(BaseHandler):
                     filename=meta['filename']
                     filepath=os.path.join(upload_path,filename)
                     send_msg["file_dir"] = filepath
-                    with open(filepath,"wb") as up:
-                        up.write(meta['body'])
+                    store_image(filepath,meta['body'])
                     receive_msg = upload_image_insert_db(send_msg)
 
                     filepath = receive_msg["img_system_dir"]
                     thumbnail_path=os.path.join(thumbnail_path,receive_msg["img_thumbnail_name"])
-                    im = Image.open(filepath)
-                    im.thumbnail((100,100))
-                    im.save(thumbnail_path) 
+                    store_thumbnail_image(filepath,thumbnail_path)
 
                 data_types = display_data_types()
                 self.render("upload.html",flash="Upload finish!",data_types=data_types)
