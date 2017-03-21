@@ -124,26 +124,18 @@ class UploadHandler(BaseHandler):
                     im.thumbnail((100,100))
                     im.save(thumbnail_path) 
 
-                sql = "select type_id,type_name from data_type"
-                client = mysql()
-                client.connect()
-                data_types = client.query(sql)
-                client.close()
+                data_types = display_data_types()
                 self.render("upload.html",flash="Upload finish!",data_types=data_types)
             except:
                 self.redirect("/upload")
         else:
             receive_msg = upload_text_insert_db(send_msg)
             text_file = get_upload_text_data(self)
-            client = mysql()
-            client.connect()
             
             with open(receive_msg["text_system_dir"],"w") as fp:
                 print(json.dumps(text_file),file=fp)
 
-            sql = "select type_id,type_name from data_type"
-            data_types = client.query(sql)
-            client.close()
+            data_types = display_data_types()
             self.render("upload.html",flash="Upload finish!",data_types=data_types)
 
 class EditHandler(BaseHandler):
@@ -153,8 +145,7 @@ class EditHandler(BaseHandler):
         text_content = None
         client = mysql()
         client.connect()
-        sql = "select type_id,type_name from data_type"
-        data_types = client.query(sql)
+        data_types = display_data_types()
         img_id = self.get_argument("img_id",default=None)
         if img_id:
             img = client.query("select * from image_data where img_is_delete = 0 and img_id = \""+img_id+"\"")[0]
@@ -193,8 +184,7 @@ class EditHandler(BaseHandler):
                 flash = "Edit "+self.get_argument("text_id")+" failed "
             text = client.query("select * from text_data where text_id = \""+self.get_argument("text_id")+"\"")[0]
             text_content = read_text_data(send_msg["text_id"])
-        sql = "select type_id,type_name from data_type"
-        data_types = client.query(sql)
+        data_types = display_data_types()
         client.close()
         self.render("edit.html",img=img,text=text,data_types=data_types,flash=flash,text_content=text_content)
 
