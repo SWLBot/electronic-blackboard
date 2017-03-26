@@ -276,7 +276,7 @@ def upload_image_insert_db(json_obj):
                 + str(img_display_time) + ", " \
                 + str(user_id) + " ) " 
         try:
-            pure_result = db.cmd(sql)
+            db.cmd(sql)
         except DB_Exception as e:
             return_msg["error"] = "insert mysql error please check file system " + img_system_dir
             try:
