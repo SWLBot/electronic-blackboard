@@ -6,6 +6,7 @@ import os.path
 import bcrypt
 from PIL import Image
 from mysql import mysql
+from mysql import DB_Exception
 from server_api import *
 from display_api import *
 import argparse

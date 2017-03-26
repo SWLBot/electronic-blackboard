@@ -1,5 +1,7 @@
 import os.path
 import pymysql
+class DB_Exception(Exception):
+    pass
 
 class mysql:
     def __init__(self, db=None, cursor=None):
@@ -13,11 +15,13 @@ class mysql:
     def connect(self):
         file_name = "mysql_auth.txt"
         if not os.path.isfile(file_name) :
+            raise DB_Exception(-1, "Mysql connect fail")
             return -1
 
         try:
             file_pointer = open(file_name,"r")
         except:
+            raise DB_Exception(-1, "Mysql connect fail")
             return -1
         host_str = file_pointer.readline().rstrip('\n').strip(' ')
         user_str = file_pointer.readline().rstrip('\n').strip(' ')
@@ -32,6 +36,7 @@ class mysql:
             #cursor.execute('SET CHARACTER SET utf8;')
             #cursor.execute('SET character_set_connection=utf8;')
         except:
+            raise DB_Exception(-1, "Mysql connect fail")
             return -1
 
         return 1
@@ -43,6 +48,7 @@ class mysql:
             self.cursor.execute(drop_sql)
             self.cursor.execute(sql)
         except:
+            raise DB_Exception(-1, "Mysql create table fail")
             return -1
         return 1
 
@@ -53,6 +59,7 @@ class mysql:
             self.db.commit()
         except:
             self.db.rollback()
+            raise DB_Exception(-1, "Mysql cmd fail")
             return -1
         return 1
 
@@ -62,11 +69,18 @@ class mysql:
             self.cursor.execute(sql)
             result = self.cursor.fetchall()
         except:
+            raise DB_Exception(-1, "Mysql query fail")
             result = -1
         return result
 
     def close(self):
-        self.db.close()
+        try:
+            self.db.close()
+        except:
+            "Do Nothing"
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self.db.close()
+        try:
+            self.db.close()
+        except:
+            "Do Nothing"
