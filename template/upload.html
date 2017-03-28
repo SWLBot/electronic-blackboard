@@ -85,12 +85,30 @@
                 <p>播放日期: <input type='date' name='start_date' value="2012-12-21"/> ~ <input type='date' name='end_date' value="2048-10-24"/></p>
                 <p>播放時段: <input type='time' step="1" name='start_time' value="00:00:00"/> ~ <input type='time' step="1" name='end_time' value="23:59:59"/></p>
                 <p>單次撥放秒數: <input type='text' name='display_time' value="5"/></p>
+                <p>背景顏色:
+                    <select name="background_color" id="ColorSelect" style="width: 150px;" onchange="ColorFunction(this.options[this.selectedIndex].style.backgroundColor)">
+                        <option value="#CE0000" style="background: #CE0000; color: #FFF;"> Red </option> 
+                        <option value="#FF8000" style="background: #FF8000; color: #FFF;"> Orange </option> 
+                        <option value="#32CD32" style="background: #32CD32; color: #FFF;"> Green </option> 
+                        <option value="#00BFFF" style="background: #00BFFF; color: #FFF;"> Skyblue </option> 
+                        <option value="#4169E1" style="background: #4169E1; color: #FFF;"> Blue </option> 
+                        <option value="#9370DB" style="background: #9370DB; color: #FFF;"> MediumPurple </option>
+                        <option value="#800080" style="background: #800080; color: #FFF;"> Purple </option> 
+                        <option value="#8B4513" style="background: #8B4513; color: #FFF;"> Brown </option>  
+                    </select>
+                </p>
                 <p><input type="submit" value="上傳" class="btn btn-primary" onClick="deal_space();"/></p>
+                <script>
+                    function ColorFunction(selectcolor) {
+                        document.getElementById("header").style.backgroundColor = selectcolor;
+                        document.getElementById("bar").style.backgroundColor = selectcolor;
+                    }
+                </script>
                 {% module xsrf_form_html() %}
             </form>
             </div>
             <div class='col-lg-6 sample-page'>
-                <div class='header'>
+                <div class='header' id='header'>
                     <span id="con" >賀 !</span>
                 </div>
                 <div class='content'>
@@ -98,7 +116,7 @@
                     <div class='title' id='reward'></div>
                     <div id='description'></div>
                     <div id='footer'>
-                        <div class='bar'></div>
+                        <div class='bar' id='bar'></div>
                         <div class='congratulation'><span id='year'></span>年<span id='month'></span>月 資訊學院全體師生慶賀</div>
                     </div>
                 </div>
@@ -127,12 +145,29 @@
                 <p>播放日期: <input type='date' name='start_date' value="2012-12-21"/> ~ <input type='date' name='end_date' value="2048-10-24"/></p>
                 <p>播放時段: <input type='time' step="1" name='start_time' value="00:00:00"/> ~ <input type='time' step="1" name='end_time' value="23:59:59"/></p>
                 <p>單次撥放秒數: <input type='text' name='display_time' value="5"/></p>
+                <p>背景顏色:
+                    <select name="background_color" id="ColorSelect" style="width: 150px;" onchange="ActivityColorFunction(this.options[this.selectedIndex].style.backgroundColor)">
+                        <option value="#CE0000" style="background: #CE0000; color: #FFF;"> Red </option> 
+                        <option value="#FF8000" style="background: #FF8000; color: #FFF;"> Orange </option> 
+                        <option value="#32CD32" style="background: #32CD32; color: #FFF;"> Green </option> 
+                        <option value="#00BFFF" style="background: #00BFFF; color: #FFF;"> Skyblue </option> 
+                        <option value="#4169E1" style="background: #4169E1; color: #FFF;"> Blue </option> 
+                        <option value="#9370DB" style="background: #9370DB; color: #FFF;"> MediumPurple </option>
+                        <option value="#800080" style="background: #800080; color: #FFF;"> Purple </option>  
+                        <option value="#8B4513" style="background: #8B4513; color: #FFF;"> Brown </option> 
+                    </select>
+                </p>
                 <p><input type="submit" value="上傳" class="btn btn-primary" onClick="deal_space();"/></p>
+                <script>
+                    function ActivityColorFunction(selectcolor) {
+                        document.getElementById("header-activity").style.backgroundColor = selectcolor;
+                    }
+                </script>
                 {% module xsrf_form_html() %}
             </form>
             </div>
             <div class='col-lg-6 sample-page'>
-                <div class='header-activity'>
+                <div class='header-activity' id='header-activity'>
                     <span id="con" >活動公告</span>
                 </div>
                 <div class='content'>

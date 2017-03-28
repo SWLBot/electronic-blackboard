@@ -92,6 +92,7 @@ def get_upload_text_data(handler):
     text_file['description'] = tornado.escape.xhtml_escape(handler.get_argument('description')).replace('&lt;br&gt;','<br>').replace('&amp;nbsp','&nbsp')
     text_file['year'] = tornado.escape.xhtml_escape(handler.get_argument('year'))
     text_file['month'] = tornado.escape.xhtml_escape(handler.get_argument('month'))
+    text_file['background_color'] = tornado.escape.xhtml_escape(handler.get_argument('background_color'))
 
     return text_file
 
