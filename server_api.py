@@ -10,6 +10,9 @@ import bcrypt
 import json
 import tornado
 
+from oauth2client import client
+from oauth2client import tools
+from oauth2client.file import Storage
 #
 def get_user_name_and_password(handler):
     return_msg = {}
@@ -960,3 +963,40 @@ def read_text_data(text_id):
         db.close()
         return_msg["error"] = e.args[1]
         return return_msg
+
+# for google api
+SCOPES = 'https://www.googleapis.com/auth/calendar.readonly'
+CLIENT_SECRET_FILE = 'client_secret.json'
+APPLICATION_NAME = 'Google Calendar API Python Quickstart'
+redirect_url = 'http://localhost:3000/googleapi'
+
+def get_credentials(handler):
+    home_dir = os.path.expanduser('~')
+    credential_dir = os.path.join(home_dir, '.credentials')
+    if not os.path.exists(credential_dir):
+        os.makedirs(credential_dir)
+    credential_path = os.path.join(credential_dir,
+        'calendar-python-quickstart.json')
+    store = Storage(credential_path)
+    credentials = store.get()
+    if not credentials or credentials.invalid:
+        flow = client.flow_from_clientsecrets(filename=CLIENT_SECRET_FILE,scope=SCOPES,redirect_uri=redirect_url)
+        url = flow.step1_get_authorize_url()
+        handler.redirect(url)
+    return credentials
+
+def exchange_code_and_store_credentials(code):
+    flow = client.flow_from_clientsecrets(filename=CLIENT_SECRET_FILE,scope=SCOPES,redirect_uri=redirect_url)
+    credentials = flow.step2_exchange(code)
+
+    home_dir = os.path.expanduser('~')
+    credential_dir = os.path.join(home_dir, '.credentials')
+    if not os.path.exists(credential_dir):
+        os.makedirs(credential_dir)
+    credential_path = os.path.join(credential_dir,
+        'calendar-python-quickstart.json')
+    store = Storage(credential_path)
+    store.put(credentials)
+    credentials.set_store(store)
+    return credentials
+

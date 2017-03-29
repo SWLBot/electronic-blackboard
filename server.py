@@ -13,6 +13,12 @@ import argparse
 import json
 import config.settings
 
+import httplib2
+
+from apiclient import discovery
+from pprint import pprint
+import datetime
+
 class BaseHandler(tornado.web.RequestHandler):
     def get_current_user(self):
         return self.get_secure_cookie("user")
@@ -211,8 +217,22 @@ class addTypeHandler(BaseHandler):
             flash = 'ADD TYPE FAILED! '+receive_msg["error"]
         self.render('add_type.html',flash=flash)
 
+class googleApiHandler(BaseHandler):
+    def get(self):
+        if self.get_argument('code',default=None):
+            code = self.get_argument('code')
+            credentials = exchange_code_and_store_credentials(code)
+        else:
+            credentials = get_credentials(self)
+        http = credentials.authorize(httplib2.Http())
+        service = discovery.build('calendar', 'v3', http=http)
+        now = datetime.datetime.utcnow().isoformat() + 'Z' # 'Z' indicates UTC time
+        print('Getting the upcoming 10 events')
+        eventsResult = service.events().list(calendarId='nctupac@gmail.com',maxResults=10,timeMin=now).execute()
+        pprint(eventsResult)
+        self.redirect('/')
+
 def main():
-    
     parser = argparse.ArgumentParser()
     parser.add_argument("--port",help="The port for backend sever")
     args = parser.parse_args()
@@ -235,7 +255,8 @@ def main():
         tornado.web.url(r"/upload",UploadHandler,name="upload"),
         tornado.web.url(r"/edit",EditHandler,name="edit"),
         tornado.web.url(r"/delete",DeleteHandler,name="delete"),
-        tornado.web.url(r"/addType",addTypeHandler,name="addType")
+        tornado.web.url(r"/addType",addTypeHandler,name="addType"),
+        tornado.web.url(r"/googleapi",googleApiHandler,name="googleapi")
     ],**settings)
     http_server = tornado.httpserver.HTTPServer(application)
     if args.port:
