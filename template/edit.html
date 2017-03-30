@@ -44,12 +44,14 @@
     <label><strong>文字ID:</strong>{{text[0]}}</label><br>
     {% if text_content %}
         {% if text[1] == 3 %}
+            <label><strong>標題:</strong><input type='text' name='con' id='con2' value="{{text_content['con']}}"/></label><br>
             <label><strong>活動名稱:</strong><input type='text' name='title1' id='person_name2' value="{{text_content['title1']}}"/></label><br>
             <input type=hidden name='title2' id='reward2' value="{{text_content['title2']}}"/>
             <label><strong>活動內容:</strong><textarea name='description' id='description2'/>{{text_content['description']}}</textarea></label><br>
             <input type=hidden name='year' value="{{text_content['year']}}"/>
             <input type=hidden name='month' value="{{text_content['month']}}"/>
         {% elif text[1] == 2 %}
+            <label><strong>標題:</strong><input type='text' name='con' id='con' value="{{text_content['con']}}"/></label><br>
             <label><strong>獲獎人:</strong><input type='text' name='title1' id='person_name' value="{{text_content['title1']}}"/></label><br>
             <label><strong>獲得獎項:</strong><input type='text' name='title2' id='reward' value="{{text_content['title2']}}"/></label><br>
             <label><strong>附註:</strong><textarea name='description' id='description'/>{{text_content['description']}}</textarea></label><br>
@@ -92,10 +94,12 @@
     <script type="text/javascript">
         function deal_space(){
             {% if text[1] == 2 %}
+            document.getElementById("con").value = document.getElementById("person_name").value.replace(/ /g,'&nbsp').replace(/\n/g,'<br>');
             document.getElementById("person_name").value = document.getElementById("person_name").value.replace(/ /g,'&nbsp').replace(/\n/g,'<br>');
             document.getElementById("reward").value = document.getElementById("reward").value.replace(/ /g,'&nbsp').replace(/\n/g,'<br>');
             document.getElementById("description").value = document.getElementById("description").value.replace(/ /g,'&nbsp').replace(/\n/g,'<br>');
             {% elif text[1] == 3 %}
+            document.getElementById("con2").value = document.getElementById("person_name").value.replace(/ /g,'&nbsp').replace(/\n/g,'<br>');
             document.getElementById("person_name2").value = document.getElementById("person_name2").value.replace(/ /g,'&nbsp').replace(/\n/g,'<br>');
             document.getElementById("reward2").value = document.getElementById("reward2").value.replace(/ /g,'&nbsp').replace(/\n/g,'<br>');
             document.getElementById("description2").value = document.getElementById("description2").value.replace(/ /g,'&nbsp').replace(/\n/g,'<br>');
@@ -152,7 +156,7 @@
     {% else %}
         {% if text[1] == 3 %}
             <div class='header-activity' id='header' style="background-color:{{text_content['background_color']}};">
-                <span id="con" >活動公告</span>
+                <span id="con2" >{{text_content['con']}}</span>
             </div>
             <div class='content'>
                 <div class='title' id='person_name2'>{{text_content['title1']}}</div>
@@ -169,7 +173,7 @@
             </div>
         {% elif text[1] == 2 %}
             <div class='header' id='header' style="background-color:{{text_content['background_color']}};">
-                <span id="con" >賀 !</span>
+                <span id="con" >{{text_content['con']}}</span>
             </div>
             <div class='content'>
                 <div class='title' id='person_name'>{{text_content['title1']}}</div>

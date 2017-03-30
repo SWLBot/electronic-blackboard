@@ -62,6 +62,14 @@ left: 5%;
 font-weight: bold;
 }
 
+span#con2 {
+position: absolute;
+color: #FFF;
+bottom: 10%;
+left: 5%;
+font-weight: bold;
+}
+
 div.title {
 position: relative;
 padding-left: 5%;

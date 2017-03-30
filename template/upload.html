@@ -30,6 +30,7 @@
     </div>
     <script type="text/javascript">
         function deal_space(){
+            document.getElementById("con").value = document.getElementById("con").value.replace(/ /g,'&nbsp').replace(/\n/g,'<br>');
             document.getElementById("person_name").value = document.getElementById("person_name").value.replace(/ /g,'&nbsp').replace(/\n/g,'<br>');
             document.getElementById("reward").value = document.getElementById("reward").value.replace(/ /g,'&nbsp').replace(/\n/g,'<br>');
             document.getElementById("description").value = document.getElementById("description").value.replace(/ /g,'&nbsp').replace(/\n/g,'<br>');
@@ -44,6 +45,7 @@
             <div class='col-lg-6' >
             <form name="send_post" id="text_form" method="post">
                 <p><input type='hidden' name='type' value='text'/></p>
+                <p>標題: <input type="text" name="con" id="con" value="賀 !"/></p>
                 <p>獲獎人: <input type="text" name="title1" id="person_name"/></p>
                 <p>獲得獎項: <input type="text" name="title2" id="reward"/></p>
                 <p>附註: <textarea name="description" id="description"/></textarea></p>
@@ -109,7 +111,7 @@
             </div>
             <div class='col-lg-6 sample-page'>
                 <div class='header' id='header'>
-                    <span id="con" >賀 !</span>
+                    <span id='con'></span>
                 </div>
                 <div class='content'>
                     <div class='title' id='person_name'></div>
@@ -127,6 +129,8 @@
         <div class='row'>
             <div class='col-lg-6' >
             <form name="send_post" id="text_form" method="post">
+                <p><input type='hidden' name='type' value='text'/></p>
+                <p>標題: <input type="text" name="con" id="con2" value="活動公告"/></p>
                 <p><input type='hidden' name='type' value='text'/></p>
                 <p>活動名稱: <input type="text" name="title1" id="person_name2"/></p>
                 <input type="hidden" name="title2" id="reward2" value=""/>
@@ -148,7 +152,7 @@
                 <p>背景顏色:
                     <select name="background_color" id="ColorSelect" style="width: 150px;" onchange="ActivityColorFunction(this.options[this.selectedIndex].style.backgroundColor)">
                         <option value="#CE0000" style="background: #CE0000; color: #FFF;"> Red </option> 
-                        <option value="#FF8000" style="background: #FF8000; color: #FFF;"> Orange </option> 
+                        <option value="#FF8000" style="background: #FF8000; color: #FFF;" selected> Orange </option> 
                         <option value="#32CD32" style="background: #32CD32; color: #FFF;"> Green </option> 
                         <option value="#00BFFF" style="background: #00BFFF; color: #FFF;"> Skyblue </option> 
                         <option value="#4169E1" style="background: #4169E1; color: #FFF;"> Blue </option> 
@@ -168,7 +172,7 @@
             </div>
             <div class='col-lg-6 sample-page'>
                 <div class='header-activity' id='header-activity'>
-                    <span id="con" >活動公告</span>
+                    <span id="con2" ></span>
                 </div>
                 <div class='content'>
                     <div class='title' id='person_name2'></div>
