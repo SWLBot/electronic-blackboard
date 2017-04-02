@@ -3,7 +3,6 @@ thumbnail/*
 *.jpg
 *.jpge
 __pycache__
-*/log/*
 mysql_auth.txt
 
 # for text data
@@ -19,3 +18,4 @@ create_tables.sql
 static/img/*
 static/thumbnail/*
 static/trash_data/*
+static/log/*
