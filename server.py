@@ -220,11 +220,8 @@ class googleApiHandler(BaseHandler):
             credentials = exchange_code_and_store_credentials(code)
         else:
             credentials = get_credentials(self)
-        http = credentials.authorize(httplib2.Http())
-        service = discovery.build('calendar', 'v3', http=http)
-        now = datetime.datetime.utcnow().isoformat() + 'Z' # 'Z' indicates UTC time
         print('Getting the upcoming 10 events')
-        eventsResult = service.events().list(calendarId='nctupac@gmail.com',maxResults=10,timeMin=now).execute()
+        eventsResult = get_upcoming_events(credentials)
         pprint(eventsResult)
         self.redirect('/')
 

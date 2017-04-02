@@ -13,6 +13,10 @@ import tornado
 from oauth2client import client
 from oauth2client import tools
 from oauth2client.file import Storage
+import httplib2
+
+from apiclient import discovery
+import datetime
 #
 def get_user_name_and_password(handler):
     return_msg = {}
@@ -983,7 +987,10 @@ def get_credentials(handler):
     if not credentials or credentials.invalid:
         flow = client.flow_from_clientsecrets(filename=CLIENT_SECRET_FILE,scope=SCOPES,redirect_uri=redirect_url)
         url = flow.step1_get_authorize_url()
-        handler.redirect(url)
+        if handler:
+            handler.redirect(url)
+        else:
+            return None
     return credentials
 
 def exchange_code_and_store_credentials(code):
@@ -1001,3 +1008,9 @@ def exchange_code_and_store_credentials(code):
     credentials.set_store(store)
     return credentials
 
+def get_upcoming_events(credentials):
+    http = credentials.authorize(httplib2.Http())
+    service = discovery.build('calendar', 'v3', http=http)
+    now = datetime.datetime.utcnow().isoformat() + 'Z' # 'Z' indicates UTC time
+    eventsResult = service.events().list(calendarId='nctupac@gmail.com',maxResults=10,timeMin=now).execute()
+    return eventsResult
