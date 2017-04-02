@@ -752,7 +752,7 @@ def delete_image_or_text_data(json_obj):
         try:
             server_dir = json_obj["server_dir"]
             target_id = json_obj["target_id"]
-            user_id = json_obj["user_id"]
+            user_id = get_user_id(json_obj["user_name"])
         except:
             return_msg["error"] = "input parameter missing"
             return return_msg
