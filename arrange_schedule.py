@@ -6,11 +6,16 @@ from time import sleep
 from PIL import Image
 from urllib import request
 from server_api import upload_image_insert_db
+from server_api import upload_text_insert_db
 from server_api import delete_image_or_text_data
+from server_api import get_credentials
+from server_api import get_upcoming_events
 from pprint import pprint
+import datetime
 import signal
 import time
 import os.path
+import json
 
 #make now activity to is used
 def mark_now_activity():
@@ -971,6 +976,56 @@ def crawler_cwb_img(json_obj):
         return_msg["error"] = e.args[1]
         return return_msg
 
+def google_calendar_text():
+    return_msg = {}
+    credentials = get_credentials()
+    if not credentials:
+        return_msg["error"] = "No credential file"
+        return return_msg
+    else:
+        try:
+            eventsResult = get_upcoming_events(credentials)
+            events = eventsResult['items']
+            for e in events:
+                check_event_exist_or_insert(e)
+                sleep(1.5)
+            return_msg["result"] = "success"
+            return return_msg
+        except DB_Exception as e:
+            return_msg["error"] = e.arg[1]
+            return return_msg
+
+def check_event_exist_or_insert(event):
+    event_id = event['id']
+    db = mysql()
+    db.connect()
+    sql = 'SELECT COUNT(*) from text_data where text_invisible_title ="%s"' % event_id
+    pure_result = db.query(sql)
+    if pure_result[0][0]:
+        # event existed
+        # do nothing
+        return
+    else:
+        send_msg = {}
+        send_msg["server_dir"] = os.path.dirname(__file__)
+        send_msg["file_type"] = 5
+        send_msg["start_date"] = date.today().strftime('%Y-%m-%d')
+        send_msg["end_date"] = event['start']['date']
+        send_msg["start_time"] = ""
+        send_msg["end_time"] = ""
+        send_msg["display_time"] = 5
+        send_msg["user_id"] = 1
+        send_msg["invisible_title"] = event_id
+        receive_msg = upload_text_insert_db(send_msg)
+        text_file = {   "con" : send_msg["end_date"],
+                        "title1" : event["summary"],
+                        "title2" : "",
+                        "description": "",
+                        "background_color" : "#984B4B"
+        }
+        with open(receive_msg["text_system_dir"],"w") as fp:
+            print(json.dumps(text_file),file=fp)
+
 #deal with defunct 
 def CHLD_handler(para1, para2):
     try:
@@ -1052,6 +1107,7 @@ def main():
     alarm_load_next_schedule = raw_time
     alarm_add_schedule = 1960380833.0
     alarm_crawler_cwb_img = raw_time + 7.0
+    alarm_google_calendar_text = raw_time + 5.0
 
 
     #start scheduling
@@ -1233,7 +1289,29 @@ def main():
                 receive_obj["error"] = "fork4 error"
                 set_system_log(receive_obj)
                 alarm_crawler_cwb_img = raw_time + 600.0
-            
+
+        #google calendar add to text data
+        if raw_time >= alarm_google_calendar_text:
+            print("#7 "+str(raw_time))
+            try:
+                newpid = os.fork()
+                if newpid == 0: #child
+                    shutdown = 1
+                    receive_obj = google_calendar_text()
+                    if receive_obj["result"] == "success":
+                        "DO NOTHING"
+                    else:
+                        receive_obj["error"] = "google_calendar_text" + receive_obj["error"]
+                        set_system_log(receive_obj)
+                    os.exit(0)
+                else: #Parent
+                    alarm_google_calendar_text = raw_time + 43200.0
+            except:
+                receive_obj["result"] = "fail"
+                receive_obj["error"] = "fork5 error"
+                set_system_log(receive_obj)
+                alarm_google_calendar_text = raw_time + 10.0
+
         #delay
         sleep(0.1)
     print("arrange_schedule shutdown")

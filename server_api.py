@@ -528,6 +528,11 @@ def upload_text_insert_db(json_obj):
             #db.close()
             #return_msg["error"] = "no basic image"
             #return return_msg
+
+        if "invisible_title" in json_obj:
+            invisible_title = json_obj["invisible_title"]
+        else:
+            invisible_title = text_id
         
         #get file place
         sql = ("SELECT type_dir FROM data_type WHERE type_id=" + str(type_id))
@@ -548,7 +553,7 @@ def upload_text_insert_db(json_obj):
                 +" ( \"" + text_id + "\", " \
                 + str(type_id) + ", " \
                 + "\"" + text_system_name + "\", " \
-                + "\"" + text_id + "\", " \
+                + "\"" + invisible_title + "\", " \
                 + "\"" + text_start_date + "\", " \
                 + "\"" + text_end_date + "\", " \
                 + "\"" + text_start_time + "\", " \
@@ -975,7 +980,7 @@ CLIENT_SECRET_FILE = 'client_secret.json'
 APPLICATION_NAME = 'Google Calendar API Python Quickstart'
 redirect_url = 'http://localhost:3000/googleapi'
 
-def get_credentials(handler):
+def get_credentials(handler=None):
     home_dir = os.path.expanduser('~')
     credential_dir = os.path.join(home_dir, '.credentials')
     if not os.path.exists(credential_dir):

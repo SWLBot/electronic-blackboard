@@ -154,24 +154,7 @@
     {% if img %}
       <img src="{{ static_url("thumbnail/"+img[3]) }}"/>
     {% else %}
-        {% if text[1] == 3 %}
-            <div class='header-activity' id='header' style="background-color:{{text_content['background_color']}};">
-                <span id="con2" >{{text_content['con']}}</span>
-            </div>
-            <div class='content'>
-                <div class='title' id='person_name2'>{{text_content['title1']}}</div>
-                <div class='title' id='reward2'>{{text_content['title2']}}</div>
-                <div id='description2'>{{text_content['description']}}</div>
-                <script>
-                    var person_name2 = $('div#person_name2').html().replace(/ /g,'&nbsp').replace(/\n/g,'<br>');
-                    var reward2 = $('div#reward2').html().replace(/ /g,'&nbsp').replace(/\n/g,'<br>');
-                    var description2 = $('div#description2').html().replace(/ /g,'&nbsp').replace(/\n/g,'<br>');
-                    $('div#person_name2').html(person_name2);
-                    $('div#reward2').html(reward2);
-                    $('div#description2').html(description2);
-                </script>
-            </div>
-        {% elif text[1] == 2 %}
+        {% if text[1] == 2 %}
             <div class='header' id='header' style="background-color:{{text_content['background_color']}};">
                 <span id="con" >{{text_content['con']}}</span>
             </div>
@@ -191,6 +174,23 @@
                     $('div#description').html(description);
                 </script>
                 </div>
+            </div>
+        {% else %}
+            <div class='header-activity' id='header' style="background-color:{{text_content['background_color']}};">
+                <span id="con2" >{{text_content['con']}}</span>
+            </div>
+            <div class='content'>
+                <div class='title' id='person_name2'>{{text_content['title1']}}</div>
+                <div class='title' id='reward2'>{{text_content['title2']}}</div>
+                <div id='description2'>{{text_content['description']}}</div>
+                <script>
+                    var person_name2 = $('div#person_name2').html().replace(/ /g,'&nbsp').replace(/\n/g,'<br>');
+                    var reward2 = $('div#reward2').html().replace(/ /g,'&nbsp').replace(/\n/g,'<br>');
+                    var description2 = $('div#description2').html().replace(/ /g,'&nbsp').replace(/\n/g,'<br>');
+                    $('div#person_name2').html(person_name2);
+                    $('div#reward2').html(reward2);
+                    $('div#description2').html(description2);
+                </script>
             </div>
         {% end %}
     {% end %}

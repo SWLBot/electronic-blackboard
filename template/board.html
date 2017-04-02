@@ -75,8 +75,7 @@
                             $('div.bar').css('background-color',jsonRes.file_text.background_color);
                             $('div#footer').css('display','inline');
                             $('div.congratulation').html(jsonRes.file_text.year+"年"+jsonRes.file_text.month+"月 資訊學院全體師生慶賀");
-                        }else if(jsonRes.type_name === "活動公告"){
-                            console.log('activity');
+                        }else{
                             $('div.header').css('background-color',jsonRes.file_text.background_color);
                             $('div#footer').css('display','none');
                         }

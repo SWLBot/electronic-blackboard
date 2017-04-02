@@ -88,6 +88,16 @@ if not os.path.exists("static/圖片/氣像雲圖"):
     print("create dir \"圖片/氣像雲圖\"")
     os.makedirs("static/圖片/氣像雲圖")
 
+print("create data_type \"google日曆\"...")
+try:
+    ret = cursor.execute('insert into `data_type` (`type_name`,`type_dir`) values ("google日曆","google日曆/")')
+except:
+    print("Insert type failed")
+
+if not os.path.exists("static/google日曆"):
+    print("create dir \"/google日曆\"")
+    os.makedirs("static/google日曆")
+
 print("create arrage_mode 0...")
 try:
     ret = cursor.execute('insert into `arrange_mode` (`armd_mode`) values (0)')
