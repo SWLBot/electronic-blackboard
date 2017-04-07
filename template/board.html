@@ -25,16 +25,7 @@
                     </div>
                 </div>
             </div>
-            <script>
-                $('div.container').height(screen.height * 0.98);
-                $('div.container').width(screen.width * 0.9);
-                $('div.header').height(screen.height * 0.35);
-                $('div.header').width(screen.width * 0.9);
-                $('div.content').height(screen.height * 0.63);
-                $('div.content').width(screen.width * 0.9);
-                $('div.bar').height(screen.height * 0.01);
-                $('div.bar').width(screen.width * 0.9);
-            </script>
+            <script type='text/javascript' src='{{ static_url("js/board_size_reset.js") }}'></script>
         <script>
 		var last_schedule_id = "no_id"
 		function load_schedule()
