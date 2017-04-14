@@ -85,7 +85,7 @@ class ChangePasswdHandler(BaseHandler):
         send_msg = {}
         send_msg['user_name'] = self.get_current_user()
         send_msg['old_password'] = self.get_argument('old_password')
-        send_msg['new_password'] = self.get_argument('new_password')
+        send_msg['new_password'] = self.get_argument('password')
         receive_msg = change_password(send_msg)
         if receive_msg['result'] == "success":
             flash = "Change password success"

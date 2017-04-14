@@ -3,35 +3,13 @@
   <link href={{ static_url("css/signin.css") }} rel="stylesheet">
 {% end %}
     {% block body %}
-        <script>
-            $(document).ready(function(){
-                $('#confirm-password').on('keyup', function () {
-                    if ($(this).val() == $('#password').val()) {    
-                        $('#message').html('matching').css('color', 'green');
-                        $('#submit').removeAttr('disabled');
-                    } else {
-                        $('#message').html('not matching').css('color', 'red');
-                        $('#submit').attr('disabled','disabled');
-                    }
-                });
-                $('#password').on('keyup', function () {
-                    if ($(this).val() == $('#confirm-password').val()) {    
-                        $('#message').html('matching').css('color', 'green');
-                        $('#submit').removeAttr('disabled');
-                    } else {
-                        $('#message').html('not matching').css('color', 'red');
-                        $('#submit').attr('disabled','disabled');
-                    }
-                });
-            });
-        </script>
+        <script type='text/javascript' src={{ static_url("js/confirm_pw.js") }}></script>
         <div class="container">
         <div class="jumbotron">
         <form class="form-signin" method="post">
             <h5>Username: </h5><input type="text" name="username" id="username"/>
             <h5>Password: </h5><input type="password" id="password" name="password" />
-            <h5>Confirm Password: </h5><input type="password" id="confirm-password" name="confirm-password" /><span id='message'></span>
-            
+            <h5>Confirm Password: </h5><input type="password" id="confirm-password" name="confirm-password" /> <span id='message'></span>
             <p><input type="submit" id="submit" value="Sign up" class="btn btn-primary"/></p>
             {% if flash %}
                 <div>{{flash}}</div>
