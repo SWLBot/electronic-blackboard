@@ -1,6 +1,7 @@
 # Electronic Blackboard
 
-This project is a electronic bulletin board of broadcasting images and announcement templates by web browser. The system provides broadcast scheduling, wieldy user interface for uploading and mutiple automated functions.
+This project is a electronic bulletin board of broadcasting images and announcement templates by web browser. The system provides broadcast scheduling, wieldy user interface for uploading and mutiple automated functions.  
+
 The functions Electronic-Blackboard included are as follows
 * Customized scheduling mode selection
 * CWB crawler for weather radar image
@@ -23,13 +24,13 @@ Since the project is totally written in python 3, pyhton 2 is not recommended.
 pip3 install -r requirements.txt
 ```
 2. create nessasary files in this project
-..* create `mysql_auth.txt`
-..* create `setting.txt` 
-3. The content inside `mysql_auth.txt` should be
-..* Host
-..* User
-..* Password
-..* Database  -create the database first where to store your data
+  * create `mysql_auth.txt`
+  * create `setting.txt` 
+3. The content inside `mysql_auth.txt` should be  
+  * Host
+  * User
+  * Password
+  * Database  -create the database first where to store your data
 ```
 localhost
 root
