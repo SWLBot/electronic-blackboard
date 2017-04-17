@@ -900,6 +900,37 @@ def read_arrange_mode():
         return_msg["error"] = e.args[1]
         return return_msg
 
+def find_cwb_type_id(db):
+    return_msg = {}
+    sql = "SELECT type_id FROM data_type WHERE type_name='氣像雲圖'"
+    pure_result = db.query(sql)
+    if len(pure_result) != 0:
+        return int(pure_result[0][0])
+    else:
+        return -1
+
+def delete_old_cwb_img(db,server_dir,user_id):
+    error_list_id = []
+    sql = "SELECT img_id FROM image_data WHERE img_is_delete=0 and img_file_name like 'CV1_TW_3600_%'" 
+    pure_result = db.query(sql)
+    for num2 in range(len(pure_result)):
+        try:
+            send_obj["server_dir"] = server_dir
+            send_obj["target_id"] = str(pure_result[num2][0])
+            send_obj["user_id"] = user_id
+            receive_obj = delete_image_or_text_data(send_obj)
+            if receive_obj["result"] == "fail":
+                error_list_id.append(send_obj["target_id"])
+        except:
+            error_list_id.append(send_obj["target_id"])
+            continue
+    return error_list_id
+
+def mark_old_cwb_img(db,error_list_id):
+    for num2 in range(len(error_list_id)):
+        sql = "UPDATE image_data SET img_is_expire=1 WHERE img_is_expire=0 and img_is_delete=0 and img_id='" + str(error_list_id[num2]) + "'" 
+        db.cmd(sql)
+
 #
 def crawler_cwb_img(json_obj):
     try:
@@ -922,16 +953,10 @@ def crawler_cwb_img(json_obj):
         db = mysql()
         db.connect()
 
-        #find 氣像雲圖 type id 
-        sql = "SELECT type_id FROM data_type WHERE type_name='氣像雲圖'"
-        pure_result = db.query(sql)
-        try:
-            data_type = int(pure_result[0][0])
-        except:
-            db.close()
+        data_type = find_cwb_type_id(db)
+        if data_type == -1:
             return_msg["error"] = "no cwb img data type"
             return return_msg
-
 
         for num1 in range(60):
             target_img = 'CV1_TW_3600_' + time.strftime("%Y%m%d%H%M", time.localtime(now_time)) + '.png'
@@ -942,26 +967,9 @@ def crawler_cwb_img(json_obj):
                 now_time -= 60
                 continue
 
-            #delete old cwb img
-            error_list_id = []
-            sql = "SELECT img_id FROM image_data WHERE img_is_delete=0 and img_file_name like 'CV1_TW_3600_%'" 
-            pure_result = db.query(sql)
-            for num2 in range(len(pure_result)):
-                try:                
-                    send_obj["server_dir"] = server_dir
-                    send_obj["target_id"] = str(pure_result[num2][0])
-                    send_obj["user_id"] = user_id
-                    receive_obj = delete_image_or_text_data(send_obj)
-                    if receive_obj["result"] == "fail":
-                        error_list_id.append(send_obj["target_id"])
-                except:
-                    error_list_id.append(send_obj["target_id"])
-                    continue
+            error_list_id = delete_old_cwb_img(db,server_dir,user_id)
 
-            #mark old cwb img
-            for num2 in range(len(error_list_id)):
-                sql = "UPDATE image_data SET img_is_expire=1 WHERE img_is_expire=0 and img_is_delete=0 and img_id='" + str(error_list_id[num2]) + "'" 
-                db.cmd(sql)
+            mark_old_cwb_img(db,error_list_id)
 
             #upload new file
             send_obj["server_dir"] = server_dir
