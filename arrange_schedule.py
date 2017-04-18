@@ -978,6 +978,7 @@ def crawler_cwb_img(json_obj):
 
 def google_calendar_text():
     return_msg = {}
+	return_msg["result"] = "fail"
     credentials = get_credentials()
     if not credentials:
         return_msg["error"] = "No credential file"
@@ -1303,7 +1304,7 @@ def main():
                     else:
                         receive_obj["error"] = "google_calendar_text" + receive_obj["error"]
                         set_system_log(receive_obj)
-                    os.exit(0)
+                    os._exit(0)
                 else: #Parent
                     alarm_google_calendar_text = raw_time + 43200.0
             except:
