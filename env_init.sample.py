@@ -88,6 +88,16 @@ if not os.path.exists("static/圖片/氣像雲圖"):
     print("create dir \"圖片/氣像雲圖\"")
     os.makedirs("static/圖片/氣像雲圖")
 
+print("create data_type \"google_drive_image\"...")
+try:
+    ret = cursor.execute('insert into `data_type` (`type_name`,`type_dir`) values ("google_drive_image","圖片/google_drive_image/")')
+except:
+    print("Insert type failed")
+
+if not os.path.exists("static/圖片/google_drive_image"):
+    print("create dir \"圖片/google_drive_image\"")
+    os.makedirs("static/圖片/google_drive_image")
+
 print("create data_type \"google日曆\"...")
 try:
     ret = cursor.execute('insert into `data_type` (`type_name`,`type_dir`) values ("google日曆","google日曆/")')
