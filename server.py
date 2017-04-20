@@ -220,9 +220,6 @@ class googleApiHandler(BaseHandler):
             credentials = exchange_code_and_store_credentials(code)
         else:
             credentials = get_credentials(self)
-        print('Getting the upcoming 10 events')
-        eventsResult = get_upcoming_events(credentials)
-        pprint(eventsResult)
         self.redirect('/')
 
 def main():
