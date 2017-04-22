@@ -1022,6 +1022,33 @@ def google_calendar_text():
             return_msg["error"] = e.arg[1]
             return return_msg
 
+def rule_base_agent(event):
+    addition_msg = {}
+    holidays = ['放假','假期','補假','休假']
+    if '節' in event['summary']:
+        addition_msg['title1'] = event['summary'] + '快樂'
+        addition_msg['description'] = '｡:.ﾟヽ(*´∀`)ﾉﾟ.:｡'
+
+    if any(holiday in event['summary'] for holiday in holidays):
+        addition_msg['title2'] = '放假就是爽(*´∀`)~♥'
+
+    if '期中預警' in event['summary']:
+        addition_msg['title2'] = '退選單簽了沒？(,,・ω・,,)'
+        addition_msg['description'] = ''
+
+    if '考試' in event['summary']:
+        addition_msg['title2'] = '考古題背完了沒?'
+        addition_msg['description'] = '考試不作弊</br>三分靠賭運</br>七分靠運氣</br>猜錯當學弟</br>_(:3 」∠ )_'
+
+    if 'title1' not in addition_msg:
+        addition_msg['title1'] = event['summary']
+
+    for key in ['title1','title2','description']:
+        if key not in addition_msg:
+            addition_msg[key] = ''
+
+    return addition_msg
+
 def check_event_exist_or_insert(event):
     event_id = event['id']
     db = mysql()
@@ -1044,10 +1071,11 @@ def check_event_exist_or_insert(event):
         send_msg["user_id"] = 1
         send_msg["invisible_title"] = event_id
         receive_msg = upload_text_insert_db(send_msg)
+        addition_msg = rule_base_agent(event)
         text_file = {   "con" : send_msg["end_date"],
-                        "title1" : event["summary"],
-                        "title2" : "",
-                        "description": "",
+                        "title1" : addition_msg['title1'],
+                        "title2" : addition_msg['title2'],
+                        "description": addition_msg['description'],
                         "background_color" : "#984B4B"
         }
         with open(receive_msg["text_system_dir"],"w") as fp:
