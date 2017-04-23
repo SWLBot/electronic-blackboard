@@ -81,7 +81,7 @@
               <td><img src="{{ static_url("thumbnail/"+img[8]) }}"/></td>
               <td>
                   <a href="/edit?img_id={{img[0]}}" class="btn btn-link">Edit</a>
-                  <a href="/delete?target_id={{img[0]}}" class="btn btn-link" onclick="deleteConfirm()">Delete</a>
+                  <a href="/delete?target_id={{img[0]}}" class="btn btn-link" onclick="return deleteConfirm()">Delete</a>
               </td>
             <tr>
           {% end %}
@@ -125,7 +125,7 @@
                             <td></td>
                             <td>
                                 <a href="/edit?text_id={{text[0]}}" class='btn btn-link'>Edit</a>
-                                <a href="/delete?target_id={{text[0]}}" class="btn btn-link" onclick="deleteConfirm()">Delete</a>
+                                <a href="/delete?target_id={{text[0]}}" class="btn btn-link" onclick="return deleteConfirm()">Delete</a>
                             </td>
                         </tr>
                     {% end %}
