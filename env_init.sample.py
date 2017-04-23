@@ -3,6 +3,22 @@ import subprocess
 import bcrypt
 import os
 
+def create_data_type(data_type_name,base_dir=None):
+    print('create data_type "%s"...' % data_type_name)
+    path = ''
+    if base_dir:
+        path = base_dir + '/'
+
+    path += data_type_name
+    try:
+        ret = cursor.execute('insert into `data_type` (`type_name`,`type_dir`) values ("%s","%s/")' % (data_type_name,path))
+    except:
+        print("Insert type failed")
+
+    if not os.path.exists("static/%s" % path):
+        print('create dir "static/%s"' % path)
+        os.makedirs('static/%s' % path)
+
 try:
     with open("mysql_auth.txt","r") as fp:
         host = fp.readline().rstrip()
@@ -48,65 +64,17 @@ try:
 except:
     print("Insert user failed")
 
-print("create data_type \"圖片\"...")
-try:
-    ret = cursor.execute('insert into `data_type` (`type_name`,`type_dir`) values ("圖片","圖片/")')
-except:
-    print("Insert type failed")
+create_data_type("圖片")
 
-if not os.path.exists("static/圖片"):
-    print("create dir \"圖片\"")
-    os.makedirs("static/圖片")
+create_data_type("獲獎公告")
 
-print("create data_type \"獲獎公告\"...")
-try:
-    ret = cursor.execute('insert into `data_type` (`type_name`,`type_dir`) values ("獲獎公告","獲獎公告/")')
-except:
-    print("Insert type failed")
+create_data_type("活動公告")
 
-if not os.path.exists("static/獲獎公告"):
-    print("create dir \"獲獎公告\"")
-    os.makedirs("static/獲獎公告")
+create_data_type("氣像雲圖","圖片")
 
-print("create data_type \"活動公告\"...")
-try:
-    ret = cursor.execute('insert into `data_type` (`type_name`,`type_dir`) values ("活動公告","活動公告/")')
-except:
-    print("Insert type failed")
+create_data_type("google_drive_image","圖片")
 
-if not os.path.exists("static/活動公告"):
-    print("create dir \"活動公告\"")
-    os.makedirs("static/活動公告")
-
-print("create data_type \"氣像雲圖\"...")
-try:
-    ret = cursor.execute('insert into `data_type` (`type_name`,`type_dir`) values ("氣像雲圖","圖片/氣像雲圖/")')
-except:
-    print("Insert type failed")
-
-if not os.path.exists("static/圖片/氣像雲圖"):
-    print("create dir \"圖片/氣像雲圖\"")
-    os.makedirs("static/圖片/氣像雲圖")
-
-print("create data_type \"google_drive_image\"...")
-try:
-    ret = cursor.execute('insert into `data_type` (`type_name`,`type_dir`) values ("google_drive_image","圖片/google_drive_image/")')
-except:
-    print("Insert type failed")
-
-if not os.path.exists("static/圖片/google_drive_image"):
-    print("create dir \"圖片/google_drive_image\"")
-    os.makedirs("static/圖片/google_drive_image")
-
-print("create data_type \"google日曆\"...")
-try:
-    ret = cursor.execute('insert into `data_type` (`type_name`,`type_dir`) values ("google日曆","google日曆/")')
-except:
-    print("Insert type failed")
-
-if not os.path.exists("static/google日曆"):
-    print("create dir \"/google日曆\"")
-    os.makedirs("static/google日曆")
+create_data_type("google日曆")
 
 print("create arrage_mode 0...")
 try:
