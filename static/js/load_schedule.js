@@ -27,18 +27,35 @@ function load_schedule()
                 $('img').css('display','none');
                 $('footer').css('display','inline');
                 $('div.title2').css('display','inline');
-                $('span#con').html(jsonRes.file_text.con);
+                if ( 'con' in jsonRes.file_text){
+                    $('span#con').html(jsonRes.file_text.con);
+                }else{
+                    if (jsonRes.type_name === "獲獎公告"){
+                        $('span#con').html("賀！");
+                    }else{
+                        $('span#con').html("活動公告");
+                    }
+                }
                 $('#title1').html(jsonRes.file_text.title1);
                 $('#title2').html(jsonRes.file_text.title2);
                 $('#description').html(jsonRes.file_text.description);
                 if(jsonRes.type_name === "獲獎公告"){
                     console.log('reward');
-                    $('div.header').css('background-color',jsonRes.file_text.background_color);
-                    $('div.bar').css('background-color',jsonRes.file_text.background_color);
+                    if ('background_color' in jsonRes.file_text){
+                        $('div.header').css('background-color',jsonRes.file_text.background_color);
+                        $('div.bar').css('background-color',jsonRes.file_text.background_color);
+                    }else{
+                        $('div.header').css('background-color','#CE0000');
+                        $('div.bar').css('background-color','#CE0000');
+                    }
                     $('div#footer').css('display','inline');
                     $('div.congratulation').html(jsonRes.file_text.year+"年"+jsonRes.file_text.month+"月 資訊學院全體師生慶賀");
                 }else{
-                    $('div.header').css('background-color',jsonRes.file_text.background_color);
+                    if ('background_color' in jsonRes.file_text){
+                        $('div.header').css('background-color',jsonRes.file_text.background_color);
+                    }else{
+                        $('div.header').css('background-color','#FF8000');
+                    }
                     $('div#footer').css('display','none');
                 }
             }else{
