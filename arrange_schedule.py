@@ -1063,7 +1063,7 @@ def check_event_exist_or_insert(event):
         send_msg = {}
         send_msg["server_dir"] = os.path.dirname(__file__)
         send_msg["file_type"] = 6
-        send_msg["start_date"] = date.today().strftime('%Y-%m-%d')
+        send_msg["start_date"] = datetime.datetime.strftime(datetime.datetime.strptime(event['start']['date'],'%Y-%m-%d') - datetime.timedelta(3),'%Y-%m-%d')
         send_msg["end_date"] = event['start']['date']
         send_msg["start_time"] = ""
         send_msg["end_time"] = ""
