@@ -28,18 +28,7 @@
             {% module xsrf_form_html() %}
         </form>
     </div>
-    <script type="text/javascript">
-        function deal_space(){
-            document.getElementById("con").value = document.getElementById("con").value.replace(/ /g,'&nbsp').replace(/\n/g,'<br>');
-            document.getElementById("person_name").value = document.getElementById("person_name").value.replace(/ /g,'&nbsp').replace(/\n/g,'<br>');
-            document.getElementById("reward").value = document.getElementById("reward").value.replace(/ /g,'&nbsp').replace(/\n/g,'<br>');
-            document.getElementById("description").value = document.getElementById("description").value.replace(/ /g,'&nbsp').replace(/\n/g,'<br>');
-            document.getElementById("person_name2").value = document.getElementById("person_name2").value.replace(/ /g,'&nbsp').replace(/\n/g,'<br>');
-            document.getElementById("reward2").value = document.getElementById("reward2").value.replace(/ /g,'&nbsp').replace(/\n/g,'<br>');
-            document.getElementById("description2").value = document.getElementById("description2").value.replace(/ /g,'&nbsp').replace(/\n/g,'<br>');
-            
-        }
-    </script>
+    <script type="text/javascript" src={{ static_url("js/deal_space.js") }}></script>
     <div class="text_block" style="display:none" >
         <div class='row'>
             <div class='col-lg-6' >
@@ -187,38 +176,6 @@
     {% end %}
     </div>
     </div>
-    <script>
-    $(window).on('load',function(){
-        $('span#year').text($('select#year').val());
-        $('span#month').text($('select#month').val());
-        $('#upload_image').click(function(){
-            if($('.text_block').css('display') !== "none"){
-                $('.text_block').toggle();
-            }
-            if($('.activity_block').css('display') !== "none"){
-                $('.activity_block').toggle();
-            }
-            $('.image_block').toggle();
-        });
-        $('#upload_text').click(function(){
-            if($('.image_block').css('display') !== "none"){
-                $('.image_block').toggle();
-            }
-            if($('.activity_block').css('display') !== "none"){
-                $('.activity_block').toggle();
-            }
-            $('.text_block').toggle();
-        });
-        $('#upload_activity').click(function(){
-            if($('.image_block').css('display') !== "none"){
-                $('.imgae_block').toggle();
-            }
-            if($('.text_block').css('display') !== "none"){
-                $('.text_block').toggle();
-            }
-            $('.activity_block').toggle();
-        });
-    });
-    </script>
+    <script type="text/javascript" src={{ static_url("js/upload_block.js") }}></script>
     <script type="text/javascript" src={{ static_url("js/text_preview.js") }}></script>
 {% end %}

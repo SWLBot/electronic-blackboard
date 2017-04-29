@@ -9,10 +9,6 @@ mysql_auth.txt
 
 text*.txt
 
-# for create table
-
-create_tables.sql
-
 # for weather image
 
 static/img/*

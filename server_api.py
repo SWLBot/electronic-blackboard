@@ -975,7 +975,7 @@ def read_text_data(text_id):
         return return_msg
 
 # for google api
-SCOPES = 'https://www.googleapis.com/auth/calendar.readonly'
+SCOPES = ['https://www.googleapis.com/auth/calendar.readonly','https://www.googleapis.com/auth/drive']
 CLIENT_SECRET_FILE = 'client_secret.json'
 APPLICATION_NAME = 'Google Calendar API Python Quickstart'
 redirect_url = 'http://localhost:3000/googleapi'
@@ -986,7 +986,7 @@ def get_credentials(handler=None):
     if not os.path.exists(credential_dir):
         os.makedirs(credential_dir)
     credential_path = os.path.join(credential_dir,
-        'calendar-python-quickstart.json')
+        'google-api-quickstart.json')
     store = Storage(credential_path)
     credentials = store.get()
     if not credentials or credentials.invalid:
@@ -1007,7 +1007,7 @@ def exchange_code_and_store_credentials(code):
     if not os.path.exists(credential_dir):
         os.makedirs(credential_dir)
     credential_path = os.path.join(credential_dir,
-        'calendar-python-quickstart.json')
+        'google-api-quickstart.json')
     store = Storage(credential_path)
     store.put(credentials)
     credentials.set_store(store)

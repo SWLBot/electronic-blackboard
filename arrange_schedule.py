@@ -11,6 +11,10 @@ from server_api import delete_image_or_text_data
 from server_api import get_credentials
 from server_api import get_upcoming_events
 from pprint import pprint
+from apiclient.http import MediaIoBaseDownload
+from apiclient import discovery
+import httplib2
+import io
 import datetime
 import signal
 import time
@@ -49,6 +53,30 @@ def mark_now_activity():
         db.close()
         return_msg["error"] = e.args[1]
         return return_msg
+        
+#child function of load_next_schedule
+def find_next_schedule(db):
+    try:
+        return_msg = {}
+        return_msg["result"] = "fail"
+        sql = ("SELECT sche_id, sche_target_id, sche_display_time, sche_is_artificial_edit, sche_sn "\
+                    +"FROM schedule WHERE sche_is_used=0 ORDER BY sche_sn ASC LIMIT 1")
+        pure_result = db.query(sql)
+        try:
+            return_msg["schedule_id"] = pure_result[0][0]
+            return_msg["sche_target_id"] = pure_result[0][1]
+            return_msg["display_time"] = int(pure_result[0][2])
+            return_msg["no_need_check_time"] = pure_result[0][3]
+            return_msg["target_sn"] = int(pure_result[0][4])
+        except:
+            return_msg["error"] = "no schedule"
+            return return_msg
+        
+        return_msg["result"] = "success"
+        return return_msg
+    except DB_Exception as e:
+        return_msg["error"] = e.args[1]
+        return return_msg
 
 #The API load schedule.txt and find out the first image which has not print and still meet the time limit
 def load_next_schedule(json_obj):
@@ -73,20 +101,18 @@ def load_next_schedule(json_obj):
         
         while True:
             #find schedule
-            sql = ("SELECT sche_id, sche_target_id, sche_display_time, sche_is_artificial_edit, sche_sn "\
-                +"FROM schedule WHERE sche_is_used=0 "\
-                +"ORDER BY sche_sn ASC LIMIT 1")
-            pure_result = db.query(sql)
-            try:
-                return_msg["schedule_id"] = pure_result[0][0]
-                sche_target_id = pure_result[0][1]
-                return_msg["display_time"] = int(pure_result[0][2])
-                no_need_check_time = pure_result[0][3]
-                target_sn = int(pure_result[0][4])
-            except:
+            receive_msg = {}
+            receive_msg = find_next_schedule(db)
+            if receive_msg["result"]=="fail":
                 db.close()
-                return_msg["error"] = "no schedule"
+                return_msg["error"] = receive_msg["error"]
                 return return_msg
+            
+            return_msg["schedule_id"] = receive_msg["schedule_id"]
+            sche_target_id = receive_msg["sche_target_id"]
+            return_msg["display_time"] = receive_msg["display_time"]
+            no_need_check_time = receive_msg["no_need_check_time"]
+            target_sn = receive_msg["target_sn"]
     
             #find the file
             if sche_target_id[0:4]=="imge":
@@ -978,6 +1004,7 @@ def crawler_cwb_img(json_obj):
 
 def google_calendar_text():
     return_msg = {}
+    return_msg["result"] = "fail"
     credentials = get_credentials()
     if not credentials:
         return_msg["error"] = "No credential file"
@@ -995,6 +1022,33 @@ def google_calendar_text():
             return_msg["error"] = e.arg[1]
             return return_msg
 
+def rule_base_agent(event):
+    addition_msg = {}
+    holidays = ['放假','假期','補假','休假']
+    if '節' in event['summary']:
+        addition_msg['title1'] = event['summary'] + '快樂'
+        addition_msg['description'] = '｡:.ﾟヽ(*´∀`)ﾉﾟ.:｡'
+
+    if any(holiday in event['summary'] for holiday in holidays):
+        addition_msg['title2'] = '放假就是爽(*´∀`)~♥'
+
+    if '期中預警' in event['summary']:
+        addition_msg['title2'] = '退選單簽了沒？(,,・ω・,,)'
+        addition_msg['description'] = ''
+
+    if '考試' in event['summary']:
+        addition_msg['title2'] = '考古題背完了沒?'
+        addition_msg['description'] = '考試不作弊</br>三分靠賭運</br>七分靠運氣</br>猜錯當學弟</br>_(:3 」∠ )_'
+
+    if 'title1' not in addition_msg:
+        addition_msg['title1'] = event['summary']
+
+    for key in ['title1','title2','description']:
+        if key not in addition_msg:
+            addition_msg[key] = ''
+
+    return addition_msg
+
 def check_event_exist_or_insert(event):
     event_id = event['id']
     db = mysql()
@@ -1008,8 +1062,8 @@ def check_event_exist_or_insert(event):
     else:
         send_msg = {}
         send_msg["server_dir"] = os.path.dirname(__file__)
-        send_msg["file_type"] = 5
-        send_msg["start_date"] = date.today().strftime('%Y-%m-%d')
+        send_msg["file_type"] = 6
+        send_msg["start_date"] = datetime.datetime.strftime(datetime.datetime.strptime(event['start']['date'],'%Y-%m-%d') - datetime.timedelta(3),'%Y-%m-%d')
         send_msg["end_date"] = event['start']['date']
         send_msg["start_time"] = ""
         send_msg["end_time"] = ""
@@ -1017,14 +1071,122 @@ def check_event_exist_or_insert(event):
         send_msg["user_id"] = 1
         send_msg["invisible_title"] = event_id
         receive_msg = upload_text_insert_db(send_msg)
+        addition_msg = rule_base_agent(event)
         text_file = {   "con" : send_msg["end_date"],
-                        "title1" : event["summary"],
-                        "title2" : "",
-                        "description": "",
+                        "title1" : addition_msg['title1'],
+                        "title2" : addition_msg['title2'],
+                        "description": addition_msg['description'],
                         "background_color" : "#984B4B"
         }
         with open(receive_msg["text_system_dir"],"w") as fp:
             print(json.dumps(text_file),file=fp)
+
+#crawler google drive image
+def crawler_google_drive_img(json_obj):
+    try:
+        return_msg = {}
+        return_msg["result"] = "fail"
+        server_dir = ""
+        user_id = 1
+        try:
+            server_dir = json_obj["server_dir"]
+            user_id = json_obj["user_id"]
+        except:
+            return_msg["error"] = "input parameter missing"
+            return return_msg
+        data_type = 4
+        now_time = time.time()
+        send_obj = {}
+        receive_obj = {}
+
+        #connect to mysql
+        db = mysql()
+        db.connect()
+
+        #find google_drive_image type id 
+        sql = "SELECT type_id FROM data_type WHERE type_name='google_drive_image'"
+        pure_result = db.query(sql)
+        try:
+            data_type = int(pure_result[0][0])
+        except:
+            db.close()
+            return_msg["error"] = "no google_drive_image data type"
+            return return_msg
+
+        #get google credentials
+        credentials = get_credentials()
+        http = credentials.authorize(httplib2.Http())
+        service = discovery.build('drive', 'v3', http=http)
+
+        #set time
+        start_time = time.strftime("%Y-%m-%dT%H:%M:%S+08:00", time.localtime(now_time-86400))
+        results = service.files().list(
+            q="modifiedTime > '" + start_time + "' and mimeType contains 'image/'", 
+            fields="nextPageToken, files(id, name)").execute()
+        items = results.get('files', [])
+        if not items:
+            "No images found."
+        else:
+            #pprint(items)
+            for item in items:
+                #print('##{0} ({1})'.format(item['name'], item['id']))
+                file_name = item['id'] + os.path.splitext(item['name'])[1]
+                download_file_place = os.path.join(server_dir, "static/img/"+file_name)
+                
+                #check if file is existed
+                sql = "SELECT COUNT(*) FROM image_data WHERE img_is_expire=0 and img_is_delete=0 "
+                sql = sql + "and type_id=" + str(data_type) + " and img_file_name='" + file_name + "'"
+                pure_result = db.query(sql)
+                if pure_result[0][0]:
+                    #image existed
+                    continue
+            
+                #download files
+                request = service.files().get_media(fileId=item['id'])
+                fh = io.FileIO(download_file_place, mode='wb')
+                downloader = MediaIoBaseDownload(fh, request)
+                done = False
+                while done is False:
+                    status, done = downloader.next_chunk()
+                
+                #upload new file
+                send_obj["server_dir"] = server_dir
+                send_obj["file_type"] = data_type
+                send_obj["file_dir"] = 'static/img/' + file_name
+                send_obj["start_date"] = time.strftime("%Y-%m-%d", time.localtime(time.time()))
+                send_obj["end_date"] = time.strftime("%Y-%m-%d", time.localtime(time.time()+86400*7))
+                send_obj["start_time"] = "00:00:00"
+                send_obj["end_time"] = "23:59:59"
+                send_obj["display_time"] = 3
+                send_obj["user_id"] = user_id
+                receive_obj = upload_image_insert_db(send_obj)
+                #pprint(receive_obj)
+                #save thumbnail image
+                try:
+                    if receive_obj["result"] == "success":
+                        filepath = receive_obj["img_system_dir"]
+                        thumbnail_path = "static/thumbnail/"
+                        thumbnail_path = os.path.join(thumbnail_path,receive_obj["img_thumbnail_name"])
+                        im = Image.open(filepath)
+                        im.thumbnail((100,100))
+                        im.save(thumbnail_path)
+                        #print(thumbnail_path)
+                    else:
+                        db.close()
+                        return_msg = receive_obj
+                        return return_msg
+                except:
+                    db.close()
+                    return_msg["error"] = "save thumbnail image fail"
+                    return return_msg
+                
+        db.close()
+        return_msg["result"] = "success"
+        return return_msg
+    except DB_Exception as e:
+        db.close()
+        return_msg["error"] = e.args[1]
+        return return_msg
 
 #deal with defunct 
 def CHLD_handler(para1, para2):
@@ -1108,6 +1270,7 @@ def main():
     alarm_add_schedule = 1960380833.0
     alarm_crawler_cwb_img = raw_time + 7.0
     alarm_google_calendar_text = raw_time + 5.0
+    alarm_crawler_google_drive_img = raw_time + 13.0
 
 
     #start scheduling
@@ -1303,7 +1466,7 @@ def main():
                     else:
                         receive_obj["error"] = "google_calendar_text" + receive_obj["error"]
                         set_system_log(receive_obj)
-                    os.exit(0)
+                    os._exit(0)
                 else: #Parent
                     alarm_google_calendar_text = raw_time + 43200.0
             except:
@@ -1311,6 +1474,30 @@ def main():
                 receive_obj["error"] = "fork5 error"
                 set_system_log(receive_obj)
                 alarm_google_calendar_text = raw_time + 10.0
+        
+        #google drive add to text data
+        if raw_time >= alarm_crawler_google_drive_img:
+            print("#8 "+str(raw_time))
+            try:
+                newpid = os.fork()
+                if newpid == 0: #child
+                    shutdown = 1
+                    send_obj["server_dir"] = board_py_dir
+                    send_obj["user_id"] = 1
+                    receive_obj = crawler_google_drive_img(send_obj)
+                    if receive_obj["result"] == "success":
+                        "DO NOTHING"
+                    else :
+                        receive_obj["error"] = "crawler_google_drive_img : " + receive_obj["error"]
+                        set_system_log(receive_obj)
+                    os._exit(0)
+                else: #Parent
+                    alarm_crawler_google_drive_img = raw_time + 3600.0
+            except:
+                receive_obj["result"] = "fail"
+                receive_obj["error"] = "fork6 error"
+                set_system_log(receive_obj)
+                alarm_crawler_google_drive_img = raw_time + 600.0
 
         #delay
         sleep(0.1)

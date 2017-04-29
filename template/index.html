@@ -22,6 +22,7 @@
                 {% if current_user and current_user.decode('utf-8') == 'admin' %}
                 <li><a href='/signup'>Create User</a></li>
                 <li><a href='/addType'>Add Type</a></li>
+                <li><a href='/googleapi'>Google API Login</a></li>
                 {% end %}
                 <li><a href="#">Contact</a></li>
               </ul>
@@ -80,7 +81,7 @@
               <td><img src="{{ static_url("thumbnail/"+img[8]) }}"/></td>
               <td>
                   <a href="/edit?img_id={{img[0]}}" class="btn btn-link">Edit</a>
-                  <a href="/delete?target_id={{img[0]}}" class="btn btn-link" onclick="deleteConfirm()">Delete</a>
+                  <a href="/delete?target_id={{img[0]}}" class="btn btn-link" onclick="return deleteConfirm()">Delete</a>
               </td>
             <tr>
           {% end %}
@@ -124,7 +125,7 @@
                             <td></td>
                             <td>
                                 <a href="/edit?text_id={{text[0]}}" class='btn btn-link'>Edit</a>
-                                <a href="/delete?target_id={{text[0]}}" class="btn btn-link" onclick="deleteConfirm()">Delete</a>
+                                <a href="/delete?target_id={{text[0]}}" class="btn btn-link" onclick="return deleteConfirm()">Delete</a>
                             </td>
                         </tr>
                     {% end %}
@@ -144,7 +145,7 @@
             $(other).css('display','none');
         });
         function deleteConfirm(){
-            confirm("確定要刪除嗎?")
+            return confirm("確定要刪除嗎?");
         }
     </script>
         {% end %}
