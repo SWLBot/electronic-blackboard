@@ -9,6 +9,7 @@ import shutil
 import bcrypt
 import json
 import tornado
+import time
 
 from oauth2client import client
 from oauth2client import tools
@@ -16,7 +17,151 @@ from oauth2client.file import Storage
 import httplib2
 
 from apiclient import discovery
+#from arrange_schedule import find_acticity
+#from arrange_schedule import edit_schedule
 import datetime
+#
+def check_bluetooth_mode_available():
+    file_dir = "static/user_data"
+    file_name = "setting.txt"
+    
+    #check setting file exist
+    if not os.path.exists(file_dir):
+        return 0
+    if not os.path.isfile(file_dir+'/'+file_name):
+        return 0
+    
+    try:
+        #read setting file
+        filename = file_dir + '/' + file_name
+        file_pointer = open(filename,"r")
+        bluetooth_available = 0
+        for line in file_pointer:
+            pure_data = []
+            pure_data = line.rstrip('\n').split(' ')
+            if pure_data[0] == "bluetooth_available":
+                bluetooth_available = int(pure_data[1])
+        file_pointer.close()
+        
+        #check function available
+        if bluetooth_available==1:
+            return 1
+        else :
+            return 0
+        
+        return 0
+    except:
+        return 0
+        
+#
+def find_user_by_bluetooth(db, bluetooth_id):
+    try:
+        sql = "SELECT user_id FROM user WHERE user_bluetooth_id='" + str(bluetooth_id) + "'"
+        pure_result = db.query(sql)
+        return int(pure_result[0][0])
+    except:
+        return 0
+#
+def load_now_user_prefer(user_id):
+    try:
+        filename = "static/user_data/"+ str(user_id) + ".txt"
+        
+        #check user data file exist
+        if not os.path.isfile(filename):
+            return -1
+        
+        #read user data file
+        user_data = {}
+        with open(filename,'r') as fp:
+            user_data = json.load(fp)
+        
+        #check attribute exist
+        key="hour" + time.strftime("%H", time.localtime(time.time()))
+        if "prefer" not in user_data:
+            return -1
+        if key not in user_data["prefer"]:
+            return -1
+        
+        return user_data["prefer"][key]
+    except:
+        return -1
+#
+def insert_customized_schedule(prefer_data_type):
+    from arrange_schedule import find_acticity
+    from arrange_schedule import edit_schedule
+
+    try:
+        receive_msg = {}
+        send_msg = {}
+
+        #find customer prefer information
+        send_msg["arrange_mode"]=5
+        send_msg["condition"]=prefer_data_type
+        receive_msg = find_acticity(send_msg)
+        if receive_msg["result"]=="fail":
+            return -1
+        target_id = receive_msg["target_id"][0]
+        display_time = receive_msg["display_time"][0]
+
+        #insert infromation to schedule
+        send_msg["next_sn"] = 1
+        send_msg["target_id"] = [target_id]
+        send_msg["display_time"] = [display_time]
+        send_msg["arrange_sn"] = 0
+        receive_msg = edit_schedule(send_msg)
+        if receive_msg["result"]=="fail":
+            return -1
+
+        return 1
+    except Exception as e:
+        print(e)
+        return -1
+#
+def deal_with_bluetooth_id(bluetooth_id):
+    try:
+        return_msg = {}
+        return_msg["result"] = "fail"
+        db = mysql()
+        db.connect()
+        user_id=0
+
+        #check bluetooth mode available
+        if check_bluetooth_mode_available()==0:
+            db.close()
+            return_msg["error"] = "the bluetooth function is closed"
+            return return_msg
+
+        #find user by bluetooth id
+        user_id = find_user_by_bluetooth(db, bluetooth_id)
+        if user_id==0:
+            db.close()
+            return_msg["error"] = "no such bluetooth id"
+            return return_msg
+
+        #load now user prefer
+        prefer_data_type = load_now_user_prefer(user_id)
+        if prefer_data_type == -1:
+            db.close()
+            return_msg["error"] = "no prefer data type"
+            return return_msg
+
+        #insert customized schedule to next schedule
+        receive_result = insert_customized_schedule(prefer_data_type)
+        if receive_result == -1:
+            db.close()
+            return_msg["error"] = "insert fail"
+            return return_msg
+    
+        return_msg["result"] = "success"
+        
+    except DB_Exception as e:
+        db.close()
+        return_msg["error"] = e.args[1]
+        return return_msg 
+    except Exception as e:
+        db.close()
+        return_msg["error"] = e
+        return return_msg
 #
 def get_user_name_and_password(handler):
     return_msg = {}
