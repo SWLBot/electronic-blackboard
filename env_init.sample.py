@@ -81,6 +81,17 @@ try:
     ret = cursor.execute('insert into `arrange_mode` (`armd_mode`) values (0)')
 except:
     print("Insert arrange mode failed")
-
 client.commit()
+
+print("create user_data dir and file...")
+try:
+    if not os.path.exists("static/user_data"):
+        print('create dir "static/user_data"')
+        os.makedirs('static/user_data')
+    if not os.path.isfile("static/user_data/setting.txt"):
+        print('create file "static/user_data/setting.txt"')
+        with open("static/user_data/setting.txt", "w") as fp:
+            fp.write("bluetooth_available 1")
+except:
+    print("create user_data file failed")
 client.close()

@@ -47,7 +47,9 @@ create table user
     user_phone_number varchar(20) ,
     user_level int default 100,
     user_sex int default 0,
-    user_enable bit(1) default 0
+    user_enable bit(1) default 0,
+    user_bluetooth_id varchar(50),
+    user_profession int default 0 not null
 );
 
 DROP TABLE IF EXISTS schedule;
