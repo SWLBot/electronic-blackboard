@@ -21,7 +21,7 @@ class mysql:
         try:
             file_pointer = open(file_name,"r")
         except:
-            raise DB_Exception(-1, "Mysql connect fail")
+            raise DB_Exception(-1, "Mysql auth file open failed")
             return -1
         host_str = file_pointer.readline().rstrip('\n').strip(' ')
         user_str = file_pointer.readline().rstrip('\n').strip(' ')
