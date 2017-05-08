@@ -226,7 +226,12 @@ class BluetoothHandler(BaseHandler):
     def get(self):
         bluetooth_id = self.get_argument("bluetooth_id", default='')
         #self.write("Hello, {}!".format(bluetooth_id))
-        deal_with_bluetooth_id(bluetooth_id)
+        receive_msg = {}
+        receive_msg = deal_with_bluetooth_id(bluetooth_id)
+        if receive_msg["result"] == "success":
+            self.write("success {}".format(bluetooth_id))
+        else :
+            self.write("fail {}".format(bluetooth_id))
         
 
 def main():

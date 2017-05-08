@@ -17,14 +17,11 @@ from oauth2client.file import Storage
 import httplib2
 
 from apiclient import discovery
-#from arrange_schedule import find_acticity
-#from arrange_schedule import edit_schedule
 import datetime
 #
 def check_bluetooth_mode_available():
-    file_dir = "static/user_data"
-    file_name = "setting.txt"
-    
+    file_dir = "setting"
+    file_name = "server_setting.txt"
     #check setting file exist
     if not os.path.exists(file_dir):
         return 0
@@ -50,9 +47,8 @@ def check_bluetooth_mode_available():
             return 0
         
         return 0
-    except:
+    except :
         return 0
-        
 #
 def find_user_by_bluetooth(db, bluetooth_id):
     try:
@@ -62,27 +58,36 @@ def find_user_by_bluetooth(db, bluetooth_id):
     except:
         return 0
 #
-def load_now_user_prefer(user_id):
+def load_now_user_prefer(db, user_id):
     try:
-        filename = "static/user_data/"+ str(user_id) + ".txt"
+        sql = "SELECT "
+        now_hour = time.localtime(time.time())[3]
+        #use now time to choose preference rule
+        if now_hour >= 7 and now_hour < 11:
+            sql = sql + "pref_data_type_01 "
+        elif now_hour >= 11 and now_hour < 13:
+            sql = sql + "pref_data_type_02 "
+        elif now_hour >= 13 and now_hour < 18:
+            sql = sql + "pref_data_type_03 "
+        elif now_hour >= 18 and now_hour < 22:
+            sql = sql + "pref_data_type_04 "
+        else :
+            sql = sql + "pref_data_type_05 "
         
-        #check user data file exist
-        if not os.path.isfile(filename):
+        sql = sql + "FROM user_prefer WHERE pref_is_delete=0 and user_id=" + str(user_id)
+        sql = sql + " ORDER BY pref_set_time DESC LIMIT 1"
+        pure_result = db.query(sql)
+        
+        #reshap pref_data_type_XX from varchar to int array
+        data_type_array = []
+        if len(pure_result) > 0  and pure_result[0][0] is not None:
+            str_condition = pure_result[0][0].split(' ')
+            for num1 in range(len(str_condition)):
+                data_type_array.append(int(str_condition[num1]))
+        else:
             return -1
         
-        #read user data file
-        user_data = {}
-        with open(filename,'r') as fp:
-            user_data = json.load(fp)
-        
-        #check attribute exist
-        key="hour" + time.strftime("%H", time.localtime(time.time()))
-        if "prefer" not in user_data:
-            return -1
-        if key not in user_data["prefer"]:
-            return -1
-        
-        return user_data["prefer"][key]
+        return data_type_array
     except:
         return -1
 #
@@ -113,8 +118,7 @@ def insert_customized_schedule(prefer_data_type):
             return -1
 
         return 1
-    except Exception as e:
-        print(e)
+    except:
         return -1
 #
 def deal_with_bluetooth_id(bluetooth_id):
@@ -139,7 +143,7 @@ def deal_with_bluetooth_id(bluetooth_id):
             return return_msg
 
         #load now user prefer
-        prefer_data_type = load_now_user_prefer(user_id)
+        prefer_data_type = load_now_user_prefer(db, user_id)
         if prefer_data_type == -1:
             db.close()
             return_msg["error"] = "no prefer data type"
@@ -153,6 +157,7 @@ def deal_with_bluetooth_id(bluetooth_id):
             return return_msg
     
         return_msg["result"] = "success"
+        return return_msg
         
     except DB_Exception as e:
         db.close()
@@ -168,7 +173,7 @@ def get_user_name_and_password(handler):
     return_msg['user_name'] = tornado.escape.xhtml_escape(handler.get_argument("username"))
     return_msg['user_password'] = tornado.escape.xhtml_escape(handler.get_argument("password"))
     return return_msg
-
+#
 def check_user_existed_or_signup(user_info):
     try:
         return_msg = {}
