@@ -899,7 +899,6 @@ def read_arrange_mode():
         db.close()
         return_msg["error"] = e.args[1]
         return return_msg
-
 #
 def crawler_cwb_img(json_obj):
     try:
@@ -1469,9 +1468,9 @@ def main():
                     os._exit(0)
                 else: #Parent
                     alarm_google_calendar_text = raw_time + 43200.0
-            except:
+            except Exception as e:
                 receive_obj["result"] = "fail"
-                receive_obj["error"] = "fork5 error"
+                receive_obj["error"] = "fork5 error" + " : " + str(e)
                 set_system_log(receive_obj)
                 alarm_google_calendar_text = raw_time + 10.0
         
@@ -1493,9 +1492,9 @@ def main():
                     os._exit(0)
                 else: #Parent
                     alarm_crawler_google_drive_img = raw_time + 3600.0
-            except:
+            except Exception as e:
                 receive_obj["result"] = "fail"
-                receive_obj["error"] = "fork6 error"
+                receive_obj["error"] = "fork6 error" + " : " + str(e)
                 set_system_log(receive_obj)
                 alarm_crawler_google_drive_img = raw_time + 600.0
 

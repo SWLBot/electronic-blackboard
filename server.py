@@ -221,6 +221,18 @@ class googleApiHandler(BaseHandler):
         else:
             credentials = get_credentials(self)
         self.redirect('/')
+        
+class BluetoothHandler(BaseHandler):
+    def get(self):
+        bluetooth_id = self.get_argument("bluetooth_id", default='')
+        #self.write("Hello, {}!".format(bluetooth_id))
+        receive_msg = {}
+        receive_msg = deal_with_bluetooth_id(bluetooth_id)
+        if receive_msg["result"] == "success":
+            self.write("success {}".format(bluetooth_id))
+        else :
+            self.write("fail {}".format(bluetooth_id))
+        
 
 def main():
     parser = argparse.ArgumentParser()
@@ -246,7 +258,8 @@ def main():
         tornado.web.url(r"/edit",EditHandler,name="edit"),
         tornado.web.url(r"/delete",DeleteHandler,name="delete"),
         tornado.web.url(r"/addType",addTypeHandler,name="addType"),
-        tornado.web.url(r"/googleapi",googleApiHandler,name="googleapi")
+        tornado.web.url(r"/googleapi",googleApiHandler,name="googleapi"),
+        tornado.web.url(r"/bluetooth",BluetoothHandler,name="bluetooth")
     ],**settings)
     http_server = tornado.httpserver.HTTPServer(application)
     if args.port:
