@@ -189,9 +189,10 @@ class EditHandler(BaseHandler):
 class DeleteHandler(BaseHandler):
     def get(self):
         send_msg = {}
-        send_msg["user_name"] = self.get_current_user().decode("utf-8")
+        user_name = self.get_current_user().decode("utf-8")
         send_msg["server_dir"] = os.path.dirname(__file__)
         send_msg["target_id"] = tornado.escape.xhtml_escape(self.get_argument("target_id"))
+        send_msg["user_id"] = get_user_id(user_name)
         receive_msg = delete_image_or_text_data(send_msg)
         if receive_msg["result"] == "success":
             flash = "delete "+send_msg["target_id"]+" success!"
