@@ -47,7 +47,9 @@ create table user
     user_phone_number varchar(20) ,
     user_level int default 100,
     user_sex int default 0,
-    user_enable bit(1) default 0
+    user_enable bit(1) default 0,
+    user_bluetooth_id varchar(50),
+    user_profession int default 0 not null
 );
 
 DROP TABLE IF EXISTS schedule;
@@ -97,4 +99,20 @@ create table arrange_mode
     armd_end_time time default '23:59:59',
     armd_is_expire bit(1) default 0,
     armd_is_delete bit(1) default 0
+);
+
+
+DROP TABLE IF EXISTS user_prefer;
+
+create table user_prefer
+(
+        pref_id varchar(14) unique key,
+        user_id int default 0,
+        pref_data_type_01 varchar(100),
+        pref_data_type_02 varchar(100),
+        pref_data_type_03 varchar(100),
+        pref_data_type_04 varchar(100),
+        pref_data_type_05 varchar(100),
+        pref_set_time datetime default now(),
+        pref_is_delete bit(1) default 0
 );
