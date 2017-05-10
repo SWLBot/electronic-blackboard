@@ -9,6 +9,7 @@ import shutil
 import bcrypt
 import json
 import tornado
+import time
 
 from oauth2client import client
 from oauth2client import tools
@@ -18,12 +19,161 @@ import httplib2
 from apiclient import discovery
 import datetime
 #
+def check_bluetooth_mode_available():
+    file_dir = "setting"
+    file_name = "server_setting.txt"
+    #check setting file exist
+    if not os.path.exists(file_dir):
+        return 0
+    if not os.path.isfile(file_dir+'/'+file_name):
+        return 0
+    
+    try:
+        #read setting file
+        filename = file_dir + '/' + file_name
+        file_pointer = open(filename,"r")
+        bluetooth_available = 0
+        for line in file_pointer:
+            pure_data = []
+            pure_data = line.rstrip('\n').split(' ')
+            if pure_data[0] == "bluetooth_enable":
+                bluetooth_available = int(pure_data[1])
+        file_pointer.close()
+        
+        #check function available
+        if bluetooth_available==1:
+            return 1
+        else :
+            return 0
+        
+        return 0
+    except :
+        return 0
+#
+def find_user_by_bluetooth(db, bluetooth_id):
+    try:
+        sql = "SELECT user_id FROM user WHERE user_bluetooth_id='" + str(bluetooth_id) + "'"
+        pure_result = db.query(sql)
+        return int(pure_result[0][0])
+    except:
+        return 0
+#
+def load_now_user_prefer(db, user_id):
+    try:
+        sql = "SELECT "
+        now_hour = time.localtime(time.time())[3]
+        #use now time to choose preference rule
+        if now_hour >= 7 and now_hour < 11:
+            sql = sql + "pref_data_type_01 "
+        elif now_hour >= 11 and now_hour < 13:
+            sql = sql + "pref_data_type_02 "
+        elif now_hour >= 13 and now_hour < 18:
+            sql = sql + "pref_data_type_03 "
+        elif now_hour >= 18 and now_hour < 22:
+            sql = sql + "pref_data_type_04 "
+        else :
+            sql = sql + "pref_data_type_05 "
+        
+        sql = sql + "FROM user_prefer WHERE pref_is_delete=0 and user_id=" + str(user_id)
+        sql = sql + " ORDER BY pref_set_time DESC LIMIT 1"
+        pure_result = db.query(sql)
+        
+        #reshap pref_data_type_XX from varchar to int array
+        data_type_array = []
+        if len(pure_result) > 0  and pure_result[0][0] is not None:
+            str_condition = pure_result[0][0].split(' ')
+            for num1 in range(len(str_condition)):
+                data_type_array.append(int(str_condition[num1]))
+        else:
+            return -1
+        
+        return data_type_array
+    except:
+        return -1
+#
+def insert_customized_schedule(prefer_data_type):
+    from arrange_schedule import find_acticity
+    from arrange_schedule import edit_schedule
+
+    try:
+        receive_msg = {}
+        send_msg = {}
+
+        #find customer prefer information
+        send_msg["arrange_mode"]=5
+        send_msg["condition"]=prefer_data_type
+        receive_msg = find_acticity(send_msg)
+        if receive_msg["result"]=="fail":
+            return -1
+        target_id = receive_msg["target_id"][0]
+        display_time = receive_msg["display_time"][0]
+
+        #insert infromation to schedule
+        send_msg["next_sn"] = 1
+        send_msg["target_id"] = [target_id]
+        send_msg["display_time"] = [display_time]
+        send_msg["arrange_sn"] = 0
+        receive_msg = edit_schedule(send_msg)
+        if receive_msg["result"]=="fail":
+            return -1
+
+        return 1
+    except:
+        return -1
+#
+def deal_with_bluetooth_id(bluetooth_id):
+    try:
+        return_msg = {}
+        return_msg["result"] = "fail"
+        db = mysql()
+        db.connect()
+        user_id=0
+
+        #check bluetooth mode available
+        if check_bluetooth_mode_available()==0:
+            db.close()
+            return_msg["error"] = "the bluetooth function is closed"
+            return return_msg
+
+        #find user by bluetooth id
+        user_id = find_user_by_bluetooth(db, bluetooth_id)
+        if user_id==0:
+            db.close()
+            return_msg["error"] = "no such bluetooth id"
+            return return_msg
+
+        #load now user prefer
+        prefer_data_type = load_now_user_prefer(db, user_id)
+        if prefer_data_type == -1:
+            db.close()
+            return_msg["error"] = "no prefer data type"
+            return return_msg
+
+        #insert customized schedule to next schedule
+        receive_result = insert_customized_schedule(prefer_data_type)
+        if receive_result == -1:
+            db.close()
+            return_msg["error"] = "insert fail"
+            return return_msg
+    
+        return_msg["result"] = "success"
+        return return_msg
+        
+    except DB_Exception as e:
+        db.close()
+        return_msg["error"] = e.args[1]
+        return return_msg 
+    except Exception as e:
+        db.close()
+        return_msg["error"] = e
+        return return_msg
+#
 def get_user_name_and_password(handler):
     return_msg = {}
     return_msg['user_name'] = tornado.escape.xhtml_escape(handler.get_argument("username"))
     return_msg['user_password'] = tornado.escape.xhtml_escape(handler.get_argument("password"))
     return return_msg
-
+#
 def check_user_existed_or_signup(user_info):
     try:
         return_msg = {}
@@ -761,7 +911,7 @@ def delete_image_or_text_data(json_obj):
         try:
             server_dir = json_obj["server_dir"]
             target_id = json_obj["target_id"]
-            user_id = get_user_id(json_obj["user_name"])
+            user_id = json_obj["user_id"]
         except:
             return_msg["error"] = "input parameter missing"
             return return_msg
@@ -1019,3 +1169,44 @@ def get_upcoming_events(credentials):
     now = datetime.datetime.utcnow().isoformat() + 'Z' # 'Z' indicates UTC time
     eventsResult = service.events().list(calendarId='nctupac@gmail.com',maxResults=10,timeMin=now).execute()
     return eventsResult
+
+#crawler handle
+def news_insert_db(json_obj):
+    try:
+        return_msg = {}
+        return_msg["result"] = "fail"
+        news_data_type = 1
+        news_title = ""
+        news_serial_number = ""
+
+        try:
+            news_data_type = json_obj["data_type"]
+            news_title = json_obj["title"]
+            news_serial_number = json_obj["serial_number"]
+        except:
+            return_msg["error"] = "input parameter missing"
+            return return_msg
+
+        #insert news data
+        db = mysql()
+        db.connect()
+        #check 
+        sql = "SELECT COUNT(*) FROM news WHERE serial_number = \""+ news_serial_number+"\""
+        check = db.query(sql)
+
+        if check[0][0] == 0:
+            sql = "INSERT INTO news " \
+                    +" (`data_type`, `serial_number`, `title`)" \
+                    +" VALUE (" \
+                    + str(news_data_type) + ", "\
+                    + "\"" + news_serial_number + "\", " \
+                    + "\"" + news_title + "\")"
+
+        db.cmd(sql)
+        db.close()
+        return_msg["result"] = "success"
+
+    except DB_Exception as e:
+        db.close()
+        return_msg["error"] = e.args[1]
+        return return_msg

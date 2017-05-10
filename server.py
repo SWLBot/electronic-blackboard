@@ -189,9 +189,10 @@ class EditHandler(BaseHandler):
 class DeleteHandler(BaseHandler):
     def get(self):
         send_msg = {}
-        send_msg["user_name"] = self.get_current_user().decode("utf-8")
+        user_name = self.get_current_user().decode("utf-8")
         send_msg["server_dir"] = os.path.dirname(__file__)
         send_msg["target_id"] = tornado.escape.xhtml_escape(self.get_argument("target_id"))
+        send_msg["user_id"] = get_user_id(user_name)
         receive_msg = delete_image_or_text_data(send_msg)
         if receive_msg["result"] == "success":
             flash = "delete "+send_msg["target_id"]+" success!"
@@ -221,6 +222,17 @@ class googleApiHandler(BaseHandler):
         else:
             credentials = get_credentials(self)
         self.redirect('/')
+        
+class BluetoothHandler(BaseHandler):
+    def get(self):
+        bluetooth_id = self.get_argument("bluetooth_id", default='')
+        #self.write("Hello, {}!".format(bluetooth_id))
+        receive_msg = {}
+        receive_msg = deal_with_bluetooth_id(bluetooth_id)
+        if receive_msg["result"] == "success":
+            self.write("success {}".format(bluetooth_id))
+        else :
+            self.write("fail {}".format(bluetooth_id))
 
 def main():
     parser = argparse.ArgumentParser()
@@ -246,7 +258,8 @@ def main():
         tornado.web.url(r"/edit",EditHandler,name="edit"),
         tornado.web.url(r"/delete",DeleteHandler,name="delete"),
         tornado.web.url(r"/addType",addTypeHandler,name="addType"),
-        tornado.web.url(r"/googleapi",googleApiHandler,name="googleapi")
+        tornado.web.url(r"/googleapi",googleApiHandler,name="googleapi"),
+        tornado.web.url(r"/bluetooth",BluetoothHandler,name="bluetooth")
     ],**settings)
     http_server = tornado.httpserver.HTTPServer(application)
     if args.port:

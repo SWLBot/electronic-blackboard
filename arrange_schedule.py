@@ -13,6 +13,7 @@ from server_api import get_upcoming_events
 from pprint import pprint
 from apiclient.http import MediaIoBaseDownload
 from apiclient import discovery
+from news_crawler.news_crawler import *
 import httplib2
 import io
 import datetime
@@ -1186,6 +1187,45 @@ def crawler_google_drive_img(json_obj):
     except DB_Exception as e:
         db.close()
         return_msg["error"] = e.args[1]
+        return return_msg 
+
+def crawler_inside_news():
+    try:
+        return_msg = {}
+        return_msg["result"] = "fail"
+        data_type = 5
+
+        #connect to mysql
+        db = mysql()
+        db.connect()
+        #check if table 'news' exists
+        check_sql = "SELECT count(*) \
+                     FROM information_schema.tables \
+                     WHERE table_schema = 'broadcast'\
+                     AND table_name = 'news'"
+        check = db.query(check_sql)
+        if check[0][0] == 0:
+            create_news_table()
+
+        #check inside data type exist or not 
+        check_sql = "SELECT COUNT(*) FROM data_type WHERE  type_name='inside'"
+        exist = db.query(check_sql)
+        if exist[0][0] == 0:
+             create_news_data_types()
+
+        #start grab INSIDE info
+        try:
+            grab_inside_articles()
+        except:
+            return_msg["error"] = "ERROR occurs in INSIDE crawler. Please check the correction of news_crawler"
+            return return_msg
+
+        db.close()
+        return_msg["result"] = "success"
+        return return_msg
+    except DB_Exception as e:
+        db.close()
+        return_msg["error"] = e.args[1]
         return return_msg
 
 #deal with defunct 
@@ -1271,7 +1311,7 @@ def main():
     alarm_crawler_cwb_img = raw_time + 7.0
     alarm_google_calendar_text = raw_time + 5.0
     alarm_crawler_google_drive_img = raw_time + 13.0
-
+    alarm_crawler_inside = raw_time + 15.0
 
     #start scheduling
     while shutdown == 0:
@@ -1498,6 +1538,28 @@ def main():
                 receive_obj["error"] = "fork6 error"
                 set_system_log(receive_obj)
                 alarm_crawler_google_drive_img = raw_time + 600.0
+
+        #crawler INSIDE
+        if raw_time >= alarm_crawler_inside:
+            print("#9 "+str(raw_time))
+            try:
+                newpid = os.fork()
+                if newpid == 0: #child
+                    shutdown = 1
+                    receive_obj = crawler_inside_news()
+                    if receive_obj["result"] == "success":
+                        "DO NOTHING"
+                    else :
+                        receive_obj["error"] = "crawler_inside_news : " + receive_obj["error"]
+                        set_system_log(receive_obj)
+                    os._exit(0)
+                else: #Parent
+                    alarm_crawler_inside = raw_time + 3600.0
+            except:
+                receive_obj["result"] = "fail"
+                receive_obj["error"] = "fork7 error"
+                set_system_log(receive_obj)
+                alarm_crawler_inside = raw_time + 600.0
 
         #delay
         sleep(0.1)
