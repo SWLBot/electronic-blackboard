@@ -43,11 +43,13 @@ def create_news_table():
     try:
         client = mysql()
         client.connect()
-        sql =   'create table news ( \
+        sql =   'create table news_QR_code ( \
                 id int NOT NULL unique key auto_increment, \
                 data_type int NOT NULL, \
                 serial_number varchar(40) not NULL, \
-                title varchar(255) not NULL \
+                title varchar(255) not NULL, \
+                upload_time datetime default now(), \
+                is_delete bit(1) default 0 \
                 )'
         print(sql)
         client.cmd(sql)
