@@ -234,6 +234,25 @@ class BluetoothHandler(BaseHandler):
         else :
             self.write("fail {}".format(bluetooth_id))
 
+class SendlikeHandler(BaseHandler):
+    def get(self):
+        receive_msg = {}
+        receive_msg = add_now_like_count()
+        if receive_msg["result"] == "success":
+            self.write("success")
+        else :
+            self.write("fail")
+#
+def AppRegisterHandler():
+    def post(self):
+        data = tornado.escape.json_decode(self.request.body)
+        receive_msg = {}
+        receive_msg = add_account_and_prefer(data)
+        if receive_msg["result"] == "success":
+            self.write("success")
+        else :
+            self.write("fail")
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--port",help="The port for backend sever")
@@ -259,7 +278,9 @@ def main():
         tornado.web.url(r"/delete",DeleteHandler,name="delete"),
         tornado.web.url(r"/addType",addTypeHandler,name="addType"),
         tornado.web.url(r"/googleapi",googleApiHandler,name="googleapi"),
-        tornado.web.url(r"/bluetooth",BluetoothHandler,name="bluetooth")
+        tornado.web.url(r"/bluetooth",BluetoothHandler,name="bluetooth"),
+        tornado.web.url(r"/sendlike",SendlikeHandler,name="sendlike"),
+        tornado.web.url(r"/appregister",AppRegisterHandler,name="appregister")
     ],**settings)
     http_server = tornado.httpserver.HTTPServer(application)
     if args.port:

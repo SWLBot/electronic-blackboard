@@ -1,0 +1,122 @@
+div#user_pref{
+    position:relative;
+}
+div#left_top {
+    background-color:#297373;
+    width: 60vw; 
+    height:55vh;
+    position:absolute; 
+    left:0px; 
+    top:0px;
+}
+
+div#hi {
+    color:#dedbd2;
+    position:absolute;
+    left:3vw; 
+    top:4vh;
+    font-size:80px;
+    font-family:Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif
+}
+
+div#name {
+    color:#dedbd2;
+    position:absolute; 
+    left:12vw; 
+    top:9vh;
+    font-size:200px;
+    font-family:Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif
+}
+
+div#right_top {
+    background-color:#f3b61f;
+    position:absolute;
+    width:30vw;
+    height:55vh;
+    left: 60.5vw;
+    top:0px
+}
+
+div#star {
+    color:#f3f3f3;
+    position:absolute; 
+    right:2vw; 
+    top:2vh;
+    font-size:90px;
+    font-family:Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif
+}
+
+div.lucky {
+    color:#f3f3f3;
+    font-size:25px;
+    font-family:Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif
+}
+
+div#left_bottom {
+     background-color:#edafb8;
+     position:absolute;
+     width:15vw;
+     height:45vh;
+     left:0px;
+     top:56vh
+}
+
+div#week {
+    color:#ffe8dd;
+    position:absolute; 
+    left:1vw; 
+    top:3vh;
+    font-size:70px;
+    font-family:Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif
+}
+
+div#year {
+    color:#ffe8dd;
+    position:absolute;
+    left:4.25vw;
+    bottom:14vh;
+    font-size:35px;
+    font-family:Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif
+}
+
+div#date {
+    color:#ffe8dd;
+    position:absolute; 
+    left:3.75vw; 
+    bottom:6vh;
+    font-size:35px;
+    font-family:Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif
+}
+
+div#right_bottom {
+    background-color:#2a0800;
+    position:absolute;
+    width:75vw;
+    height:45vh;
+    left:15.5vw;
+    top:56vh
+}
+
+div#interested {
+    color:#dedbd2;
+    position:absolute; 
+    right:3vw; 
+    top:3vh;
+    font-size:35px;
+    font-family:Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif
+}
+
+img.qrcode {
+    position:absolute; 
+    top:17vh;
+}
+
+div.title {
+    color:#dedbd2;
+    width:250px;
+    height:120px;
+    position:absolute;
+    top:17vh;
+    font-size:20px;
+    font-family:Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif
+}

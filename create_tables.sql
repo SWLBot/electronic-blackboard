@@ -29,7 +29,8 @@ create table image_data
     img_is_expire bit(1) default 0,
     user_id int not null,
     img_last_edit_user_id int default 0,
-    img_is_delete bit(1) default 0
+    img_is_delete bit(1) default 0,
+    img_like_count int default 0
 );
 
 DROP TABLE IF EXISTS user;
@@ -49,7 +50,8 @@ create table user
     user_sex int default 0,
     user_enable bit(1) default 0,
     user_bluetooth_id varchar(50),
-    user_profession int default 0 not null
+    user_profession int default 0 not null,
+    user_birthday datetime
 );
 
 DROP TABLE IF EXISTS schedule;
@@ -84,7 +86,8 @@ create table text_data
     text_is_expire bit(1) default 0,
     user_id int not null,
     text_last_edit_user_id int default 0,
-    text_is_delete bit(1) default 0
+    text_is_delete bit(1) default 0,
+    text_like_count int default 0
 );
 
 DROP TABLE IF EXISTS arrange_mode;
