@@ -2,6 +2,7 @@ from mysql import mysql
 from mysql import DB_Exception
 from shutil import copyfile
 from display_api import get_user_id
+from display_api import display_data_type
 from PIL import Image
 import os
 import os.path
@@ -10,12 +11,11 @@ import bcrypt
 import json
 import tornado
 import time
-
+import random
 from oauth2client import client
 from oauth2client import tools
 from oauth2client.file import Storage
 import httplib2
-
 from apiclient import discovery
 import datetime
 #
@@ -73,6 +73,68 @@ def add_now_like_count():
         db.close()
         return_msg["error"] = e
         return return_msg
+def register_preference(data):
+    try:
+        db = mysql()
+        db.connect()
+        inside_type = str(display_data_type(type_name='inside')[0])
+        techOrange_type = str(display_data_type(type_name='techOrange')[0])
+        medium_type = str(display_data_type(type_name='medium')[0])
+        pttBeauty_type = str(display_data_type(type_name='pttBeauty')[0])
+        pttjoke_type = str(display_data_type(type_name='pttjoke')[0])
+        pttStupidClown_type = str(display_data_type(type_name='pttStupidClown')[0])
+
+        pref_str = ""
+        if "all" in data["user_preference"]:
+            pref_str = inside_type+" "+medium_type+" "+pttBeauty_type+" "+pttStupidClown_type+" "+pttjoke_type+" "+techOrange_type+" "
+        else:
+            if "inside" in data["user_preference"]:
+                pref_str = pref_str + inside_type + " "
+            if "techOrange" in data["user_preference"]:
+                pref_str = pref_str + techOrange_type + " "
+            if "medium" in data["user_preference"]:
+                pref_str = pref_str + medium_type + " "
+            if "pttBeauty" in data["user_preference"]:
+                pref_str = pref_str + pttBeauty_type + " "
+            if "pttjoke" in data["user_preference"]:
+                pref_str = pref_str + pttjoke_type + " "
+            if "pttStupidClown" in data["user_preference"]:
+                pref_str = pref_str + pttStupidClown_type + " "
+            if len(pref_str)>0:
+                pref_str = pref_str[:-1]
+
+        #generate new id
+        sql = ("SELECT pref_id FROM user_prefer ORDER BY pref_set_time DESC LIMIT 1")
+        pure_result = db.query(sql)
+        pref_id = "pref0000000001"
+        try:
+            pref_id = "pref" + "{0:010d}".format(int(pure_result[0][0][4:]) + 1)
+        except:
+            pref_id = "pref0000000001"
+        #find user id
+        sql = ("SELECT user_id FROM user WHERE user_bluetooth_id='"+str(data["bluetooth_id"])+"'")
+        pure_result = db.query(sql)
+        #insert user preference
+        sql = "INSERT INTO user_prefer" \
+        +"(pref_id,user_id,pref_data_type_01,pref_data_type_02,pref_data_type_03,pref_data_type_04,pref_data_type_05) VALUES ('" \
+            +pref_id+"', "+str(pure_result[0][0])+",'"+pref_str+"','"+pref_str+"','"+pref_str+"','"+pref_str+"','"+pref_str+"')"
+        db.cmd(sql)
+
+        db.close()
+        return 1
+    except Exception as e:
+        print(e)
+        db.close()
+        return 0
+#
+def check_bluetooth_id_exist(db, bluetooth_id):
+    try:
+        sql = "SELECT count(*) FROM user WHERE user_bluetooth_id='"+str(bluetooth_id)+"'"
+        pure_result = db.query(sql)
+        return int(pure_result[0][0])
+
+    except:
+        return -1
 #
 def check_bluetooth_mode_available():
     file_dir = "setting"
@@ -146,22 +208,128 @@ def load_now_user_prefer(db, user_id):
     except:
         return -1
 #
-def insert_customized_schedule(prefer_data_type):
-    from arrange_schedule import find_acticity
+def set_insert_customer_text_msg():
+    try:
+        send_msg = {}
+        now_time = time.time()
+        send_msg["result"] = "fail"
+        send_msg["server_dir"] = ""
+        send_msg["file_type"] = display_data_type(type_name='customized_text')[0]
+        send_msg["start_date"] = time.strftime("%Y-%m-%d", time.localtime(now_time))
+        send_msg["end_date"] = time.strftime("%Y-%m-%d", time.localtime(now_time+3))
+        send_msg["start_time"] = time.strftime("%H:%M:%S", time.localtime(now_time))
+        send_msg["end_time"] = time.strftime("%H:%M:%S", time.localtime(now_time+3))
+        send_msg["display_time"] = 10
+        send_msg["user_id"] = 1
+        send_msg["result"] = "success"
+        return send_msg
+    except Exception as e:
+        send_msg["error"] = e
+        return send_msg
+#
+def get_user_birthday(user_id):
+    try:
+        db = mysql()
+        db.connect()
+        pure_result = db.query('select user_birthday from user where user_id = %s' % user_id)
+        if len(pure_result) > 0:
+            return pure_result[0][0]
+        return None
+    except DB_Exception as e:
+        print(e)
+        return None
+    except Exception as e:
+        print(e)
+        return None
+def Zodiac(month, day):
+    n = (u'摩羯座',u'水瓶座',u'雙鱼座',u'白羊座',u'金牛座',u'雙子座',u'巨蟹座',u'獅子座',u'處女座',u'天秤座',u'天蝎座',u'射手座')
+    d = ((1,20),(2,19),(3,21),(4,21),(5,21),(6,22),(7,23),(8,23),(9,23),(10,23),(11,23),(12,23))
+    return n[len(list(filter(lambda y:y<=(month,day), d)))%12]
+#
+def random_constellation(user_id):
+    return_msg = {}
+    date = get_user_birthday(user_id)
+    if date == None:
+        constellation = ['摩羯座','水瓶座','雙鱼座','白羊座','金牛座','雙子座','巨蟹座','獅子座','處女座','天秤座','天蝎座','射手座']
+        constellation = random.choice(constellation)
+    else:
+        constellation = Zodiac(date.month,date.day)
+    return_msg["name"] = constellation
+    return_msg["value"] = [random.randrange(6),random.randrange(6),random.randrange(6),random.randrange(6)]
+    return return_msg
+#
+def get_prefer_news(db, prefer_data_type):
+    try:
+        return_msg = []
+        if len(prefer_data_type)<1:
+            return return_msg
+
+        #array to string
+        prefer_str = "("
+        for num1 in range(len(prefer_data_type)):
+            prefer_str = prefer_str + str(prefer_data_type[num1]) + ","
+        prefer_str = prefer_str[:-1]
+        prefer_str = prefer_str + ")"
+        #find two
+        sql = "SELECT * FROM "\
+        +"(SELECT title, serial_number FROM news_QR_code where is_delete=0 and data_type IN " + prefer_str \
+        +" ORDER BY upload_time DESC LIMIT 10) as data ORDER BY RAND() LIMIT 2"
+        pure_result = db.query(sql)
+        #reshape output data
+        for num2 in range(len(pure_result)):
+            tmp_json = {}
+            tmp_json["title"] = str(pure_result[num2][0])
+            tmp_json["QR"] = str(pure_result[num2][1]) + ".png"
+            return_msg.append(tmp_json)
+
+        return return_msg
+    except:
+        return return_msg
+
+#
+def collect_user_prefer_data(user_id, prefer_data_type):
+    try:
+        return_msg = {}
+        db = mysql()
+        db.connect()
+        return_msg["preference"] = 1
+        #date
+        return_msg["date"] = time.strftime("%a. %Y.%m.%d", time.localtime(time.time()))
+        #nickname
+        sql = "SELECT user_nickname FROM user WHERE user_id=" + str(user_id)
+        pure_result = db.query(sql)
+        return_msg["nickname"] = str(pure_result[0][0])
+        #constellation
+        return_msg["constellation"] = random_constellation(user_id)
+        #news
+        return_msg["news"] = get_prefer_news(db, prefer_data_type)
+        db.close()
+        return return_msg
+    except:
+        db.close()
+        return return_msg
+#
+def insert_customized_schedule(user_id, prefer_data_type):
     from arrange_schedule import edit_schedule
 
     try:
         receive_msg = {}
-        send_msg = {}
 
-        #find customer prefer information
-        send_msg["arrange_mode"]=5
-        send_msg["condition"]=prefer_data_type
-        receive_msg = find_acticity(send_msg)
+        #insert customer text to db
+        send_msg = set_insert_customer_text_msg()
+        receive_msg = upload_text_insert_db(send_msg)
         if receive_msg["result"]=="fail":
             return -1
-        target_id = receive_msg["target_id"][0]
-        display_time = receive_msg["display_time"][0]
+
+        #collect user prefer data
+        text_content = collect_user_prefer_data(user_id, prefer_data_type)
+
+        #write to text
+        with open(receive_msg["text_system_dir"],"w") as fp:
+            print(json.dumps(text_content),file=fp)
+
+        target_id = receive_msg["text_id"]
+        display_time = 10
 
         #insert infromation to schedule
         send_msg["next_sn"] = 1
@@ -205,7 +373,7 @@ def deal_with_bluetooth_id(bluetooth_id):
             return return_msg
 
         #insert customized schedule to next schedule
-        receive_result = insert_customized_schedule(prefer_data_type)
+        receive_result = insert_customized_schedule(user_id, prefer_data_type)
         if receive_result == -1:
             db.close()
             return_msg["error"] = "insert fail"
@@ -255,7 +423,86 @@ def check_user_existed_or_signup(user_info):
         db.close()
         return_msg["error"] = e.args[1]
         return return_msg
+#
+def register_no_right_user(data):
+    try:
+        send_msg = {}
+        send_msg["user_name"] = data["bluetooth_id"]
+        send_msg["user_password"] = data["bluetooth_id"][0:6]
+        check_user_existed_or_signup(send_msg)
 
+        db = mysql()
+        db.connect()
+        sql = "SELECT count(*) FROM user WHERE user_name='" + str(data["bluetooth_id"]) + "'"
+        pure_result = db.query(sql)
+        if int(pure_result[0][0])<1:
+            db.close()
+            return 0
+
+        sql = "UPDATE user SET "
+        if "bluetooth_id" in data and data["bluetooth_id"] is not None:
+            sql = sql + "user_bluetooth_id='" +str(data["bluetooth_id"])+ "', "
+        if "nickName" in data and data["nickName"] is not None:
+            sql = sql + "user_nickname='" +str(data["nickName"])+ "', "
+        if "birthday" in data and data["birthday"] is not None:
+            sql = sql + "user_birthday='" +str(data["birthday"])+ "', "
+        if "occupation" in data and data["occupation"] is not None:
+            sql = sql + "user_profession="
+            if data["occupation"]=="bachelor":
+                sql = sql + "1, "
+            elif data["occupation"]=="masterDr":
+                sql = sql + "2, "
+            elif data["occupation"]=="faculty":
+                sql = sql + "3, "
+            else:
+                sql = sql + "0, "
+        sql = sql + "user_level=50 WHERE user_name='" + str(data["bluetooth_id"]) + "'"
+        db.cmd(sql)
+
+        db.close()
+        return 1
+    except DB_Exception as e:
+        print(e)
+        db.close()
+        return 0
+#
+def add_account_and_prefer(data):
+    try:
+        return_msg = {}
+        return_msg["result"] = "fail"
+        db = mysql()
+        db.connect()
+
+        #check bluetooth id exist or not
+        if check_bluetooth_id_exist(db, data["bluetooth_id"])!=0:
+            db.close()
+            return_msg["error"] = "bluetooth id exist"
+            return return_msg
+
+        #register new user level 50 == lower than normal user
+        if register_no_right_user(data)==0:
+            db.close()
+            return_msg["error"] = "register user fail"
+            return return_msg
+
+        #register preference
+        if register_preference(data)==0:
+            db.close()
+            return_msg["error"] = "register preference fail"
+            return return_msg
+
+        return_msg["result"] = "success"
+        return return_msg
+
+    except DB_Exception as e:
+        db.close()
+        return_msg["error"] = e.args[1]
+        return return_msg
+    except Exception as e:
+        db.close()
+        return_msg["error"] = e
+        return return_msg
+#
 def check_user_password(user_info):
     try:
         return_msg = {}
