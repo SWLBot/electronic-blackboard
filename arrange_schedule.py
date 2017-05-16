@@ -1198,20 +1198,14 @@ def crawler_inside_news():
         #connect to mysql
         db = mysql()
         db.connect()
-        #check if table 'news' exists
-        check_sql = "SELECT count(*) \
-                     FROM information_schema.tables \
-                     WHERE table_schema = 'broadcast'\
-                     AND table_name = 'news'"
-        check = db.query(check_sql)
-        if check[0][0] == 0:
-            create_news_table()
+        #check if table 'news_QR_code' exists
+        check_news_QR_code_table()
 
         #check inside data type exist or not 
         check_sql = "SELECT COUNT(*) FROM data_type WHERE  type_name='inside'"
         exist = db.query(check_sql)
         if exist[0][0] == 0:
-             create_news_data_types()
+            create_data_type('inside')
 
         #start grab INSIDE info
         try:
@@ -1226,6 +1220,140 @@ def crawler_inside_news():
     except DB_Exception as e:
         db.close()
         return_msg["error"] = e.args[1]
+        return return_msg
+
+
+def crawler_techorange_news():
+    try:
+        return_msg = {}
+        return_msg["result"] = "fail"
+        data_type = 6
+
+        #connect to mysql
+        db = mysql()
+        db.connect()
+        #check if table 'news_QR_code' exists
+        check_news_QR_code_table()
+
+        #check inside data type exist or not 
+        check_sql = "SELECT COUNT(*) FROM data_type WHERE  type_name='techOrange'"
+        exist = db.query(check_sql)
+        if exist[0][0] == 0:
+            create_data_type('techOrange')
+
+        #start grab TECHORANGE info
+        try:
+            grab_techorange_articles()
+        except:
+            return_msg["error"] = "ERROR occurs in TECHORANGE crawler. Please check the correction of news_crawler"
+            return return_msg
+
+        db.close()
+        return_msg["result"] = "success"
+        return return_msg
+    except DB_Exception as e:
+        db.close()
+        return_msg["error"] = e.args[1]
+        return return_msg
+
+def crawler_ptt_news(boards):
+    try:
+        return_msg = {}
+        return_msg["result"] = "fail"
+        data_type = 7
+
+        #connect to mysql
+        db = mysql()
+        db.connect()
+        #check if table 'news_QR_code' exists
+        check_news_QR_code_table()
+        
+        #check inside data type existance and filter board_inhitbit 
+        for board in boards:
+            check_sql = "SELECT COUNT(*) FROM data_type WHERE  type_name='ptt"+board+"'"
+            exist = db.query(check_sql)
+            if exist[0][0] == 0:
+                datatype='ptt'+board
+                create_data_type(datatype)
+
+        #board with data_type but no crawling
+        inhibit_boards = ["Beauty"]
+        #start grab PTT info
+        try:
+            allow_boards=list(set(boards) - set(inhibit_boards))
+            grab_ptt_articles(allow_boards)
+        except:
+            return_msg["error"] = "ERROR occurs in PTT crawler. Please check the correction of news_crawler"
+            return return_msg
+
+        db.close()
+        return_msg["result"] = "success"
+        return return_msg
+    except DB_Exception as e:
+        db.close()
+        return_msg["error"] = e.args[1]
+        return return_msg
+
+def crawler_medium_news():
+    try:
+        return_msg = {}
+        return_msg["result"] = "fail"
+        data_type = 8
+
+        #connect to mysql
+        db = mysql()
+        db.connect()
+        #check if table 'news_QR_code' exists
+        check_news_QR_code_table()
+
+        #check data type exist or not 
+        check_sql = "SELECT COUNT(*) FROM data_type WHERE  type_name='medium'"
+        exist = db.query(check_sql)
+        if exist[0][0] == 0:
+            create_data_type('medium')
+
+        #start grab MEDIUM info
+        try:
+            grab_medium_articles()
+        except:
+            return_msg["error"] = "ERROR occurs in MEDIUM crawler. Please check the correction of news_crawler"
+            return return_msg
+
+        db.close()
+        return_msg["result"] = "success"
+        return return_msg
+    except DB_Exception as e:
+        db.close()
+        return_msg["error"] = e.args[1]
+        return return_msg
+
+def check_news_QR_code_table():
+    db = mysql()
+    db.connect()
+    check_sql = "SELECT count(*) \
+                 FROM information_schema.tables \
+                 WHERE table_schema = 'broadcast'\
+                 AND table_name = 'news_QR_code'"
+    check = db.query(check_sql)
+    if check[0][0] == 0:
+        create_news_table()
+
+def crawler_schedule():
+    try:
+        boards=['joke','StupidClown','Beauty']
+        return_msg = {}
+        return_msg["result"] = "fail"
+        
+        return_inside = crawler_inside_news()
+        return_techorange = crawler_techorange_news()
+        return_medium = crawler_medium_news()
+        return_ptt = crawler_ptt_news(boards)
+        if return_inside["result"]=="success" and return_techorange["result"]=="success" \
+            and return_ptt["result"]=="success" and return_medium["result"]=="success":
+            return_msg["result"] = "success"
+        return return_msg
+    except:
+        print("crawler execution fail")
         return return_msg
 
 #deal with defunct 
@@ -1311,7 +1439,7 @@ def main():
     alarm_crawler_cwb_img = raw_time + 7.0
     alarm_google_calendar_text = raw_time + 5.0
     alarm_crawler_google_drive_img = raw_time + 13.0
-    alarm_crawler_inside = raw_time + 15.0
+    alarm_crawler_functions = raw_time + 15.0
 
     #start scheduling
     while shutdown == 0:
@@ -1539,27 +1667,27 @@ def main():
                 set_system_log(receive_obj)
                 alarm_crawler_google_drive_img = raw_time + 600.0
 
-        #crawler INSIDE
-        if raw_time >= alarm_crawler_inside:
+        #crawler
+        if raw_time >= alarm_crawler_functions:
             print("#9 "+str(raw_time))
             try:
                 newpid = os.fork()
                 if newpid == 0: #child
                     shutdown = 1
-                    receive_obj = crawler_inside_news()
+                    receive_obj = crawler_schedule()
                     if receive_obj["result"] == "success":
                         "DO NOTHING"
                     else :
-                        receive_obj["error"] = "crawler_inside_news : " + receive_obj["error"]
+                        receive_obj["error"] = "crawler_news : " + receive_obj["error"]
                         set_system_log(receive_obj)
                     os._exit(0)
                 else: #Parent
-                    alarm_crawler_inside = raw_time + 3600.0
+                    alarm_crawler_functions = raw_time + 3600.0
             except:
                 receive_obj["result"] = "fail"
                 receive_obj["error"] = "fork7 error"
                 set_system_log(receive_obj)
-                alarm_crawler_inside = raw_time + 600.0
+                alarm_crawler_functions = raw_time + 600.0
 
         #delay
         sleep(0.1)

@@ -1191,17 +1191,16 @@ def news_insert_db(json_obj):
         db = mysql()
         db.connect()
         #check 
-        sql = "SELECT COUNT(*) FROM news WHERE serial_number = \""+ news_serial_number+"\""
+        sql = "SELECT COUNT(*) FROM news_QR_code WHERE serial_number = \""+ news_serial_number+"\""
         check = db.query(sql)
 
         if check[0][0] == 0:
-            sql = "INSERT INTO news " \
+            sql = "INSERT INTO news_QR_code " \
                     +" (`data_type`, `serial_number`, `title`)" \
-                    +" VALUE (" \
+                    +" VALUES (" \
                     + str(news_data_type) + ", "\
                     + "\"" + news_serial_number + "\", " \
                     + "\"" + news_title + "\")"
-
         db.cmd(sql)
         db.close()
         return_msg["result"] = "success"
