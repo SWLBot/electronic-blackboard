@@ -28,6 +28,7 @@ function load_schedule()
                 $('footer').css('display','none');
                 $('div.title2').css('display','none');
                 $('img#pic').css('display','none');
+                $('div.like_count').css('display','none');
                 $('div#user_pref').css('display','inline');
                 
                 console.log("text");
