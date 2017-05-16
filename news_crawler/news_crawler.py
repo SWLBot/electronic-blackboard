@@ -20,15 +20,33 @@ def grab_inside_articles():
         link = post['href']
         title = post.text
         serial_number = make_qrcode_image(link,path)
-        send_obj = save_inside_db_data(serial_number, title)
+        send_obj = save_db_data(serial_number, title, "inside")
         news_insert_db(send_obj)
-            
-def save_inside_db_data(serial_number, title):
+
+def grab_techorange_articles():
+    url = 'https://buzzorange.com/techorange/'
+
+    techorange = requests.get(url).text
+    soup = bs(techorange, "html.parser")
+    posts = soup.find_all('h4', attrs={'class' : 'entry-title'})
+    if not os.path.exists("static/techorange/"):
+        os.makedirs("static/techorange/")
+    path = "static/techorange/"
+
+    #top 9 articles without page down    
+    for post in posts[:9]:   
+        link = post.a["href"]
+        title = post.a.text
+        serial_number = make_qrcode_image(link,path)
+        send_obj = save_db_data(serial_number, title, "techorange")
+        news_insert_db(send_obj)
+
+def save_db_data(serial_number, title, datatype):
     send_obj={}
     db = mysql()
     db.connect()
-    #get INSIDE data type
-    sql = "SELECT type_id FROM data_type WHERE type_name='inside'"
+    #get data type
+    sql = "SELECT type_id FROM data_type WHERE type_name='" + datatype + "'"
     pure_result = db.query(sql)
     data_type = int(pure_result[0][0])
 
@@ -38,6 +56,7 @@ def save_inside_db_data(serial_number, title):
 
     db.close()   
     return send_obj
+
 
 def create_news_table():
     try:
@@ -60,3 +79,4 @@ def create_news_table():
 #create data_types for all websites crawler grabbed
 def create_news_data_types():
     create_data_type('inside')
+    create_data_type('techorange')
