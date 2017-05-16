@@ -24,7 +24,8 @@ function load_schedule()
             else if(jsonRes.file_type == "text"){
                 console.log("text");
                 last_schedule_id = jsonRes.schedule_id;
-                $('img').css('display','none');
+                $('img#pic').css('display','none');
+                $('div.like_count').css('display','none');
                 $('footer').css('display','inline');
                 $('div.title2').css('display','inline');
                 if ( 'con' in jsonRes.file_text){
@@ -60,14 +61,21 @@ function load_schedule()
                 }
             }else{
                 console.log("image");
+                console.log(jsonRes);
                 last_schedule_id = jsonRes.schedule_id;
                 $('div.title2').css('display','none');
-                $('img').css('display','inline');
-                $('img').attr('src',"/static/"+jsonRes.file);
-                var width = $('img').width();
-                var height = $('img').height();
-                $('img').height(screen.height * 0.98);
-                $('img').css('maxWidth',($(window).width() * 0.85 | 0 ) + "px");
+                $('img#pic').css('display','inline');
+                $('div.like_count').css('display','inline');
+                $('p#like_count').css('display','inline');
+                if('like_count' in jsonRes){
+                    console.log("QQQ");
+                    $('p#like_count').text(jsonRes.like_count);
+                }
+                $('img#pic').attr('src',"/static/"+jsonRes.file);
+                var width = $('img#pic').width();
+                var height = $('img#pic').height();
+                $('img#pic').height(screen.height * 0.98);
+                $('img#pic').css('maxWidth',($(window).width() * 0.85 | 0 ) + "px");
             }
 		},
 		error: function (xhr, textStatus, error) 
