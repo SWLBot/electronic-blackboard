@@ -28,6 +28,11 @@ def check_table_exist_or_create(db,table_name,sql):
         print('Create table %s' % table_name)
         db.cmd(sql)
 
+def check_data_type_exist_or_create(db,data_type):
+    if len(db.query('select * from data_type where type_name = "%s"' % data_type)) == 0:
+        print("%s data_type doesn't exist" % data_type)
+        create_data_type(data_type)
+
 def check_bluetooth_DB(db):
     create_user_data_file()
     check_table_exist_or_create(db,'user_prefer','create table user_prefer ( \
@@ -45,7 +50,7 @@ def check_bluetooth_DB(db):
     check_column_exist_or_add(db,'image_data','img_like_count','int default 0')
     check_column_exist_or_add(db,'user','user_birthday','datetime')
     check_column_exist_or_add(db,'text_data','text_like_count','int default 0')
-    create_data_type("customized_text")
+    check_data_type_exist_or_create(db,"customized_text")
 
 def main():
     db = mysql()
