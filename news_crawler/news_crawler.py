@@ -78,6 +78,21 @@ def get_ptt_index_page(board):
     page = int(first_page.group(1)) + 1
     return page
 
+def grab_medium_articles():
+    url = 'https://medium.com/topic/technology'
+
+    medium = requests.get(url).text
+    soup = bs(medium, "html.parser")
+    posts = soup.find_all('div', attrs={'class' : 'u-flex0 u-sizeFullWidth'})
+    path = "static/medium/"
+ 
+    for post in posts:   
+        link = post.a["href"]
+        title = post.a.text
+        serial_number = make_qrcode_image(link,path)
+        send_obj = save_db_data(serial_number, title, "medium")
+        news_insert_db(send_obj)
+
 def save_db_data(serial_number, title, datatype):
     send_obj={}
     db = mysql()
@@ -117,6 +132,7 @@ def create_news_table():
 def create_news_data_types():
     create_data_type('inside')
     create_data_type('techOrange')
+    create_data_type('medium')
     create_data_type('pttjoke')
     create_data_type('pttStupidClown')
     create_data_type('pttBeauty')

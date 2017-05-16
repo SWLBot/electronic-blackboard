@@ -1294,6 +1294,39 @@ def crawler_ptt_news(boards):
         return_msg["error"] = e.args[1]
         return return_msg
 
+def crawler_medium_news():
+    try:
+        return_msg = {}
+        return_msg["result"] = "fail"
+        data_type = 8
+
+        #connect to mysql
+        db = mysql()
+        db.connect()
+        #check if table 'news_QR_code' exists
+        check_news_QR_code_table()
+
+        #check data type exist or not 
+        check_sql = "SELECT COUNT(*) FROM data_type WHERE  type_name='medium'"
+        exist = db.query(check_sql)
+        if exist[0][0] == 0:
+            create_data_type('medium')
+
+        #start grab MEDIUM info
+        try:
+            grab_medium_articles()
+        except:
+            return_msg["error"] = "ERROR occurs in MEDIUM crawler. Please check the correction of news_crawler"
+            return return_msg
+
+        db.close()
+        return_msg["result"] = "success"
+        return return_msg
+    except DB_Exception as e:
+        db.close()
+        return_msg["error"] = e.args[1]
+        return return_msg
+
 def check_news_QR_code_table():
     db = mysql()
     db.connect()
@@ -1313,8 +1346,10 @@ def crawler_schedule():
         
         return_inside = crawler_inside_news()
         return_techorange = crawler_techorange_news()
+        return_medium = crawler_medium_news()
         return_ptt = crawler_ptt_news(boards)
-        if return_inside["result"]=="success" and return_techorange["result"]=="success" and return_ptt["result"]=="success":
+        if return_inside["result"]=="success" and return_techorange["result"]=="success" \
+            and return_ptt["result"]=="success" and return_medium["result"]=="success":
             return_msg["result"] = "success"
         return return_msg
     except:
