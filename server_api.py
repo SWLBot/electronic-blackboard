@@ -1471,3 +1471,43 @@ def get_upcoming_events(credentials):
     now = datetime.datetime.utcnow().isoformat() + 'Z' # 'Z' indicates UTC time
     eventsResult = service.events().list(calendarId='nctupac@gmail.com',maxResults=10,timeMin=now).execute()
     return eventsResult
+
+#crawler handle
+def news_insert_db(json_obj):
+    try:
+        return_msg = {}
+        return_msg["result"] = "fail"
+        news_data_type = 1
+        news_title = ""
+        news_serial_number = ""
+
+        try:
+            news_data_type = json_obj["data_type"]
+            news_title = json_obj["title"]
+            news_serial_number = json_obj["serial_number"]
+        except:
+            return_msg["error"] = "input parameter missing"
+            return return_msg
+
+        #insert news data
+        db = mysql()
+        db.connect()
+        #check 
+        sql = "SELECT COUNT(*) FROM news_QR_code WHERE serial_number = \""+ news_serial_number+"\""
+        check = db.query(sql)
+
+        if check[0][0] == 0:
+            sql = "INSERT INTO news_QR_code " \
+                    +" (`data_type`, `serial_number`, `title`)" \
+                    +" VALUES (" \
+                    + str(news_data_type) + ", "\
+                    + "\"" + news_serial_number + "\", " \
+                    + "\"" + news_title + "\")"
+        db.cmd(sql)
+        db.close()
+        return_msg["result"] = "success"
+
+    except DB_Exception as e:
+        db.close()
+        return_msg["error"] = e.args[1]
+        return return_msg

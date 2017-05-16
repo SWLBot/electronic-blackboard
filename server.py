@@ -234,7 +234,6 @@ class BluetoothHandler(BaseHandler):
         else :
             self.write("fail {}".format(bluetooth_id))
 
-
 class SendlikeHandler(BaseHandler):
     def get(self):
         receive_msg = {}
