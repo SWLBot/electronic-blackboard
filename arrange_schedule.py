@@ -1205,7 +1205,7 @@ def crawler_inside_news():
         check_sql = "SELECT COUNT(*) FROM data_type WHERE  type_name='inside'"
         exist = db.query(check_sql)
         if exist[0][0] == 0:
-             create_data_type('inside')
+            create_data_type('inside')
 
         #start grab INSIDE info
         try:
@@ -1236,16 +1236,54 @@ def crawler_techorange_news():
         check_news_QR_code_table()
 
         #check inside data type exist or not 
-        check_sql = "SELECT COUNT(*) FROM data_type WHERE  type_name='techorange'"
+        check_sql = "SELECT COUNT(*) FROM data_type WHERE  type_name='techOrange'"
         exist = db.query(check_sql)
         if exist[0][0] == 0:
-            create_data_type('techorange')
+            create_data_type('techOrange')
 
         #start grab TECHORANGE info
         try:
             grab_techorange_articles()
         except:
             return_msg["error"] = "ERROR occurs in TECHORANGE crawler. Please check the correction of news_crawler"
+            return return_msg
+
+        db.close()
+        return_msg["result"] = "success"
+        return return_msg
+    except DB_Exception as e:
+        db.close()
+        return_msg["error"] = e.args[1]
+        return return_msg
+
+def crawler_ptt_news(boards):
+    try:
+        return_msg = {}
+        return_msg["result"] = "fail"
+        data_type = 7
+
+        #connect to mysql
+        db = mysql()
+        db.connect()
+        #check if table 'news_QR_code' exists
+        check_news_QR_code_table()
+        
+        #check inside data type existance and filter board_inhitbit 
+        for board in boards:
+            check_sql = "SELECT COUNT(*) FROM data_type WHERE  type_name='ptt"+board+"'"
+            exist = db.query(check_sql)
+            if exist[0][0] == 0:
+                datatype='ptt'+board
+                create_data_type(datatype)
+
+        #board with data_type but no crawling
+        inhibit_boards = ["Beauty"]
+        #start grab PTT info
+        try:
+            allow_boards=list(set(boards) - set(inhibit_boards))
+            grab_ptt_articles(allow_boards)
+        except:
+            return_msg["error"] = "ERROR occurs in PTT crawler. Please check the correction of news_crawler"
             return return_msg
 
         db.close()
@@ -1269,12 +1307,14 @@ def check_news_QR_code_table():
 
 def crawler_schedule():
     try:
+        boards=['joke','StupidClown','Beauty']
         return_msg = {}
         return_msg["result"] = "fail"
-
+        
         return_inside = crawler_inside_news()
         return_techorange = crawler_techorange_news()
-        if return_msg["result"]=="success" and return_techorange["result"]=="success":
+        return_ptt = crawler_ptt_news(boards)
+        if return_inside["result"]=="success" and return_techorange["result"]=="success" and return_ptt["result"]=="success":
             return_msg["result"] = "success"
         return return_msg
     except:
