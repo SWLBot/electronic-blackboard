@@ -272,14 +272,15 @@ def get_prefer_news(db, prefer_data_type):
         prefer_str = prefer_str + ")"
         #find two
         sql = "SELECT * FROM "\
-        +"(SELECT title, serial_number FROM news_QR_code where is_delete=0 and data_type IN " + prefer_str \
+        +"(SELECT title, serial_number,data_type FROM news_QR_code where is_delete=0 and data_type IN " + prefer_str \
         +" ORDER BY upload_time DESC LIMIT 10) as data ORDER BY RAND() LIMIT 2"
         pure_result = db.query(sql)
         #reshape output data
         for num2 in range(len(pure_result)):
+            type_dir = db.query('select type_dir from data_type where type_id = %s' % pure_result[num2][2])[0]
             tmp_json = {}
             tmp_json["title"] = str(pure_result[num2][0])
-            tmp_json["QR"] = str(pure_result[num2][1]) + ".png"
+            tmp_json["QR"] = ('static/%s' % type_dir)+ str(pure_result[num2][1]) + ".png"
             return_msg.append(tmp_json)
 
         return return_msg
