@@ -19,6 +19,60 @@ import httplib2
 from apiclient import discovery
 import datetime
 #
+def add_like_count(db, target_id):
+    try:
+        sql = ""
+        if target_id[0:4]=="imge":
+            sql = ("UPDATE image_data SET img_like_count=img_like_count+1 WHERE img_id='" + str(target_id) + "'")
+        elif target_id[0:4]=="text":
+            sql = ("UPDATE text_data SET text_like_count=text_like_count+1 WHERE text_id='" + str(target_id) + "'")
+        else :
+            return 0
+        db.cmd(sql)
+        
+        return 1
+    except:
+        return 0
+#
+def find_now_schedule(db):
+    try:
+        sql = "SELECT sche_target_id FROM schedule WHERE sche_is_used=0 ORDER BY sche_sn ASC LIMIT 1"
+        pure_result = db.query(sql)
+        return str(pure_result[0][0])
+    except:
+        return 0
+#
+def add_now_like_count():
+    try:
+        return_msg = {}
+        return_msg["result"] = "fail"
+        db = mysql()
+        db.connect()
+
+        #find image or text id from current schedule
+        target_id = find_now_schedule(db)
+        if target_id==0:
+            db.close()
+            return_msg["error"] = "can not find current schedule"
+            return return_msg
+            
+        #add like count
+        if add_like_count(db, target_id)==0:
+            db.close()
+            return_msg["error"] = "can not add like count"
+            return return_msg
+
+        return_msg["result"] = "success"
+        return return_msg
+                
+    except DB_Exception as e:
+        db.close()
+        return_msg["error"] = e.args[1]
+        return return_msg 
+    except Exception as e:
+        db.close()
+        return_msg["error"] = e
+        return return_msg
 def register_preference(data):
     try:
         db = mysql()
