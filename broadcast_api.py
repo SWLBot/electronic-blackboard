@@ -37,10 +37,10 @@ def load_schedule():
 
         #find the file
         if sche_target_id[0:4]=="imge":
-            sql = ("SELECT type_id, img_system_name FROM image_data WHERE img_id=\"" + sche_target_id + "\" ")
+            sql = ("SELECT type_id, img_system_name, img_like_count FROM image_data WHERE img_id=\"" + sche_target_id + "\" ")
             return_msg["file_type"] = "image" 
         elif sche_target_id[0:4]=="text":
-            sql = ("SELECT type_id, text_system_name FROM text_data WHERE text_id=\"" + sche_target_id + "\" ")
+            sql = ("SELECT type_id, text_system_name, text_like_count FROM text_data WHERE text_id=\"" + sche_target_id + "\" ")
             return_msg["file_type"] = "text"
         else :
             db.close()
@@ -50,6 +50,7 @@ def load_schedule():
         try:
             type_id = int(pure_result[0][0])
             system_file_name = pure_result[0][1]
+            return_msg["like_count"] = int(pure_result[0][2])
         except:
             db.close()
             return_msg["error"] = "no file record"
