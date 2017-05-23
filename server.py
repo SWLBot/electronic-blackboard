@@ -243,7 +243,7 @@ class SendlikeHandler(BaseHandler):
         else :
             self.write("fail")
 #
-def AppRegisterHandler():
+class AppRegisterHandler(BaseHandler):
     def post(self):
         data = tornado.escape.json_decode(self.request.body)
         receive_msg = {}
@@ -251,7 +251,8 @@ def AppRegisterHandler():
         if receive_msg["result"] == "success":
             self.write("success")
         else :
-            self.write("fail")
+            msg = "fail - " + receive_msg["error"]
+            self.write(msg)
 
 def main():
     parser = argparse.ArgumentParser()
@@ -264,7 +265,6 @@ def main():
         "template_path":os.path.join(base_dir,"template"),
         "static_path":os.path.join(base_dir,"static"),
         "debug":True,
-        "xsrf_cookies":True,
         "autoreload":True
     }
     application = tornado.web.Application([
