@@ -77,12 +77,12 @@ def register_preference(data):
     try:
         db = mysql()
         db.connect()
-        inside_type = str(display_data_type(type_name='inside')[0])
-        techOrange_type = str(display_data_type(type_name='techOrange')[0])
-        medium_type = str(display_data_type(type_name='medium')[0])
-        pttBeauty_type = str(display_data_type(type_name='pttBeauty')[0])
-        pttjoke_type = str(display_data_type(type_name='pttjoke')[0])
-        pttStupidClown_type = str(display_data_type(type_name='pttStupidClown')[0])
+        inside_type = str(display_data_type(type_name='inside'))
+        techOrange_type = str(display_data_type(type_name='techOrange'))
+        medium_type = str(display_data_type(type_name='medium'))
+        pttBeauty_type = str(display_data_type(type_name='pttBeauty'))
+        pttjoke_type = str(display_data_type(type_name='pttjoke'))
+        pttStupidClown_type = str(display_data_type(type_name='pttStupidClown'))
 
         pref_str = ""
         if "all" in data["user_preference"]:
@@ -501,7 +501,7 @@ def add_account_and_prefer(data):
         return return_msg
     except Exception as e:
         db.close()
-        return_msg["error"] = e
+        return_msg["error"] = str(e)
         return return_msg
 #
 def check_user_password(user_info):
