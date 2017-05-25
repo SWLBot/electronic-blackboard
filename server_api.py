@@ -280,7 +280,7 @@ def get_prefer_news(db, prefer_data_type):
             type_dir = db.query('select type_dir from data_type where type_id = %s' % pure_result[num2][2])[0]
             tmp_json = {}
             tmp_json["title"] = str(pure_result[num2][0])
-            tmp_json["QR"] = ('static/%s' % type_dir)+ str(pure_result[num2][1]) + ".png"
+            tmp_json["QR"] = ('/static/%s' % type_dir)+ str(pure_result[num2][1]) + ".png"
             return_msg.append(tmp_json)
 
         return return_msg

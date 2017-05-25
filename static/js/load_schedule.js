@@ -58,9 +58,10 @@ function load_schedule()
                         $('div#name b').text(jsonRes.file_text.nickname);
                         $('div#star b').text(jsonRes.file_text.constellation.name);
                         if( jsonRes.file_text.news.length > 0){
-                            $('img#qrcode1').attr('src',jsonRes.file_text.news[0].QR);
+                            console.log("print!!!");
+                            $('img#qrcode1').attr('src',String(jsonRes.file_text.news[0].QR));
                             $('div#newsTitle1').text(jsonRes.file_text.news[0].title);
-                            $('img#qrcode2').attr('src',jsonRes.file_text.news[1].QR);
+                            $('img#qrcode2').attr('src',String(jsonRes.file_text.news[1].QR));
                             $('div#newsTitle2').text(jsonRes.file_text.news[1].title);
                         }
                     }
@@ -109,12 +110,14 @@ function load_schedule()
                 $('div.title2').css('display','none');
                 $('div#user_pref').css('display','none');
                 $('img#pic').css('display','inline');
+                $('img#like').css('display','inline');
                 $('div.like_count').css('display','inline');
                 $('p#like_count').css('display','inline');
                 if('like_count' in jsonRes){
                     $('p#like_count').text(jsonRes.like_count);
                 }
                 $('img#pic').attr('src',"/static/"+jsonRes.file);
+                $('img#like').attr('src',"/static/img/Like.png");
                 var width = $('img#pic').width();
                 var height = $('img#pic').height();
                 $('img#pic').height(screen.height * 0.98);
