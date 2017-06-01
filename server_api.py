@@ -77,16 +77,16 @@ def register_preference(data):
     try:
         db = mysql()
         db.connect()
-        inside_type = str(display_data_type(type_name='inside'))
-        techOrange_type = str(display_data_type(type_name='techOrange'))
-        medium_type = str(display_data_type(type_name='medium'))
-        pttBeauty_type = str(display_data_type(type_name='pttBeauty'))
-        pttjoke_type = str(display_data_type(type_name='pttjoke'))
-        pttStupidClown_type = str(display_data_type(type_name='pttStupidClown'))
+        inside_type = str(display_data_type(type_name='inside')[0])
+        techOrange_type = str(display_data_type(type_name='techOrange')[0])
+        medium_type = str(display_data_type(type_name='medium')[0])
+        pttBeauty_type = str(display_data_type(type_name='pttBeauty')[0])
+        pttjoke_type = str(display_data_type(type_name='pttjoke')[0])
+        pttStupidClown_type = str(display_data_type(type_name='pttStupidClown')[0])
 
         pref_str = ""
         if "all" in data["user_preference"]:
-            pref_str = inside_type+" "+medium_type+" "+pttBeauty_type+" "+pttStupidClown_type+" "+pttjoke_type+" "+techOrange_type+" "
+            pref_str = inside_type+" "+medium_type+" "+pttBeauty_type+" "+pttStupidClown_type+" "+pttjoke_type+" "+techOrange_type
         else:
             if "inside" in data["user_preference"]:
                 pref_str = pref_str + inside_type + " "
@@ -123,7 +123,6 @@ def register_preference(data):
         db.close()
         return 1
     except Exception as e:
-        print(e)
         db.close()
         return 0
 #
