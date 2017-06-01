@@ -83,6 +83,8 @@ def env_init():
 
     create_data_type("google日曆")
 
+    create_data_type("customized_text")
+
     print("create arrage_mode 0...")
     try:
         ret = cursor.execute('insert into `arrange_mode` (`armd_mode`) values (0)')

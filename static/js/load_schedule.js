@@ -30,6 +30,8 @@ function load_schedule()
                 $('img#pic').css('display','none');
                 $('div.like_count').css('display','none');
                 $('div#user_pref').css('display','inline');
+                $('img#qrcode1').css('display','inline');
+                $('img#qrcode2').css('display','inline');
                 
                 console.log("text");
                 if ('preference' in jsonRes.file_text){
