@@ -6,6 +6,7 @@ from mysql import mysql,DB_Exception
 from env_init import create_data_type
 from server_api import *
 import os
+import datetime
 
 def grab_inside_articles():
     url = 'https://www.inside.com.tw/category/trend'
@@ -136,3 +137,54 @@ def create_news_data_types():
     create_data_type('pttjoke')
     create_data_type('pttStupidClown')
     create_data_type('pttBeauty')
+
+#constellation fortune
+def grab_constellation_fortune():
+    date=str(datetime.date.today())
+    constellation_list=['牡羊座','金牛座','雙子座','巨蟹座','獅子座','處女座','天秤座','天蝎座','射手座','摩羯座','水瓶座','雙鱼座']
+    for i in range(12):
+        send_obj={}
+        res = requests.get('http://astro.click108.com.tw/daily_'+str(i)+'.php?iAcDay='+date+'&iAstro='+str(i))
+        soup = bs(res.content, "html.parser")
+        send_obj["overall"] = soup.find('span', {'class': 'txt_green'}).text[4:9]
+        send_obj["love"] = soup.find('span', {'class': 'txt_pink'}).text[4:9]
+        send_obj["career"] = soup.find('span', {'class': 'txt_blue'}).text[4:9]
+        send_obj["wealth"] = soup.find('span', {'class': 'txt_orange'}).text[4:9]
+        send_obj["constellation"]=constellation_list[i]
+        fortune_insert_db(send_obj)
+
+def create_news_table():
+    try:
+        client = mysql()
+        client.connect()
+        sql =   'create table news_QR_code ( \
+                id int NOT NULL unique key auto_increment, \
+                data_type int NOT NULL, \
+                serial_number varchar(40) not NULL, \
+                title varchar(255) not NULL, \
+                upload_time datetime default now(), \
+                is_delete bit(1) default 0 \
+                )'
+        print(sql)
+        client.cmd(sql)
+        return dict(result='success')
+    except DB_Exception as e:
+        return dict(error=e.args[1])
+
+def create_fortune_table():
+    try:
+        client = mysql()
+        client.connect()
+        sql =   'create table fortune ( \
+                fortune_date datetime, \
+                constellation varchar(20) not NULL, \
+                overall varchar(20) not NULL, \
+                love varchar(20) not NULL, \
+                career varchar(20) not NULL, \
+                wealth varchar(20) not NULL \
+                )'
+        print(sql)
+        client.cmd(sql)
+        return dict(result='success')
+    except DB_Exception as e:
+        return dict(error=e.args[1])

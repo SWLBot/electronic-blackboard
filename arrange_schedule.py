@@ -1327,6 +1327,31 @@ def crawler_medium_news():
         return_msg["error"] = e.args[1]
         return return_msg
 
+def crawler_constellation_fortune():
+    try:
+        return_msg = {}
+        return_msg["result"] = "fail"
+
+        #connect to mysql
+        db = mysql()
+        db.connect()
+        #check if table 'fortune' exists
+        check_fortune_table()
+        #start grab CONSTELLATION FORTUNE info
+        try:
+            grab_constellation_fortune()
+        except:
+            return_msg["error"] = "ERROR occurs in FORTUNE crawler. Please check the correction of news_crawler"
+            return return_msg
+
+        db.close()
+        return_msg["result"] = "success"
+        return return_msg
+    except DB_Exception as e:
+        db.close()
+        return_msg["error"] = e.args[1]
+        return return_msg
+
 def check_news_QR_code_table():
     db = mysql()
     db.connect()
@@ -1338,6 +1363,17 @@ def check_news_QR_code_table():
     if check[0][0] == 0:
         create_news_table()
 
+def check_fortune_table():
+    db = mysql()
+    db.connect()
+    check_sql = "SELECT count(*) \
+                 FROM information_schema.tables \
+                 WHERE table_schema = 'broadcast'\
+                 AND table_name = 'fortune'"
+    check = db.query(check_sql)
+    if check[0][0] == 0:
+        create_fortune_table()
+
 def crawler_schedule():
     try:
         boards=['joke','StupidClown','Beauty']
@@ -1348,8 +1384,10 @@ def crawler_schedule():
         return_techorange = crawler_techorange_news()
         return_medium = crawler_medium_news()
         return_ptt = crawler_ptt_news(boards)
+        return_fortune = crawler_constellation_fortune()
         if return_inside["result"]=="success" and return_techorange["result"]=="success" \
-            and return_ptt["result"]=="success" and return_medium["result"]=="success":
+            and return_ptt["result"]=="success" and return_medium["result"]=="success" \
+            and return_fortune["result"]=="success":
             return_msg["result"] = "success"
         return return_msg
     except:
