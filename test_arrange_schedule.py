@@ -8,6 +8,12 @@ def test_read_system_setting():
         assert key in system_setting
     return system_setting
 
+def test_read_arrange_mode():
+    keys = ['arrange_sn','arrange_mode','condition']
+    receive_msg = read_arrange_mode()
+    for key in keys:
+        assert key in receive_msg
+
 def test_crawler_cwb_img(system_setting):
     send_msg = {}
     send_msg['server_dir'] = system_setting['board_py_dir']
@@ -18,5 +24,6 @@ def test_crawler_cwb_img(system_setting):
 
 if __name__ == "__main__":
     system_setting = test_read_system_setting()
+    test_read_arrange_mode()
     test_crawler_cwb_img(system_setting)
     print("All test passed")
