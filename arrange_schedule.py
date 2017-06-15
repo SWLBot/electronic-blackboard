@@ -911,6 +911,7 @@ def find_cwb_type_id(db):
         return -1
 
 def delete_old_cwb_img(db,server_dir,user_id):
+    send_obj = {}
     error_list_id = []
     sql = "SELECT img_id FROM image_data WHERE img_is_delete=0 and img_file_name like 'CV1_TW_3600_%'" 
     pure_result = db.query(sql)
