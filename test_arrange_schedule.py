@@ -22,8 +22,23 @@ def test_crawler_cwb_img(system_setting):
     receive_msg = crawler_cwb_img(send_msg)
     assert receive_msg['result'] == 'success'
 
+def test_crawler_inside_img():
+    receive_msg = crawler_inside_news()
+    assert receive_msg['result'] == 'success'
+
+def test_crawler_techorange_news():
+    receive_msg = crawler_techorange_news()
+    assert receive_msg['result'] == 'success'
+
+def test_crawler_medium_news():
+    receive_msg = crawler_medium_news()
+    assert receive_msg['result'] == 'success'
+
 if __name__ == "__main__":
     system_setting = test_read_system_setting()
     test_read_arrange_mode()
     test_crawler_cwb_img(system_setting)
+    test_crawler_inside_img()
+    test_crawler_techorange_news()
+    test_crawler_medium_news()
     print("All test passed")
