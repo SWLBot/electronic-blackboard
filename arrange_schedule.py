@@ -1304,9 +1304,9 @@ def crawler_schedule():
         return_msg = {}
         return_msg["result"] = "fail"
         
-        return_inside = crawler_inside_news()
-        return_techorange = crawler_techorange_news()
-        return_medium = crawler_medium_news()
+        return_inside = crawler_news('inside')
+        return_techorange = crawler_news('techOrange')
+        return_medium = crawler_news('medium')
         return_ptt = crawler_ptt_news(boards)
         if return_inside["result"]=="success" and return_techorange["result"]=="success" \
             and return_ptt["result"]=="success" and return_medium["result"]=="success":
