@@ -24,17 +24,11 @@ class Arrange_Schedule(unittest.TestCase):
         receive_msg = crawler_cwb_img(send_msg)
         assert receive_msg['result'] == 'success'
 
-    def test_crawler_inside_img(self):
-        receive_msg = crawler_inside_news()
-        assert receive_msg['result'] == 'success'
-
-    def test_crawler_techorange_news(self):
-        receive_msg = crawler_techorange_news()
-        assert receive_msg['result'] == 'success'
-
-    def test_crawler_medium_news(self):
-        receive_msg = crawler_medium_news()
-        assert receive_msg['result'] == 'success'
+    def test_crawler_news(self):
+        websites = ['inside','techOrange','medium']
+        for website in websites:
+            receive_msg = crawler_news(website)
+            assert receive_msg['result'] == 'success'
 
 if __name__ == "__main__":
     unittest.main()

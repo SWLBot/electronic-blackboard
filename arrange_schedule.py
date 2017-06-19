@@ -21,6 +21,7 @@ import signal
 import time
 import os.path
 import json
+from util import switch
 
 #make now activity to is used
 def mark_now_activity():
@@ -1198,11 +1199,10 @@ def crawler_google_drive_img(json_obj):
         return_msg["error"] = e.args[1]
         return return_msg 
 
-def crawler_inside_news():
+def crawler_news(website):
     try:
         return_msg = {}
         return_msg["result"] = "fail"
-        data_type = 5
 
         #connect to mysql
         db = mysql()
@@ -1211,53 +1211,37 @@ def crawler_inside_news():
         check_news_QR_code_table()
 
         #check inside data type exist or not 
-        check_sql = "SELECT COUNT(*) FROM data_type WHERE  type_name='inside'"
+        check_sql = "SELECT COUNT(*) FROM data_type WHERE  type_name='{0}'".format(website)
         exist = db.query(check_sql)
+        db.close()
         if exist[0][0] == 0:
-            create_data_type('inside')
+            create_data_type(website)
 
-        #start grab INSIDE info
-        try:
-            grab_inside_articles()
-        except:
-            return_msg["error"] = "ERROR occurs in INSIDE crawler. Please check the correction of news_crawler"
-            return return_msg
-
-        db.close()
-        return_msg["result"] = "success"
-        return return_msg
-    except DB_Exception as e:
-        db.close()
-        return_msg["error"] = e.args[1]
-        return return_msg
-
-
-def crawler_techorange_news():
-    try:
-        return_msg = {}
-        return_msg["result"] = "fail"
-        data_type = 6
-
-        #connect to mysql
-        db = mysql()
-        db.connect()
-        #check if table 'news_QR_code' exists
-        check_news_QR_code_table()
-
-        #check inside data type exist or not 
-        check_sql = "SELECT COUNT(*) FROM data_type WHERE  type_name='techOrange'"
-        exist = db.query(check_sql)
-        if exist[0][0] == 0:
-            create_data_type('techOrange')
-
-        #start grab TECHORANGE info
-        try:
-            grab_techorange_articles()
-        except:
-            return_msg["error"] = "ERROR occurs in TECHORANGE crawler. Please check the correction of news_crawler"
-            return return_msg
-
-        db.close()
+        for case in switch(website):
+            if case('inside'):
+                #start grab INSIDE info
+                try:
+                    grab_inside_articles()
+                except:
+                    return_msg["error"] = "ERROR occurs in INSIDE crawler. Please check the correction of news_crawler"
+                    return return_msg
+                break
+            if case('techOrange'):
+                #start grab TECHORANGE info
+                try:
+                    grab_techorange_articles()
+                except:
+                    return_msg["error"] = "ERROR occurs in TECHORANGE crawler. Please check the correction of news_crawler"
+                    return return_msg
+                break
+            if case('medium'):
+                #start grab MEDIUM info
+                try:
+                    grab_medium_articles()
+                except:
+                    return_msg["error"] = "ERROR occurs in MEDIUM crawler. Please check the correction of news_crawler"
+                    return return_msg
+                break
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
@@ -1293,39 +1277,6 @@ def crawler_ptt_news(boards):
             grab_ptt_articles(allow_boards)
         except:
             return_msg["error"] = "ERROR occurs in PTT crawler. Please check the correction of news_crawler"
-            return return_msg
-
-        db.close()
-        return_msg["result"] = "success"
-        return return_msg
-    except DB_Exception as e:
-        db.close()
-        return_msg["error"] = e.args[1]
-        return return_msg
-
-def crawler_medium_news():
-    try:
-        return_msg = {}
-        return_msg["result"] = "fail"
-        data_type = 8
-
-        #connect to mysql
-        db = mysql()
-        db.connect()
-        #check if table 'news_QR_code' exists
-        check_news_QR_code_table()
-
-        #check data type exist or not 
-        check_sql = "SELECT COUNT(*) FROM data_type WHERE  type_name='medium'"
-        exist = db.query(check_sql)
-        if exist[0][0] == 0:
-            create_data_type('medium')
-
-        #start grab MEDIUM info
-        try:
-            grab_medium_articles()
-        except:
-            return_msg["error"] = "ERROR occurs in MEDIUM crawler. Please check the correction of news_crawler"
             return return_msg
 
         db.close()
