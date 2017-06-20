@@ -5,12 +5,12 @@ import os
 def create_user_data_file():
     print("check user_data dir and file...")
     try:
-        if not os.path.exists("static/user_data"):
-            print('create dir "static/user_data"')
-            os.makedirs('static/user_data')
-        if not os.path.isfile("static/user_data/setting.txt"):
-            print('create file "static/user_data/setting.txt"')
-            with open("static/user_data/setting.txt", "w") as fp:
+        if not os.path.exists("setting"):
+            print('create dir setting"')
+            os.makedirs('setting')
+        if not os.path.isfile("setting/server_setting.txt"):
+            print('create file "setting/server_setting.txt"')
+            with open("setting/server_setting.txt", "w") as fp:
                 fp.write("bluetooth_enable 1")
         print("check finish")
     except Exception as e:
