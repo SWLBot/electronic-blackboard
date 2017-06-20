@@ -25,7 +25,6 @@ pip3 install -r requirements.txt
 ```
 2. create nessasary files in this project
   * create `mysql_auth.txt`
-  * create `setting.txt` 
 3. The content inside `mysql_auth.txt` should be  
   * Host
   * User
