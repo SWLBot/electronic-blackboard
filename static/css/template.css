@@ -65,3 +65,9 @@ p#like_count {
     bottom: 20px;
     font-size: 300%;
 }
+#like_count_class {
+    float:right;
+    position: fixed;
+    bottom: 0;
+    right: 0;
+}

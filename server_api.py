@@ -86,7 +86,7 @@ def register_preference(data):
 
         pref_str = ""
         if "all" in data["user_preference"]:
-            pref_str = inside_type+" "+medium_type+" "+pttBeauty_type+" "+pttStupidClown_type+" "+pttjoke_type+" "+techOrange_type+" "
+            pref_str = inside_type+" "+medium_type+" "+pttBeauty_type+" "+pttStupidClown_type+" "+pttjoke_type+" "+techOrange_type
         else:
             if "inside" in data["user_preference"]:
                 pref_str = pref_str + inside_type + " "
@@ -123,7 +123,6 @@ def register_preference(data):
         db.close()
         return 1
     except Exception as e:
-        print(e)
         db.close()
         return 0
 #
@@ -287,14 +286,15 @@ def get_prefer_news(db, prefer_data_type):
         prefer_str = prefer_str + ")"
         #find two
         sql = "SELECT * FROM "\
-        +"(SELECT title, serial_number FROM news_QR_code where is_delete=0 and data_type IN " + prefer_str \
+        +"(SELECT title, serial_number,data_type FROM news_QR_code where is_delete=0 and data_type IN " + prefer_str \
         +" ORDER BY upload_time DESC LIMIT 10) as data ORDER BY RAND() LIMIT 2"
         pure_result = db.query(sql)
         #reshape output data
         for num2 in range(len(pure_result)):
+            type_dir = db.query('select type_dir from data_type where type_id = %s' % pure_result[num2][2])[0]
             tmp_json = {}
             tmp_json["title"] = str(pure_result[num2][0])
-            tmp_json["QR"] = str(pure_result[num2][1]) + ".png"
+            tmp_json["QR"] = ('/static/%s' % type_dir)+ str(pure_result[num2][1]) + ".png"
             return_msg.append(tmp_json)
 
         return return_msg
@@ -515,7 +515,7 @@ def add_account_and_prefer(data):
         return return_msg
     except Exception as e:
         db.close()
-        return_msg["error"] = e
+        return_msg["error"] = str(e)
         return return_msg
 #
 def check_user_password(user_info):

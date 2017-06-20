@@ -5,12 +5,12 @@ import os
 def create_user_data_file():
     print("check user_data dir and file...")
     try:
-        if not os.path.exists("static/user_data"):
-            print('create dir "static/user_data"')
-            os.makedirs('static/user_data')
-        if not os.path.isfile("static/user_data/setting.txt"):
-            print('create file "static/user_data/setting.txt"')
-            with open("static/user_data/setting.txt", "w") as fp:
+        if not os.path.exists("setting"):
+            print('create dir setting"')
+            os.makedirs('setting')
+        if not os.path.isfile("setting/server_setting.txt"):
+            print('create file "setting/server_setting.txt"')
+            with open("setting/server_setting.txt", "w") as fp:
                 fp.write("bluetooth_enable 1")
         print("check finish")
     except Exception as e:
@@ -27,6 +27,11 @@ def check_table_exist_or_create(db,table_name,sql):
         print('Table %s doesn\'t exist' % table_name)
         print('Create table %s' % table_name)
         db.cmd(sql)
+
+def check_data_type_exist_or_create(db,data_type):
+    if len(db.query('select * from data_type where type_name = "%s"' % data_type)) == 0:
+        print("%s data_type doesn't exist" % data_type)
+        create_data_type(data_type)
 
 def check_bluetooth_DB(db):
     create_user_data_file()
@@ -45,7 +50,7 @@ def check_bluetooth_DB(db):
     check_column_exist_or_add(db,'image_data','img_like_count','int default 0')
     check_column_exist_or_add(db,'user','user_birthday','datetime')
     check_column_exist_or_add(db,'text_data','text_like_count','int default 0')
-    create_data_type("customized_text")
+    check_data_type_exist_or_create(db,"customized_text")
 
 def main():
     db = mysql()

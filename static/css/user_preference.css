@@ -48,7 +48,7 @@ div#star {
 
 div.lucky {
     color:#f3f3f3;
-    font-size:25px;
+    font-size:40px;
     font-family:Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif
 }
 
@@ -102,7 +102,7 @@ div#interested {
     position:absolute; 
     right:3vw; 
     top:3vh;
-    font-size:35px;
+    font-size:40px;
     font-family:Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif
 }
 
@@ -111,7 +111,7 @@ img.qrcode {
     top:17vh;
 }
 
-div.title {
+div.user_title {
     color:#dedbd2;
     width:250px;
     height:120px;

@@ -21,6 +21,8 @@ import signal
 import time
 import os.path
 import json
+from util import switch
+import config.settings as setting
 
 #make now activity to is used
 def mark_now_activity():
@@ -837,28 +839,14 @@ def set_schedule_log(json_obj):
 def read_system_setting():
     return_msg = {}
     return_msg["result"] = "fail"
-    file_name = "setting.txt"
-    
-    if not os.path.isfile(file_name) :
-        return_msg["error"] = "file missing"
-        return return_msg
     
     try:
-        file_pointer = open(file_name,"r")
-        for line in file_pointer:
-            pure_data = []
-            pure_data = line.rstrip('\n').split(' ')
-            if pure_data[0] == "board_py_dir":
-                return_msg["board_py_dir"] = pure_data[1]
-            elif pure_data[0] == "shutdown":
-                return_msg["shutdown"] = int(pure_data[1])
-            elif pure_data[0] == "max_db_log":
-                return_msg["max_db_log"] = int(pure_data[1])
-            elif pure_data[0] == "min_db_activity":
-                return_msg["min_db_activity"] = int(pure_data[1])
-        file_pointer.close()
-    except:
-        return_msg["error"] = "read error"
+        return_msg["board_py_dir"] = setting.arrange_setting['board_py_dir']
+        return_msg["shutdown"] = setting.arrange_setting['shutdown']
+        return_msg["max_db_log"] = setting.arrange_setting['max_db_log']
+        return_msg["min_db_activity"] = setting.arrange_setting['min_db_activity']
+    except Exception as e:
+        return_msg["error"] = str(e)
         return return_msg
 
     return_msg["result"] = "success"
@@ -901,6 +889,38 @@ def read_arrange_mode():
         return_msg["error"] = e.args[1]
         return return_msg
 
+def find_cwb_type_id(db):
+    return_msg = {}
+    sql = "SELECT type_id FROM data_type WHERE type_name='氣像雲圖'"
+    pure_result = db.query(sql)
+    if len(pure_result) != 0:
+        return int(pure_result[0][0])
+    else:
+        return -1
+
+def delete_old_cwb_img(db,server_dir,user_id):
+    send_obj = {}
+    error_list_id = []
+    sql = "SELECT img_id FROM image_data WHERE img_is_delete=0 and img_file_name like 'CV1_TW_3600_%'" 
+    pure_result = db.query(sql)
+    for num2 in range(len(pure_result)):
+        try:
+            send_obj["server_dir"] = server_dir
+            send_obj["target_id"] = str(pure_result[num2][0])
+            send_obj["user_id"] = user_id
+            receive_obj = delete_image_or_text_data(send_obj)
+            if receive_obj["result"] == "fail":
+                error_list_id.append(send_obj["target_id"])
+        except:
+            error_list_id.append(send_obj["target_id"])
+            continue
+    return error_list_id
+
+def mark_old_cwb_img(db,error_list_id):
+    for num2 in range(len(error_list_id)):
+        sql = "UPDATE image_data SET img_is_expire=1 WHERE img_is_expire=0 and img_is_delete=0 and img_id='" + str(error_list_id[num2]) + "'" 
+        db.cmd(sql)
+
 #
 def crawler_cwb_img(json_obj):
     try:
@@ -923,16 +943,10 @@ def crawler_cwb_img(json_obj):
         db = mysql()
         db.connect()
 
-        #find 氣像雲圖 type id 
-        sql = "SELECT type_id FROM data_type WHERE type_name='氣像雲圖'"
-        pure_result = db.query(sql)
-        try:
-            data_type = int(pure_result[0][0])
-        except:
-            db.close()
+        data_type = find_cwb_type_id(db)
+        if data_type == -1:
             return_msg["error"] = "no cwb img data type"
             return return_msg
-
 
         for num1 in range(60):
             target_img = 'CV1_TW_3600_' + time.strftime("%Y%m%d%H%M", time.localtime(now_time)) + '.png'
@@ -943,26 +957,9 @@ def crawler_cwb_img(json_obj):
                 now_time -= 60
                 continue
 
-            #delete old cwb img
-            error_list_id = []
-            sql = "SELECT img_id FROM image_data WHERE img_is_delete=0 and img_file_name like 'CV1_TW_3600_%'" 
-            pure_result = db.query(sql)
-            for num2 in range(len(pure_result)):
-                try:                
-                    send_obj["server_dir"] = server_dir
-                    send_obj["target_id"] = str(pure_result[num2][0])
-                    send_obj["user_id"] = user_id
-                    receive_obj = delete_image_or_text_data(send_obj)
-                    if receive_obj["result"] == "fail":
-                        error_list_id.append(send_obj["target_id"])
-                except:
-                    error_list_id.append(send_obj["target_id"])
-                    continue
+            error_list_id = delete_old_cwb_img(db,server_dir,user_id)
 
-            #mark old cwb img
-            for num2 in range(len(error_list_id)):
-                sql = "UPDATE image_data SET img_is_expire=1 WHERE img_is_expire=0 and img_is_delete=0 and img_id='" + str(error_list_id[num2]) + "'" 
-                db.cmd(sql)
+            mark_old_cwb_img(db,error_list_id)
 
             #upload new file
             send_obj["server_dir"] = server_dir
@@ -1189,11 +1186,10 @@ def crawler_google_drive_img(json_obj):
         return_msg["error"] = e.args[1]
         return return_msg 
 
-def crawler_inside_news():
+def crawler_news(website):
     try:
         return_msg = {}
         return_msg["result"] = "fail"
-        data_type = 5
 
         #connect to mysql
         db = mysql()
@@ -1202,53 +1198,37 @@ def crawler_inside_news():
         check_news_QR_code_table()
 
         #check inside data type exist or not 
-        check_sql = "SELECT COUNT(*) FROM data_type WHERE  type_name='inside'"
+        check_sql = "SELECT COUNT(*) FROM data_type WHERE  type_name='{0}'".format(website)
         exist = db.query(check_sql)
+        db.close()
         if exist[0][0] == 0:
-            create_data_type('inside')
+            create_data_type(website)
 
-        #start grab INSIDE info
-        try:
-            grab_inside_articles()
-        except:
-            return_msg["error"] = "ERROR occurs in INSIDE crawler. Please check the correction of news_crawler"
-            return return_msg
-
-        db.close()
-        return_msg["result"] = "success"
-        return return_msg
-    except DB_Exception as e:
-        db.close()
-        return_msg["error"] = e.args[1]
-        return return_msg
-
-
-def crawler_techorange_news():
-    try:
-        return_msg = {}
-        return_msg["result"] = "fail"
-        data_type = 6
-
-        #connect to mysql
-        db = mysql()
-        db.connect()
-        #check if table 'news_QR_code' exists
-        check_news_QR_code_table()
-
-        #check inside data type exist or not 
-        check_sql = "SELECT COUNT(*) FROM data_type WHERE  type_name='techOrange'"
-        exist = db.query(check_sql)
-        if exist[0][0] == 0:
-            create_data_type('techOrange')
-
-        #start grab TECHORANGE info
-        try:
-            grab_techorange_articles()
-        except:
-            return_msg["error"] = "ERROR occurs in TECHORANGE crawler. Please check the correction of news_crawler"
-            return return_msg
-
-        db.close()
+        for case in switch(website):
+            if case('inside'):
+                #start grab INSIDE info
+                try:
+                    grab_inside_articles()
+                except:
+                    return_msg["error"] = "ERROR occurs in INSIDE crawler. Please check the correction of news_crawler"
+                    return return_msg
+                break
+            if case('techOrange'):
+                #start grab TECHORANGE info
+                try:
+                    grab_techorange_articles()
+                except:
+                    return_msg["error"] = "ERROR occurs in TECHORANGE crawler. Please check the correction of news_crawler"
+                    return return_msg
+                break
+            if case('medium'):
+                #start grab MEDIUM info
+                try:
+                    grab_medium_articles()
+                except:
+                    return_msg["error"] = "ERROR occurs in MEDIUM crawler. Please check the correction of news_crawler"
+                    return return_msg
+                break
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
@@ -1284,39 +1264,6 @@ def crawler_ptt_news(boards):
             grab_ptt_articles(allow_boards)
         except:
             return_msg["error"] = "ERROR occurs in PTT crawler. Please check the correction of news_crawler"
-            return return_msg
-
-        db.close()
-        return_msg["result"] = "success"
-        return return_msg
-    except DB_Exception as e:
-        db.close()
-        return_msg["error"] = e.args[1]
-        return return_msg
-
-def crawler_medium_news():
-    try:
-        return_msg = {}
-        return_msg["result"] = "fail"
-        data_type = 8
-
-        #connect to mysql
-        db = mysql()
-        db.connect()
-        #check if table 'news_QR_code' exists
-        check_news_QR_code_table()
-
-        #check data type exist or not 
-        check_sql = "SELECT COUNT(*) FROM data_type WHERE  type_name='medium'"
-        exist = db.query(check_sql)
-        if exist[0][0] == 0:
-            create_data_type('medium')
-
-        #start grab MEDIUM info
-        try:
-            grab_medium_articles()
-        except:
-            return_msg["error"] = "ERROR occurs in MEDIUM crawler. Please check the correction of news_crawler"
             return return_msg
 
         db.close()
@@ -1380,9 +1327,9 @@ def crawler_schedule():
         return_msg = {}
         return_msg["result"] = "fail"
         
-        return_inside = crawler_inside_news()
-        return_techorange = crawler_techorange_news()
-        return_medium = crawler_medium_news()
+        return_inside = crawler_news('inside')
+        return_techorange = crawler_news('techOrange')
+        return_medium = crawler_news('medium')
         return_ptt = crawler_ptt_news(boards)
         return_fortune = crawler_constellation_fortune()
         if return_inside["result"]=="success" and return_techorange["result"]=="success" \
