@@ -36,6 +36,10 @@ class Arrange_Schedule(unittest.TestCase):
             receive_msg = crawler_ptt_news(boards)
             assert receive_msg['result'] == 'success'
 
+    def test_crawler_schedule(self):
+        receive_msg = crawler_schedule()
+        assert receive_msg['result'] == 'success'
+
     def test_set_schedule_log(self):
         send_msg = {}
         send_msg['board_py_dir'] = self.system_setting['board_py_dir']
