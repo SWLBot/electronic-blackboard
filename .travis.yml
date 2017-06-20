@@ -1,0 +1,13 @@
+language: python
+python:
+    - "3.4"
+    - "3.5"
+install:
+    - pip install -r requirements.txt
+services:
+    - mysql
+script:
+    echo $'localhost\nroot\n\nbroadcast' > mysql_auth.txt
+    coverage run test_arrange_schedule.py 
+after_success:
+    coverage report
