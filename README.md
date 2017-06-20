@@ -1,4 +1,4 @@
-# Electronic Blackboard
+# Electronic Blackboard [![Build Status](https://travis-ci.org/SWLBot/electronic-blackboard.svg?branch=master)](https://travis-ci.org/SWLBot/electronic-blackboard) 
 
 This project is a electronic bulletin board of broadcasting images and announcement templates by web browser. The system provides broadcast scheduling, wieldy user interface for uploading and mutiple automated functions.  
 
