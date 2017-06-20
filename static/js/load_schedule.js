@@ -59,6 +59,10 @@ function load_schedule()
                         $('div#date b').text(String(month)+'.'+String(date));
                         $('div#name b').text(jsonRes.file_text.nickname);
                         $('div#star b').text(jsonRes.file_text.constellation.name);
+                        $('div#overall b').text(jsonRes.file_text.constellation.value[0]);
+                        $('div#love b').text(jsonRes.file_text.constellation.value[1]);
+                        $('div#career b').text(jsonRes.file_text.constellation.value[2]);
+                        $('div#wealth b').text(jsonRes.file_text.constellation.value[3]);
                         if( jsonRes.file_text.news.length > 0){
                             console.log("print!!!");
                             $('img#qrcode1').attr('src',String(jsonRes.file_text.news[0].QR));

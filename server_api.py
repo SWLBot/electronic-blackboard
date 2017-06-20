@@ -253,9 +253,24 @@ def random_constellation(user_id):
         constellation = random.choice(constellation)
     else:
         constellation = Zodiac(date.month,date.day)
-    return_msg["name"] = constellation
-    return_msg["value"] = [random.randrange(6),random.randrange(6),random.randrange(6),random.randrange(6)]
-    return return_msg
+    try:
+        today=str(datetime.date.today())
+        db = mysql()
+        db.connect()
+        sql = "SELECT overall, love, career, wealth FROM fortune " \
+            "WHERE fortune_date = '" +today+ "' AND constellation = '" + constellation + "'"
+        result = db.query(sql)
+        overall_str="整體運勢" + result[0][0]
+        love_str="愛情運勢" + result[0][1]
+        career_str="事業運勢" + result[0][2]
+        wealth_str="財運運勢" + result[0][3]
+        return_msg["name"] = constellation
+        return_msg["value"] = [overall_str,love_str,career_str,wealth_str]
+        return return_msg
+    except DB_Exception as e:
+        db.close()
+        return_msg["error"] = e.args[1]
+        return return_msg
 #
 def get_prefer_news(db, prefer_data_type):
     try:
@@ -1511,3 +1526,51 @@ def news_insert_db(json_obj):
         db.close()
         return_msg["error"] = e.args[1]
         return return_msg
+
+def fortune_insert_db(json_obj):
+    try:
+        return_msg = {}
+        return_msg["result"] = "fail"
+
+        constellation = ""
+        overall = ""
+        love = ""
+        career = ""
+        wealth = ""
+        date = str(datetime.date.today())
+        try:
+            constellation = json_obj["constellation"]
+            overall = json_obj["overall"]
+            love = json_obj["love"]
+            career = json_obj["career"]
+            wealth = json_obj["wealth"]
+        except:
+            return_msg["error"] = "input parameter missing"
+            return return_msg
+
+        #insert fortune data
+        db = mysql()
+        db.connect()
+        #check
+        sql = "SELECT COUNT(*) FROM fortune WHERE fortune_date = '" +date+ "' AND constellation = '" + constellation + "'"
+        check = db.query(sql)
+
+        if check[0][0] == 0:
+            sql = "INSERT INTO fortune " \
+                    +" (`fortune_date`,`constellation`, `overall`, `love`, `career`, `wealth`)" \
+                    +" VALUES (" \
+                    + "\"" + date + "\", " \
+                    + "\"" + constellation + "\", " \
+                    + "\"" + overall + "\", " \
+                    + "\"" + love + "\", " \
+                    + "\"" + career + "\", " \
+                    + "\"" + wealth + "\")"
+        db.cmd(sql)
+        db.close()
+        return_msg["result"] = "success"
+
+    except DB_Exception as e:
+        db.close()
+        return_msg["error"] = e.args[1]
+        return return_msg
+
