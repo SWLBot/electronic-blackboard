@@ -30,5 +30,12 @@ class Arrange_Schedule(unittest.TestCase):
             receive_msg = crawler_news(website)
             assert receive_msg['result'] == 'success'
 
+    def test_set_schedule_log(self):
+        send_msg = {}
+        send_msg['board_py_dir'] = self.system_setting['board_py_dir']
+        send_msg['max_db_log'] = self.system_setting['max_db_log']
+        receive_msg = set_schedule_log(send_msg)
+        assert receive_msg['result'] == 'success'
+
 if __name__ == "__main__":
     unittest.main()
