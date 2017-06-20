@@ -22,6 +22,7 @@ import time
 import os.path
 import json
 from util import switch
+import config.settings as setting
 
 #make now activity to is used
 def mark_now_activity():
@@ -838,28 +839,14 @@ def set_schedule_log(json_obj):
 def read_system_setting():
     return_msg = {}
     return_msg["result"] = "fail"
-    file_name = "setting.txt"
-    
-    if not os.path.isfile(file_name) :
-        return_msg["error"] = "file missing"
-        return return_msg
     
     try:
-        file_pointer = open(file_name,"r")
-        for line in file_pointer:
-            pure_data = []
-            pure_data = line.rstrip('\n').split(' ')
-            if pure_data[0] == "board_py_dir":
-                return_msg["board_py_dir"] = pure_data[1]
-            elif pure_data[0] == "shutdown":
-                return_msg["shutdown"] = int(pure_data[1])
-            elif pure_data[0] == "max_db_log":
-                return_msg["max_db_log"] = int(pure_data[1])
-            elif pure_data[0] == "min_db_activity":
-                return_msg["min_db_activity"] = int(pure_data[1])
-        file_pointer.close()
-    except:
-        return_msg["error"] = "read error"
+        return_msg["board_py_dir"] = setting.arrange_setting['board_py_dir']
+        return_msg["shutdown"] = setting.arrange_setting['shutdown']
+        return_msg["max_db_log"] = setting.arrange_setting['max_db_log']
+        return_msg["min_db_activity"] = setting.arrange_setting['min_db_activity']
+    except Exception as e:
+        return_msg["error"] = str(e)
         return return_msg
 
     return_msg["result"] = "success"
