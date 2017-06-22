@@ -32,24 +32,14 @@ class mysql:
         try:
             self.db = pymysql.connect(host_str, user_str, token_str, dbname_str, use_unicode=True, charset="utf8")
             self.cursor = self.db.cursor()
-            #cursor.execute('SET NAMES utf8;')
-            #cursor.execute('SET CHARACTER SET utf8;')
-            #cursor.execute('SET character_set_connection=utf8;')
+            self.cursor.execute('SET NAMES utf8;')
+            self.cursor.execute('SET CHARACTER SET utf8;')
+            self.cursor.execute('SET character_set_connection=utf8;')
+            self.db.commit()
         except:
             raise DB_Exception(-1, "Mysql connect fail")
             return -1
 
-        return 1
-
-    #drop old table if exist!! be careful when using it!!
-    def create_table(self, sql, table_name):
-        try:
-            drop_sql = "DROP TABLE IF EXISTS " + table_name
-            self.cursor.execute(drop_sql)
-            self.cursor.execute(sql)
-        except:
-            raise DB_Exception(-1, "Mysql create table fail")
-            return -1
         return 1
 
     #insert, update, delete query
