@@ -21,7 +21,7 @@ Since the project is totally written in python 3, pyhton 2 is not recommended.
 
 1. For the libraries needed
 ```
-pip3 install -r requirements.txt
+# pip3 install -r requirements.txt
 ```
 2. create nessasary files in this project
   * create `mysql_auth.txt`
@@ -36,16 +36,29 @@ root
 your_password
 yout_database_name
 ```
-4. Execute `env_init.sample.py` to automatically initialize environment settings
+4. Execute `env_init.py` to automatically initialize environment settings
 ```
-python3 env_init.sample.py
+$ python3 env_init.py
+```
+
+## Run test
+`$ python3 test/test.py`
+if success, it should print
+```
+test_close (test_mysql.Mysql) ... ok
+...
+test_set_schedule_log (test_arrange_schedule.Arrange_Schedule) ... ok
+----------------------------------------------------------------------
+Ran 12 tests in XXX.XXs
+
+OK
 ```
 
 ## Start
 ```
-python3 server.py
-python3 arrange_schedule.py
-python3 board.py
+$ python3 server.py
+$ python3 arrange_schedule.py
+$ python3 board.py
 ```
 
 Open the web browser to check the implement result with the url `localhost:3000` and `localhost:4000`
