@@ -9,7 +9,6 @@ services:
     - mysql
 script:
     echo $'localhost\nroot\n\nbroadcast' > mysql_auth.txt
-    coverage run test_env_init.py
-    coverage run test_arrange_schedule.py 
+    coverage run test/test.py
 after_success:
     coverage report
