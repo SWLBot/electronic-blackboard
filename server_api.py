@@ -33,14 +33,18 @@ def add_like_count(db, target_id):
         return 1
     except:
         return 0
-#
+        
+#find the current displaying schedule
 def find_now_schedule(db):
     try:
         sql = "SELECT sche_target_id FROM schedule WHERE sche_is_used=0 ORDER BY sche_sn ASC LIMIT 1"
         pure_result = db.query(sql)
-        return str(pure_result[0][0])
+        if len(pure_result):
+            return str(pure_result[0][0])
+        else:
+            return 0
     except:
-        return 0
+        return -1
 #
 def add_now_like_count():
     try:
