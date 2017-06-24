@@ -51,5 +51,9 @@ class Arrange_Schedule(unittest.TestCase):
         receive_msg = set_schedule_log(send_msg)
         self.assertEqual(receive_msg['result'],'success')
 
+    def test_expire_data_check(self):
+        receive_msg = expire_data_check()
+        self.assertEqual(receive_msg['result'],'success')
+
 if __name__ == "__main__":
     unittest.main()
