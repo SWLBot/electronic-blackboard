@@ -61,6 +61,7 @@ def suite():
     suite = unittest.TestSuite()
     for case in cases:
         suite.addTest(Arrange_Schedule(case))
+    return suite
 
 if __name__ == "__main__":
     unittest.main()
