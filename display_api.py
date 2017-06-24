@@ -48,10 +48,9 @@ def display_image(argu_user):
         user_id = get_user_id(user_name)
 
         #check whether level is 10000
-        sql = "SELECT user_level FROM user WHERE user_id  = %d" % (user_id)
-        pure_data = db.query(sql)
-        current_user_level = 0
         try:
+            sql = "SELECT user_level FROM user WHERE user_id  = %d" % (user_id)
+            pure_data = db.query(sql)
             current_user_level = pure_data[0][0]
         except:
             db.close()
