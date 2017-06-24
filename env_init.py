@@ -49,8 +49,13 @@ def env_init():
     print("Creating database \"%s\"..." % dbname)
     cursor.execute("CREATE DATABASE %s character set utf8" % dbname)
     try:
-        with open("create_tables.sql","r") as file:
-            subprocess.call(["mysql","-u",user,"-p"+passwd],stdin=file)
+        with mysql() as db:
+            db.connect()
+            with open("create_tables.sql","r") as file:
+                sql_Commands = file.read()
+                sql_Commands = sql_Commands.replace('\n','').split(';')
+            for sql in sql_Commands[:-1]:
+                db.cmd(sql)
     except:
         print("Open sql file failed")
         exit(1)
