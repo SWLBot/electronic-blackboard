@@ -1,3 +1,5 @@
+dist: trusty
+sudo: false
 language: python
 python:
     - "3.4"
@@ -8,7 +10,7 @@ install:
 services:
     - mysql
 script:
-    echo $'localhost\nroot\n\nbroadcast' > mysql_auth.txt
-    coverage run test/test.py
+    - echo $'localhost\nroot\n\nbroadcast' > mysql_auth.txt
+    - coverage run test/test.py
 after_success:
-    coverage report
+    - coverage report
