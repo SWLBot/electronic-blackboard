@@ -1,15 +1,13 @@
-from test_mysql import Mysql
-from test_env_init import Env_init
-from test_arrange_schedule import Arrange_Schedule
-from test_server_api import Server_api
+from test_mysql import suite as MysqlSuite
+from test_env_init import suite as EnvSuite
+from test_arrange_schedule import suite as ArrangeSuite
 import unittest
 
 def main():
-    testcases = [Mysql,Env_init,Arrange_Schedule,Server_api]
+    testcases = [EnvSuite,MysqlSuite,ArrangeSuite]
     suite = unittest.TestSuite()
     for case in testcases:
-        tmp = unittest.TestLoader().loadTestsFromTestCase(case)
-        suite.addTests(tmp)
+        suite.addTests(case())
 
     unittest.TextTestRunner(verbosity=2).run(suite)
 

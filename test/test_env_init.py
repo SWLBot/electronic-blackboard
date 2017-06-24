@@ -12,5 +12,12 @@ class Env_init(unittest.TestCase):
     def test_create_data_type(self):
         create_data_type('test')
 
+def suite():
+    cases = ['test_env_init','test_create_data_type']
+    suite = unittest.TestSuite()
+    for case in cases:
+        suite.addTest(Env_init(case))
+    return suite
+
 if __name__ == "__main__":
     unittest.main()
