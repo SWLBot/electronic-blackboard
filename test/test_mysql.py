@@ -28,5 +28,12 @@ class Mysql(unittest.TestCase):
             db.connect()
             db.close()
 
+def suite():
+    cases = ['test_connect','test_cmd','test_query','test_close']
+    suite = unittest.TestSuite()
+    for case in cases:
+        suite.addTest(Mysql(case))
+    return suite
+
 if __name__ == '__main__':
     unittest.main()
