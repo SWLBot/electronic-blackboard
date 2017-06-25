@@ -57,7 +57,8 @@ class Arrange_Schedule(unittest.TestCase):
 
 def suite():
     cases = ['test_read_arrange_mode','test_crawler_cwb_img','test_crawler_news',
-        'test_crawler_ptt_news','test_crawler_schedule','test_set_schedule_log']
+        'test_crawler_ptt_news','test_crawler_schedule','test_set_schedule_log',
+        'test_expire_data_check']
     suite = unittest.TestSuite()
     for case in cases:
         suite.addTest(Arrange_Schedule(case))
