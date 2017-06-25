@@ -18,5 +18,12 @@ class Display_api(unittest.TestCase):
         #return dict type when error occurs
         self.assertEqual(type(receive_msg),int)
 
+def suite():
+    cases = ['test_get_user_id','test_display_image']
+    suite = unittest.TestSuite()
+    for case in cases:
+        suite.addTest(Display_api(case))
+    return suite
+
 if __name__ == "__main__":
     unittest.main()
