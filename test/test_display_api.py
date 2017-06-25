@@ -12,5 +12,11 @@ class Display_api(unittest.TestCase):
         #return dict type when error occurs
         self.assertEqual(type(receive_msg),list)
 
+    def test_get_user_id(self):
+        user_name = "admin"
+        receive_msg = get_user_id(user_name)
+        #return dict type when error occurs
+        self.assertEqual(type(receive_msg),int)
+
 if __name__ == "__main__":
     unittest.main()
