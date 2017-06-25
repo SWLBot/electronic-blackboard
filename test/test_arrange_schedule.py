@@ -51,6 +51,10 @@ class Arrange_Schedule(unittest.TestCase):
         receive_msg = set_schedule_log(send_msg)
         self.assertEqual(receive_msg['result'],'success')
 
+    def test_google_calendar_text(self):
+        receive_msg = google_calendar_text()
+        self.assertEqual(receive_msg['result'],'success')
+
 def suite():
     cases = ['test_read_arrange_mode','test_crawler_cwb_img','test_crawler_news',
         'test_crawler_ptt_news','test_crawler_schedule','test_set_schedule_log']
