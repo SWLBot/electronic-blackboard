@@ -1308,7 +1308,8 @@ def check_news_QR_code_table():
                  AND table_name = 'news_QR_code'"
     check = db.query(check_sql)
     if check[0][0] == 0:
-        create_news_table()
+        return create_news_table()
+    return dict(result='success')
 
 def check_fortune_table():
     db = mysql()

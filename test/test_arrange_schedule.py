@@ -34,7 +34,11 @@ class Arrange_Schedule(unittest.TestCase):
 
         receive_msg = crawler_cwb_img(send_msg)
         self.assertEqual(receive_msg['result'],'success')
-
+    
+    def test_check_news_QR_code_table(self):
+        receive_msg = check_news_QR_code_table()
+        self.assertEqual(receive_msg['result'],'success')
+    
     def test_crawler_news(self):
         websites = ['inside','techOrange','medium']
         for website in websites:
@@ -69,8 +73,9 @@ class Arrange_Schedule(unittest.TestCase):
 
 def suite():
     cases = ['test_read_arrange_mode','test_delete_old_cwb_img','test_crawler_cwb_img',
-        'test_crawler_news','test_crawler_ptt_news','test_crawler_schedule',
-        'test_set_schedule_log','test_expire_data_check','test_find_cwb_type_id']
+        'test_check_news_QR_code_table','test_crawler_news','test_crawler_ptt_news',
+        'test_crawler_schedule','test_set_schedule_log','test_expire_data_check',
+        'test_find_cwb_type_id']
     suite = unittest.TestSuite()
     for case in cases:
         suite.addTest(Arrange_Schedule(case))
