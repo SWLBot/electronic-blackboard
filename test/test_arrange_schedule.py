@@ -20,6 +20,13 @@ class Arrange_Schedule(unittest.TestCase):
         for key in keys:
             self.assertTrue(key in receive_msg)
 
+    def test_delete_old_cwb_img(self):
+        with mysql() as db:
+            db.connect()
+            server_dir = self.system_setting['board_py_dir']
+            user_id = 1
+            self.assertEqual(len(delete_old_cwb_img(db,server_dir,user_id)),0)
+
     def test_crawler_cwb_img(self):
         send_msg = {}
         send_msg['server_dir'] = self.system_setting['board_py_dir']
@@ -61,9 +68,9 @@ class Arrange_Schedule(unittest.TestCase):
             self.assertNotEqual(find_cwb_type_id(db),-1)
 
 def suite():
-    cases = ['test_read_arrange_mode','test_crawler_cwb_img','test_crawler_news',
-        'test_crawler_ptt_news','test_crawler_schedule','test_set_schedule_log',
-        'test_expire_data_check','test_find_cwb_type_id']
+    cases = ['test_read_arrange_mode','test_delete_old_cwb_img','test_crawler_cwb_img',
+        'test_crawler_news','test_crawler_ptt_news','test_crawler_schedule',
+        'test_set_schedule_log','test_expire_data_check','test_find_cwb_type_id']
     suite = unittest.TestSuite()
     for case in cases:
         suite.addTest(Arrange_Schedule(case))
