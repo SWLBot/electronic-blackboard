@@ -1319,7 +1319,8 @@ def check_fortune_table():
                  AND table_name = 'fortune'"
     check = db.query(check_sql)
     if check[0][0] == 0:
-        create_fortune_table()
+        return create_fortune_table()
+    return dict(result='success')
 
 def crawler_schedule():
     try:

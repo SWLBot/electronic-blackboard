@@ -187,4 +187,4 @@ def create_fortune_table():
         client.cmd(sql)
         return dict(result='success')
     except DB_Exception as e:
-        return dict(error=e.args[1])
+        return dict(error=e.args[1],result='fail')
