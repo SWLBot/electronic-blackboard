@@ -127,7 +127,7 @@ def create_news_table():
         client.cmd(sql)
         return dict(result='success')
     except DB_Exception as e:
-        return dict(error=e.args[1])
+        return dict(error=e.args[1],result='fail')
 
 #create data_types for all websites crawler grabbed
 def create_news_data_types():
