@@ -6,6 +6,7 @@ import unittest
 
 def main():
     testcases = [EnvSuite,MysqlSuite,ArrangeSuite,DisplaySuite]
+    suite = unittest.TestSuite()
     for case in testcases:
         suite.addTests(case())
 
