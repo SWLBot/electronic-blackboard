@@ -562,18 +562,26 @@ def get_upload_meta_data(handler):
 
     return meta_data
 
+#get the text data from the handler
 def get_upload_text_data(handler):
-    text_file = {}
+    try:
+        text_data = {}
+        text_data['result'] = 'fail'
 
-    text_file['con'] = tornado.escape.xhtml_escape(handler.get_argument('con')).replace('&amp;nbsp','&nbsp').replace('&lt;br&gt;','<br>')
-    text_file['title1'] = tornado.escape.xhtml_escape(handler.get_argument('title1')).replace('&amp;nbsp','&nbsp').replace('&lt;br&gt;','<br>')
-    text_file['title2'] = tornado.escape.xhtml_escape(handler.get_argument('title2')).replace('&amp;nbsp','&nbsp').replace('&lt;br&gt;','<br>')
-    text_file['description'] = tornado.escape.xhtml_escape(handler.get_argument('description')).replace('&lt;br&gt;','<br>').replace('&amp;nbsp','&nbsp')
-    text_file['year'] = tornado.escape.xhtml_escape(handler.get_argument('year'))
-    text_file['month'] = tornado.escape.xhtml_escape(handler.get_argument('month'))
-    text_file['background_color'] = tornado.escape.xhtml_escape(handler.get_argument('background_color'))
+        text_data['con'] = tornado.escape.xhtml_escape(handler.get_argument('con')).replace('&amp;nbsp','&nbsp').replace('&lt;br&gt;','<br>')
+        text_data['title1'] = tornado.escape.xhtml_escape(handler.get_argument('title1')).replace('&amp;nbsp','&nbsp').replace('&lt;br&gt;','<br>')
+        text_data['title2'] = tornado.escape.xhtml_escape(handler.get_argument('title2')).replace('&amp;nbsp','&nbsp').replace('&lt;br&gt;','<br>')
+        text_data['description'] = tornado.escape.xhtml_escape(handler.get_argument('description')).replace('&lt;br&gt;','<br>').replace('&amp;nbsp','&nbsp')
+        text_data['year'] = tornado.escape.xhtml_escape(handler.get_argument('year'))
+        text_data['month'] = tornado.escape.xhtml_escape(handler.get_argument('month'))
+        text_data['background_color'] = tornado.escape.xhtml_escape(handler.get_argument('background_color'))
 
-    return text_file
+        text_data['result'] = 'success'
+        return text_data
+    except Exception as e:
+        print(str(e))
+        return text_data
+
 
 def store_image(filepath,file_content):
     with open(filepath,'wb') as fp:

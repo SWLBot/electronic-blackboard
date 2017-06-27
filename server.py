@@ -135,9 +135,11 @@ class UploadHandler(BaseHandler):
         else:
             receive_msg = upload_text_insert_db(send_msg)
             text_file = get_upload_text_data(self)
-            
-            with open(receive_msg["text_system_dir"],"w") as fp:
-                print(json.dumps(text_file),file=fp)
+
+            if text_file['result'] == 'success':
+                text_file.pop('result')
+                with open(receive_msg["text_system_dir"],"w") as fp:
+                    print(json.dumps(text_file),file=fp)
 
             data_types = display_data_types()
             self.render("upload.html",flash="Upload finish!",data_types=data_types)
