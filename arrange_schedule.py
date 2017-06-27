@@ -456,7 +456,7 @@ def find_image_acticity(json_obj):
         return return_msg
 
 #The API connect mysql and find image data that can be scheduled
-def find_acticity(json_obj):
+def find_activity(json_obj):
     return_msg = {}
     return_msg["result"] = "fail"
     receive_obj = {}
@@ -1550,11 +1550,11 @@ def main():
                     #find activity
                     send_obj["arrange_mode"] = arrange_mode
                     send_obj["condition"] = condition
-                    receive_obj = find_acticity(send_obj)
+                    receive_obj = find_activity(send_obj)
                     if receive_obj["result"] == "success":
                         "DO NOTHING"
                     else :
-                        receive_obj["error"] = "find_acticity : " + receive_obj["error"]
+                        receive_obj["error"] = "find_activity : " + receive_obj["error"]
                         set_system_log(receive_obj)
                         os._exit(0)
 
