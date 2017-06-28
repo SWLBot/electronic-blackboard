@@ -144,9 +144,9 @@ def check_bluetooth_mode_available():
     file_name = "server_setting.txt"
     #check setting file exist
     if not os.path.exists(file_dir):
-        return 0
+        return -1
     if not os.path.isfile(file_dir+'/'+file_name):
-        return 0
+        return -1
     
     try:
         #read setting file
@@ -167,8 +167,9 @@ def check_bluetooth_mode_available():
             return 0
         
         return 0
-    except :
-        return 0
+    except Exception as e:
+        print(str(e))
+        return -1
 #
 def find_user_by_bluetooth(db, bluetooth_id):
     try:
