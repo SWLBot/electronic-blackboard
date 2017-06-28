@@ -12,5 +12,6 @@ services:
 script:
     - echo $'localhost\nroot\n\nbroadcast' > mysql_auth.txt
     - coverage run test/test.py
+    - coverage run test/test_server_api.py
 after_success:
     - coverage report

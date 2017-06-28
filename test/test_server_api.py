@@ -12,5 +12,9 @@ class Server_api(unittest.TestCase):
             db.connect()
             self.assertNotEqual(find_now_schedule(db),-1)
 
+    def test_check_bluetooth_mode_available(self):
+        ret = check_bluetooth_mode_available()
+        self.assertNotEqual(ret,-1)
+
 if __name__ == "__main__":
     unittest.main()
