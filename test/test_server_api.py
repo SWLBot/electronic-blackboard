@@ -16,5 +16,13 @@ class Server_api(unittest.TestCase):
         ret = check_bluetooth_mode_available()
         self.assertNotEqual(ret,-1)
 
+def suite():
+    cases = ['test_find_now_schedule','test_check_bluetooth_mode_available']
+    suite = unittest.TestSuite()
+    for case in cases:
+        suite.addTest(Server_api(case))
+
+    return suite
+
 if __name__ == "__main__":
     unittest.main()
