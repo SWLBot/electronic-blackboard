@@ -445,19 +445,6 @@ def deal_with_bluetooth_id(bluetooth_id):
         db.close()
         return_msg["error"] = e
         return return_msg
-#
-def get_user_name_and_password(handler):
-    try:
-        return_msg = {}
-        return_msg['result'] = 'fail'
-
-        return_msg['user_name'] = tornado.escape.xhtml_escape(handler.get_argument("username"))
-        return_msg['user_password'] = tornado.escape.xhtml_escape(handler.get_argument("password"))
-        return_msg['result'] = 'success'
-        return return_msg
-    except Exception as e:
-        return_msg['error'] = str(e)
-        return return_msg
 
 #
 def check_user_existed_or_signup(user_info):
