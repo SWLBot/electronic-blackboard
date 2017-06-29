@@ -53,6 +53,15 @@ class UserEditArgumentsUtil(ArgumentUtil):
         userInfo['new_password'] = self.getArgument('password')
         return userInfo
 
+class UploadArgumentsUtil(ArgumentUtil):
+    def getArguments(self):
+        uploadData = {}
+        uploadData['file_type'] = self.getArgument('data_type')
+        uploadData['start_date'] = self.getArgument('start_date')
+        uploadData['end_date'] = self.getArgument('end_date')
+        uploadData['start_time'] = self.getArgument('start_time')
+        uploadData['end_time'] = self.getArgument('end_time')
+        uploadData['display_time'] = self.getArgument('display_time')
 #
 def add_like_count(db, target_id):
     try:
@@ -579,16 +588,11 @@ def check_user_password(user_info):
         return return_msg
 
 def get_upload_meta_data(handler):
-    meta_data = {}
+    uploadArgUtil = UploadArgumentsUtil(handler)
     user_name = handler.get_current_user().decode('utf-8')
 
+    meta_data = uploadArgUtil.getArguments()
     meta_data["server_dir"] = os.path.dirname(__file__)
-    meta_data["file_type"] = tornado.escape.xhtml_escape(handler.get_argument("data_type"))
-    meta_data["start_date"] = tornado.escape.xhtml_escape(handler.get_argument("start_date"))
-    meta_data["end_date"] = tornado.escape.xhtml_escape(handler.get_argument("end_date"))
-    meta_data["start_time"] = tornado.escape.xhtml_escape(handler.get_argument("start_time"))
-    meta_data["end_time"] = tornado.escape.xhtml_escape(handler.get_argument("end_time"))
-    meta_data["display_time"] = tornado.escape.xhtml_escape(handler.get_argument("display_time"))
     meta_data["user_id"] = get_user_id(user_name)
 
     return meta_data
