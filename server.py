@@ -44,13 +44,9 @@ class SignupHandler(BaseHandler):
             self.redirect('/')
 
     def post(self):
-        user_info = get_user_name_and_password(self)
-        if user_info['result'] == 'success':
-            user_info.pop('result')
-            ret = check_user_existed_or_signup(user_info)
-        else:
-            #TODO raise exception
-            ret = dict(error=user_info['error'])
+        userArgUtil = UserArgumentsUtil(self)
+        user_info = userArgUtil.getArguments()
+        ret = check_user_existed_or_signup(user_info)
         if 'error' in ret:
             self.render('signup.html',flash=ret['error'])
         else:
@@ -69,13 +65,9 @@ class LoginHandler(BaseHandler):
             self.write('<center>Blocked</center>')
             return
 
-        user_info = get_user_name_and_password(self)
-        if user_info['result'] == 'success':
-            user_info.pop('result')
-            ret = check_user_password(user_info)
-        else:
-            #TODO raise exception
-            ret = dict(fail=user_info['error'])
+        userArgUtil = UserArgumentsUtil(self)
+        user_info = userArgUtil.getArguments()
+        ret = check_user_password(user_info)
 
         if 'success' in ret:
             self.set_secure_cookie("user",self.get_argument("username"))

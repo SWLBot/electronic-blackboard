@@ -12,12 +12,36 @@ import json
 import tornado
 import time
 import random
+from tornado.escape import xhtml_escape
+from tornado.web import MissingArgumentError
 from oauth2client import client
 from oauth2client import tools
 from oauth2client.file import Storage
 import httplib2
 from apiclient import discovery
 import datetime
+
+class ArgumentUtil():
+    def __init__(self,requestHandler):
+        self.handler = requestHandler
+
+    def getArgument(self,name):
+        rawArg = self.handler.get_argument(name)
+        return xhtml_escape(rawArg)
+
+    def getArguments(self):
+        raise NotImplementedError("The getArgument() is not implemented.")
+
+class UserArgumentsUtil(ArgumentUtil):
+    def __init__(self,requestHandler):
+        super().__init__(requestHandler)
+
+    def getArguments(self):
+        userInfo = {}
+        userInfo['user_name'] = self.getArgument('username')
+        userInfo['user_password'] = self.getArgument('password')
+        return userInfo
+
 #
 def add_like_count(db, target_id):
     try:
