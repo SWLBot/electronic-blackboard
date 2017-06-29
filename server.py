@@ -84,10 +84,8 @@ class ChangePasswdHandler(BaseHandler):
         self.render("changepasswd.html",flash=None)
 
     def post(self):
-        send_msg = {}
-        send_msg['user_name'] = self.get_current_user()
-        send_msg['old_password'] = self.get_argument('old_password')
-        send_msg['new_password'] = self.get_argument('password')
+        userEditArgUtil = UserEditArgumentsUtil(self)
+        send_msg = userEditArgUtil.getArguments()
         receive_msg = change_password(send_msg)
         if receive_msg['result'] == "success":
             flash = "Change password success"
