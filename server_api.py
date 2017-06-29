@@ -42,6 +42,17 @@ class UserArgumentsUtil(ArgumentUtil):
         userInfo['user_password'] = self.getArgument('password')
         return userInfo
 
+class UserEditArgumentsUtil(ArgumentUtil):
+    def getCurUser(self):
+        return self.handler.get_current_user()
+
+    def getArguments(self):
+        userInfo = {}
+        userInfo['user_name'] = self.getCurUser()
+        userInfo['old_password'] = self.getArgument('old_password')
+        userInfo['new_password'] = self.getArgument('password')
+        return userInfo
+
 #
 def add_like_count(db, target_id):
     try:
