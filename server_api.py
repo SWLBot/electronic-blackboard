@@ -62,6 +62,7 @@ class UploadArgumentsUtil(ArgumentUtil):
         uploadData['start_time'] = self.getArgument('start_time')
         uploadData['end_time'] = self.getArgument('end_time')
         uploadData['display_time'] = self.getArgument('display_time')
+        return uploadData
 #
 def add_like_count(db, target_id):
     try:
