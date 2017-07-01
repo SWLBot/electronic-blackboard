@@ -650,20 +650,11 @@ def get_text_meta(text_id):
         return_msg["error"] = e.args[1]
         return return_msg
 
-def check_user_level(json_obj):
+def check_user_level(user_id):
     try:
         return_msg = {}
         return_msg["result"] = "fail"
-        user_id = 0
-        user_level = 0
-        compare_level = []
-        compare_ans = []
-        try:
-            user_id = json_obj["user_id"]
-            compare_level = json_obj["compare_level"]
-        except:
-            return_msg["error"] = "input parameter missing"
-            return return_msg
+        user_level_low_bound = 100
 
         #connect to mysql
         db = mysql()
@@ -680,15 +671,13 @@ def check_user_level(json_obj):
             return_msg["error"] = "no such user id : " + str(user_id)
             return return_msg
 
-        for num1 in range(len(compare_level)):
-            if int(compare_level[num1]) >= user_level:
-                compare_ans.append("pass")
-            else :
-                compare_ans.append("fail")
+        if user_level < user_level_low_bound:
+            db.close()
+            return_msg['error'] = 'User has permission to do this job'
+            return return_msg
 
         db.close()
 
-        return_msg["compare_ans"] = compare_ans
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
@@ -729,18 +718,9 @@ def upload_image_insert_db(json_obj):
         db = mysql()
         db.connect()
         
-        #check user level
-        sql = ("SELECT user_level FROM user WHERE user_id=" + str(user_id))
-        pure_result = db.query(sql)
-        try: 
-            if pure_result[0][0] < user_level_low_bound:
-                db.close()
-                return_msg["error"] = "user right is too low"
-                return return_msg
-        except:
-            db.close()
-            return_msg["error"] = "no such user id : " + str(user_id)
-            return return_msg
+        receive_msg = check_user_level(str(user_id))
+        if 'fail' in receive_msg:
+            return_msg['result'] = receive_msg['error']
         
         #get new file place
         sql = ("SELECT type_dir FROM data_type WHERE type_id=" + str(type_id))
@@ -1019,18 +999,9 @@ def upload_text_insert_db(json_obj):
         db = mysql()
         db.connect()
         
-        #check user level
-        sql = ("SELECT user_level FROM user WHERE user_id=" + str(user_id))
-        pure_result = db.query(sql)
-        try: 
-            if int(pure_result[0][0]) < user_level_low_bound:
-                db.close()
-                return_msg["error"] = "user right is too low"
-                return return_msg
-        except:
-            db.close()
-            return_msg["error"] = "no such user id : " + str(user_id)
-            return return_msg
+        receive_msg = check_user_level(user_id)
+        if 'fail' in receive_msg:
+            return_msg['result'] = receive_msg['error']
 
         #generate new id
         sql = ("SELECT text_id FROM text_data ORDER BY text_upload_time DESC LIMIT 1")
