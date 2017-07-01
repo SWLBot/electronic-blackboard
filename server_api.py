@@ -1368,11 +1368,9 @@ def change_password(json_obj):
         db.connect()
         
         #get user_id 
-        sql = "SELECT user_id FROM user WHERE user_name = \""+user_name.decode("utf-8")+"\""
-        pure_result = db.query(sql)
-        try:
-            user_id = pure_result[0][0]
-        except:
+        user_name = user_name.decode('utf-8')
+        user_id  = get_user_id(user_name)
+        if type(user_id) == type(dict()):
             db.close()
             return_msg["error"] = "no such user name"
             return return_msg
