@@ -964,14 +964,6 @@ def upload_text_insert_db(json_obj):
     try:
         return_msg = {}
         return_msg["result"] = "fail"
-        server_dir = ""
-        type_id = 1
-        text_start_date = ""
-        text_end_date = ""
-        text_start_time = ""
-        text_end_time = ""
-        text_display_time = 5
-        user_id = ""
         try:
             server_dir = json_obj["server_dir"]
             type_id = json_obj["file_type"]
@@ -1065,16 +1057,6 @@ def edit_text_data(json_obj):
     try:
         return_msg = {}
         return_msg["result"] = "fail"
-        server_dir = ""
-        text_id = ""
-        invisible_title = ""
-        type_id = 0
-        text_start_date = ""
-        text_end_date = ""
-        text_start_time = ""
-        text_end_time = ""
-        text_display_time = 5
-        user_id = ""
         try:
             server_dir = json_obj["server_dir"]
             text_id = json_obj["text_id"]
@@ -1236,9 +1218,6 @@ def delete_image_or_text_data(json_obj):
     try:
         return_msg = {}
         return_msg["result"] = "fail"
-        server_dir = ""
-        target_id = ""
-        user_id = ""
         target_dir = ""
         trash_dir = ""
         target_type_id = 0
@@ -1376,9 +1355,6 @@ def change_password(json_obj):
     try:
         return_msg = {}
         return_msg["result"] = "fail"
-        user_id = 0
-        old_password = ""
-        new_password = ""
         try:
             user_name = json_obj["user_name"]
             old_password = json_obj["old_password"]
