@@ -1539,19 +1539,16 @@ def fortune_insert_db(json_obj):
         db = mysql()
         db.connect()
         #check
-        sql = "SELECT COUNT(*) FROM fortune WHERE fortune_date = '" +date+ "' AND constellation = '" + constellation + "'"
+        sql = 'SELECT COUNT(*) FROM fortune WHERE fortune_date = "{date}" AND constellation = "{constellation}"'.format(
+                date=date,constellation=constellation)
+
         check = db.query(sql)
 
         if check[0][0] == 0:
-            sql = "INSERT INTO fortune " \
-                    +" (`fortune_date`,`constellation`, `overall`, `love`, `career`, `wealth`)" \
-                    +" VALUES (" \
-                    + "\"" + date + "\", " \
-                    + "\"" + constellation + "\", " \
-                    + "\"" + overall + "\", " \
-                    + "\"" + love + "\", " \
-                    + "\"" + career + "\", " \
-                    + "\"" + wealth + "\")"
+            sql2 = 'INSERT INTO fortune '\
+                +' (`fortune_date`, `constellation`, `overall`, `love`, `career`, `wealth`)'\
+                +' VALUES ("{date}","{constellation}","{overall}","{love}","{career}","{wealth}")'.format(
+                date=date,constellation=constellation,overall=overall,love=love,career=career,wealth=wealth)
         db.cmd(sql)
         db.close()
         return_msg["result"] = "success"
