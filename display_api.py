@@ -3,35 +3,26 @@ from mysql import DB_Exception
 from datetime import date
 from datetime import datetime
 from datetime import timedelta
+from dataAccessObjects import UserDao
 import os.path
 #
-def get_user_id(argu_user):
+def get_user_id(user_name):
     try:
-        user_name = argu_user
         return_msg = {}
         result = ""
 
-        #connect to mysql
-        db = mysql()
-        db.connect()
-
-        sql = "SELECT user_id FROM user WHERE user_name = \""+user_name+"\""
-        pure_data = db.query(sql)
-        try:
-            result = pure_data[0][0]
-        except:
-            db.close()
-            return_msg["error"] = "no such user"
+        with UserDao() as userDao:
+            user_id = userDao.getUserId(user_name) 
+        if user_id:
+            return user_id
+        else:
+            return_msg['error'] = 'No such user'
             return return_msg
 
-        db.close()
-        return result
     except DB_Exception as e:
         db.close()
         return_msg["error"] = e.args[1]
         return return_msg
-
-
 
 #connect mysql and list all upload images' information
 def display_image(argu_user):
