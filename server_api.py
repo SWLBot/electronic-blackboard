@@ -20,6 +20,7 @@ from oauth2client.file import Storage
 import httplib2
 from apiclient import discovery
 import datetime
+from dataAccessObjects import UserDao
 
 class ArgumentUtil():
     def __init__(self,requestHandler):
@@ -160,13 +161,14 @@ def register_preference(data):
             pref_id = "pref" + "{0:010d}".format(int(pure_result[0][0][4:]) + 1)
         except:
             pref_id = "pref0000000001"
-        #find user id
-        sql = ("SELECT user_id FROM user WHERE user_bluetooth_id='"+str(data["bluetooth_id"])+"'")
-        pure_result = db.query(sql)
+
+        with UserDao() as userDao:
+            user_id = userDao.getUserId(bluetoothId=data['bluetooth_id'])
+
         #insert user preference
         sql = "INSERT INTO user_prefer" \
         +"(pref_id,user_id,pref_data_type_01,pref_data_type_02,pref_data_type_03,pref_data_type_04,pref_data_type_05) VALUES ('" \
-            +pref_id+"', "+str(pure_result[0][0])+",'"+pref_str+"','"+pref_str+"','"+pref_str+"','"+pref_str+"','"+pref_str+"')"
+            +pref_id+"', "+str(user_id)+",'"+pref_str+"','"+pref_str+"','"+pref_str+"','"+pref_str+"','"+pref_str+"')"
         db.cmd(sql)
 
         db.close()
@@ -215,14 +217,6 @@ def check_bluetooth_mode_available():
     except Exception as e:
         print(str(e))
         return -1
-#
-def find_user_by_bluetooth(db, bluetooth_id):
-    try:
-        sql = "SELECT user_id FROM user WHERE user_bluetooth_id='" + str(bluetooth_id) + "'"
-        pure_result = db.query(sql)
-        return int(pure_result[0][0])
-    except:
-        return 0
 #
 def load_now_user_prefer(db, user_id):
     try:
@@ -423,9 +417,9 @@ def deal_with_bluetooth_id(bluetooth_id):
             return_msg["error"] = "the bluetooth function is closed"
             return return_msg
 
-        #find user by bluetooth id
-        user_id = find_user_by_bluetooth(db, bluetooth_id)
-        if user_id==0:
+        with UserDao() as userDao:
+            user_id = userDao.getUserId(bluetoothId=bluetooth_id)
+        if user_id == None:
             db.close()
             return_msg["error"] = "no such bluetooth id"
             return return_msg

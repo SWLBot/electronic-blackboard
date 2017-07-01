@@ -15,8 +15,13 @@ class DefaultDao():
         self.db.close()
 
 class UserDao(DefaultDao):
-    def getUserId(self,userName):
-        sql = 'SELECT user_id FROM user WHERE user_name = "{userName}"'.format(userName=userName)
+    def getUserId(self,userName=None,bluetoothId=None):
+        sql = 'SELECT user_id FROM user WHERE '
+        if userName:
+            sql += 'user_name = "{userName}"'.format(userName=userName)
+        elif bluetoothId:
+            sql += 'user_bluetooth_id = "{bluetoothId}"'.format(bluetoothId=bluetoothId)
+
         ret = self.db.query(sql)
         if len(ret):
             return ret[0][0]
