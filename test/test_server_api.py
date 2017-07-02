@@ -23,8 +23,17 @@ class Server_api(unittest.TestCase):
         except:
             self.fail("Failed with %s" % traceback.format_exc())
 
+    def test_collect_user_prefer_data(self):
+        try:
+            user_id = 1
+            prefer = [9,10]
+            collect_user_prefer_data(user_id, prefer)
+        except:
+            self.fail("Failed with %s" % traceback.format_exc())
+
 def suite():
-    cases = ['test_find_now_schedule','test_check_bluetooth_mode_available','test_get_user_birthday']
+    cases = ['test_find_now_schedule','test_check_bluetooth_mode_available','test_get_user_birthday',
+        'test_collect_user_prefer_data']
     suite = unittest.TestSuite()
     for case in cases:
         suite.addTest(Server_api(case))
