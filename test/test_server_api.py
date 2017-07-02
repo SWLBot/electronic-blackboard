@@ -23,8 +23,15 @@ class Server_api(unittest.TestCase):
         except:
             self.fail("Failed with %s" % traceback.format_exc())
 
+    def test_get_prefer_news(self):
+        prefer = [9,10]
+        with mysql() as db:
+            db.connect()
+            self.assertNotEqual(len(get_prefer_news(db,prefer)),0)
+
 def suite():
-    cases = ['test_find_now_schedule','test_check_bluetooth_mode_available','test_get_user_birthday']
+    cases = ['test_find_now_schedule','test_check_bluetooth_mode_available','test_get_user_birthday',
+        'test_get_prefer_news']
     suite = unittest.TestSuite()
     for case in cases:
         suite.addTest(Server_api(case))
