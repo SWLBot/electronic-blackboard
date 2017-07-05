@@ -23,6 +23,18 @@ class Server_api(unittest.TestCase):
         except:
             self.fail("Failed with %s" % traceback.format_exc())
 
+    def test_set_insert_customer_text_msg(self):
+        ret = set_insert_customer_text_msg()
+        self.assertEqual(ret['result'],'success')
+
+    def test_collect_user_prefer_data(self):
+        try:
+            user_id = 1
+            prefer = [9,10]
+            collect_user_prefer_data(user_id, prefer)
+        except:
+            self.fail("Failed with %s" % traceback.format_exc())
+
     def test_get_prefer_news(self):
         prefer = [9,10]
         with mysql() as db:
@@ -31,7 +43,7 @@ class Server_api(unittest.TestCase):
 
 def suite():
     cases = ['test_find_now_schedule','test_check_bluetooth_mode_available','test_get_user_birthday',
-        'test_get_prefer_news']
+        'test_set_insert_customer_text_msg','test_collect_user_prefer_data','test_get_prefer_news']
     suite = unittest.TestSuite()
     for case in cases:
         suite.addTest(Server_api(case))
