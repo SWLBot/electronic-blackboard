@@ -23,8 +23,13 @@ class Server_api(unittest.TestCase):
         except:
             self.fail("Failed with %s" % traceback.format_exc())
 
+    def test_set_insert_customer_text_msg(self):
+        ret = set_insert_customer_text_msg()
+        self.assertEqual(ret['result'],'success')
+
 def suite():
-    cases = ['test_find_now_schedule','test_check_bluetooth_mode_available','test_get_user_birthday']
+    cases = ['test_find_now_schedule','test_check_bluetooth_mode_available','test_get_user_birthday',
+        'test_set_insert_customer_text_msg']
     suite = unittest.TestSuite()
     for case in cases:
         suite.addTest(Server_api(case))
