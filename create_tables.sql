@@ -1,5 +1,3 @@
-use broadcast
-
 DROP TABLE IF EXISTS data_type;
 
 create table data_type

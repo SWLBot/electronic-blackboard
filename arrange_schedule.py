@@ -233,38 +233,34 @@ def find_text_acticity(json_obj):
         db.connect()
         
         #find images that may be schedule
-        if arrange_mode == 0 :
+        if arrange_mode in range(6):
+            if arrange_mode in [0,3]:
+                orderById = True
+            else:
+                orderById = False
+
+            if arrange_mode in [3,4,5]:
+                conditionAssigned = True
+            else:
+                conditionAssigned = False
+
             sql = "SELECT text_id, text_display_time FROM text_data" \
                 +" WHERE text_is_delete=0 and text_is_expire=0 "\
-                +" and (TO_DAYS(NOW()) between TO_DAYS(text_start_date) and TO_DAYS(text_end_date)) " \
-                +" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(text_start_time) and TIME_TO_SEC(text_end_time)) " \
-                +" ORDER BY text_id ASC"
-        elif arrange_mode == 1 or arrange_mode == 2:
-            sql = "SELECT text_id, text_display_time FROM text_data" \
-                +" WHERE text_is_delete=0 and text_is_expire=0 "\
-                +" and (TO_DAYS(NOW()) between TO_DAYS(text_start_date) and TO_DAYS(text_end_date)) " \
-                +" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(text_start_time) and TIME_TO_SEC(text_end_time))" 
-        elif arrange_mode == 3 :
-            sql = "SELECT text_id, text_display_time FROM text_data WHERE ( "
-            for num1 in range(len(arrange_condition)):
-                if num1 == 0:
-                    sql = sql + " type_id=" + str(arrange_condition[num1]) + " "
-                else :
-                    sql = sql + " or type_id=" + str(arrange_condition[num1]) + " "
-            sql = sql + " ) and text_is_delete=0 and text_is_expire=0 "\
-                +" and (TO_DAYS(NOW()) between TO_DAYS(text_start_date) and TO_DAYS(text_end_date)) " \
-                +" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(text_start_time) and TIME_TO_SEC(text_end_time))"\
-                +" ORDER BY text_id ASC"
-        elif arrange_mode == 4 or arrange_mode == 5:
-            sql = "SELECT text_id, text_display_time FROM text_data WHERE ( "
-            for num1 in range(len(arrange_condition)):
-                if num1 == 0:
-                    sql = sql + " type_id=" + str(arrange_condition[num1]) + " "
-                else :
-                    sql = sql + " or type_id=" + str(arrange_condition[num1]) + " "
-            sql = sql + " ) and text_is_delete=0 and text_is_expire=0 "\
                 +" and (TO_DAYS(NOW()) between TO_DAYS(text_start_date) and TO_DAYS(text_end_date)) " \
                 +" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(text_start_time) and TIME_TO_SEC(text_end_time))"
+            # condtionAssigned select type_id in arrange_condition
+            if conditionAssigned:
+                type_condition = ''
+                for idx,type_id in enumerate(arrange_condition):
+                    if idx == 0:
+                        type_condition += " type_id={type_id} ".format(type_id=type_id)
+                    else:
+                        type_condition += " or type_id={type_id} ".format(type_id=type_id)
+                sql += " and ({type_condition}) ".format(type_condition=type_condition)
+
+            if orderById:
+                sql += " ORDER BY text_id ASC"
+
         elif arrange_mode == 6:
             sql = "SELECT a0.text_id, a0.text_display_time, a1.type_weight FROM " \
                 +" (SELECT text_id, type_id, text_display_time FROM text_data WHERE " \
@@ -456,7 +452,7 @@ def find_image_acticity(json_obj):
         return return_msg
 
 #The API connect mysql and find image data that can be scheduled
-def find_acticity(json_obj):
+def find_activity(json_obj):
     return_msg = {}
     return_msg["result"] = "fail"
     receive_obj = {}
@@ -1308,7 +1304,8 @@ def check_news_QR_code_table():
                  AND table_name = 'news_QR_code'"
     check = db.query(check_sql)
     if check[0][0] == 0:
-        create_news_table()
+        return create_news_table()
+    return dict(result='success')
 
 def check_fortune_table():
     db = mysql()
@@ -1319,7 +1316,8 @@ def check_fortune_table():
                  AND table_name = 'fortune'"
     check = db.query(check_sql)
     if check[0][0] == 0:
-        create_fortune_table()
+        return create_fortune_table()
+    return dict(result='success')
 
 def crawler_schedule():
     try:
@@ -1548,11 +1546,11 @@ def main():
                     #find activity
                     send_obj["arrange_mode"] = arrange_mode
                     send_obj["condition"] = condition
-                    receive_obj = find_acticity(send_obj)
+                    receive_obj = find_activity(send_obj)
                     if receive_obj["result"] == "success":
                         "DO NOTHING"
                     else :
-                        receive_obj["error"] = "find_acticity : " + receive_obj["error"]
+                        receive_obj["error"] = "find_activity : " + receive_obj["error"]
                         set_system_log(receive_obj)
                         os._exit(0)
 

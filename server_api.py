@@ -12,12 +12,58 @@ import json
 import tornado
 import time
 import random
+from tornado.escape import xhtml_escape
+from tornado.web import MissingArgumentError
 from oauth2client import client
 from oauth2client import tools
 from oauth2client.file import Storage
 import httplib2
 from apiclient import discovery
 import datetime
+from dataAccessObjects import UserDao
+
+class ArgumentUtil():
+    def __init__(self,requestHandler):
+        self.handler = requestHandler
+
+    def getArgument(self,name):
+        rawArg = self.handler.get_argument(name)
+        return xhtml_escape(rawArg)
+
+    def getArguments(self):
+        raise NotImplementedError("The getArgument() is not implemented.")
+
+class UserArgumentsUtil(ArgumentUtil):
+    def __init__(self,requestHandler):
+        super().__init__(requestHandler)
+
+    def getArguments(self):
+        userInfo = {}
+        userInfo['user_name'] = self.getArgument('username')
+        userInfo['user_password'] = self.getArgument('password')
+        return userInfo
+
+class UserEditArgumentsUtil(ArgumentUtil):
+    def getCurUser(self):
+        return self.handler.get_current_user()
+
+    def getArguments(self):
+        userInfo = {}
+        userInfo['user_name'] = self.getCurUser()
+        userInfo['old_password'] = self.getArgument('old_password')
+        userInfo['new_password'] = self.getArgument('password')
+        return userInfo
+
+class UploadArgumentsUtil(ArgumentUtil):
+    def getArguments(self):
+        uploadData = {}
+        uploadData['file_type'] = self.getArgument('data_type')
+        uploadData['start_date'] = self.getArgument('start_date')
+        uploadData['end_date'] = self.getArgument('end_date')
+        uploadData['start_time'] = self.getArgument('start_time')
+        uploadData['end_time'] = self.getArgument('end_time')
+        uploadData['display_time'] = self.getArgument('display_time')
+        return uploadData
 #
 def add_like_count(db, target_id):
     try:
@@ -115,13 +161,14 @@ def register_preference(data):
             pref_id = "pref" + "{0:010d}".format(int(pure_result[0][0][4:]) + 1)
         except:
             pref_id = "pref0000000001"
-        #find user id
-        sql = ("SELECT user_id FROM user WHERE user_bluetooth_id='"+str(data["bluetooth_id"])+"'")
-        pure_result = db.query(sql)
+
+        with UserDao() as userDao:
+            user_id = userDao.getUserId(bluetoothId=data['bluetooth_id'])
+
         #insert user preference
         sql = "INSERT INTO user_prefer" \
         +"(pref_id,user_id,pref_data_type_01,pref_data_type_02,pref_data_type_03,pref_data_type_04,pref_data_type_05) VALUES ('" \
-            +pref_id+"', "+str(pure_result[0][0])+",'"+pref_str+"','"+pref_str+"','"+pref_str+"','"+pref_str+"','"+pref_str+"')"
+            +pref_id+"', "+str(user_id)+",'"+pref_str+"','"+pref_str+"','"+pref_str+"','"+pref_str+"','"+pref_str+"')"
         db.cmd(sql)
 
         db.close()
@@ -144,9 +191,9 @@ def check_bluetooth_mode_available():
     file_name = "server_setting.txt"
     #check setting file exist
     if not os.path.exists(file_dir):
-        return 0
+        return -1
     if not os.path.isfile(file_dir+'/'+file_name):
-        return 0
+        return -1
     
     try:
         #read setting file
@@ -167,16 +214,9 @@ def check_bluetooth_mode_available():
             return 0
         
         return 0
-    except :
-        return 0
-#
-def find_user_by_bluetooth(db, bluetooth_id):
-    try:
-        sql = "SELECT user_id FROM user WHERE user_bluetooth_id='" + str(bluetooth_id) + "'"
-        pure_result = db.query(sql)
-        return int(pure_result[0][0])
-    except:
-        return 0
+    except Exception as e:
+        print(str(e))
+        return -1
 #
 def load_now_user_prefer(db, user_id):
     try:
@@ -377,9 +417,9 @@ def deal_with_bluetooth_id(bluetooth_id):
             return_msg["error"] = "the bluetooth function is closed"
             return return_msg
 
-        #find user by bluetooth id
-        user_id = find_user_by_bluetooth(db, bluetooth_id)
-        if user_id==0:
+        with UserDao() as userDao:
+            user_id = userDao.getUserId(bluetoothId=bluetooth_id)
+        if user_id == None:
             db.close()
             return_msg["error"] = "no such bluetooth id"
             return return_msg
@@ -409,12 +449,7 @@ def deal_with_bluetooth_id(bluetooth_id):
         db.close()
         return_msg["error"] = e
         return return_msg
-#
-def get_user_name_and_password(handler):
-    return_msg = {}
-    return_msg['user_name'] = tornado.escape.xhtml_escape(handler.get_argument("username"))
-    return_msg['user_password'] = tornado.escape.xhtml_escape(handler.get_argument("password"))
-    return return_msg
+
 #
 def check_user_existed_or_signup(user_info):
     try:
@@ -548,32 +583,35 @@ def check_user_password(user_info):
         return return_msg
 
 def get_upload_meta_data(handler):
-    meta_data = {}
+    uploadArgUtil = UploadArgumentsUtil(handler)
     user_name = handler.get_current_user().decode('utf-8')
 
+    meta_data = uploadArgUtil.getArguments()
     meta_data["server_dir"] = os.path.dirname(__file__)
-    meta_data["file_type"] = tornado.escape.xhtml_escape(handler.get_argument("data_type"))
-    meta_data["start_date"] = tornado.escape.xhtml_escape(handler.get_argument("start_date"))
-    meta_data["end_date"] = tornado.escape.xhtml_escape(handler.get_argument("end_date"))
-    meta_data["start_time"] = tornado.escape.xhtml_escape(handler.get_argument("start_time"))
-    meta_data["end_time"] = tornado.escape.xhtml_escape(handler.get_argument("end_time"))
-    meta_data["display_time"] = tornado.escape.xhtml_escape(handler.get_argument("display_time"))
     meta_data["user_id"] = get_user_id(user_name)
 
     return meta_data
 
+#get the text data from the handler
 def get_upload_text_data(handler):
-    text_file = {}
+    try:
+        text_data = {}
+        text_data['result'] = 'fail'
 
-    text_file['con'] = tornado.escape.xhtml_escape(handler.get_argument('con')).replace('&amp;nbsp','&nbsp').replace('&lt;br&gt;','<br>')
-    text_file['title1'] = tornado.escape.xhtml_escape(handler.get_argument('title1')).replace('&amp;nbsp','&nbsp').replace('&lt;br&gt;','<br>')
-    text_file['title2'] = tornado.escape.xhtml_escape(handler.get_argument('title2')).replace('&amp;nbsp','&nbsp').replace('&lt;br&gt;','<br>')
-    text_file['description'] = tornado.escape.xhtml_escape(handler.get_argument('description')).replace('&lt;br&gt;','<br>').replace('&amp;nbsp','&nbsp')
-    text_file['year'] = tornado.escape.xhtml_escape(handler.get_argument('year'))
-    text_file['month'] = tornado.escape.xhtml_escape(handler.get_argument('month'))
-    text_file['background_color'] = tornado.escape.xhtml_escape(handler.get_argument('background_color'))
+        text_data['con'] = tornado.escape.xhtml_escape(handler.get_argument('con')).replace('&amp;nbsp','&nbsp').replace('&lt;br&gt;','<br>')
+        text_data['title1'] = tornado.escape.xhtml_escape(handler.get_argument('title1')).replace('&amp;nbsp','&nbsp').replace('&lt;br&gt;','<br>')
+        text_data['title2'] = tornado.escape.xhtml_escape(handler.get_argument('title2')).replace('&amp;nbsp','&nbsp').replace('&lt;br&gt;','<br>')
+        text_data['description'] = tornado.escape.xhtml_escape(handler.get_argument('description')).replace('&lt;br&gt;','<br>').replace('&amp;nbsp','&nbsp')
+        text_data['year'] = tornado.escape.xhtml_escape(handler.get_argument('year'))
+        text_data['month'] = tornado.escape.xhtml_escape(handler.get_argument('month'))
+        text_data['background_color'] = tornado.escape.xhtml_escape(handler.get_argument('background_color'))
 
-    return text_file
+        text_data['result'] = 'success'
+        return text_data
+    except Exception as e:
+        print(str(e))
+        return text_data
+
 
 def store_image(filepath,file_content):
     with open(filepath,'wb') as fp:
@@ -606,20 +644,11 @@ def get_text_meta(text_id):
         return_msg["error"] = e.args[1]
         return return_msg
 
-def check_user_level(json_obj):
+def check_user_level(user_id):
     try:
         return_msg = {}
         return_msg["result"] = "fail"
-        user_id = 0
-        user_level = 0
-        compare_level = []
-        compare_ans = []
-        try:
-            user_id = json_obj["user_id"]
-            compare_level = json_obj["compare_level"]
-        except:
-            return_msg["error"] = "input parameter missing"
-            return return_msg
+        user_level_low_bound = 100
 
         #connect to mysql
         db = mysql()
@@ -636,15 +665,13 @@ def check_user_level(json_obj):
             return_msg["error"] = "no such user id : " + str(user_id)
             return return_msg
 
-        for num1 in range(len(compare_level)):
-            if int(compare_level[num1]) >= user_level:
-                compare_ans.append("pass")
-            else :
-                compare_ans.append("fail")
+        if user_level < user_level_low_bound:
+            db.close()
+            return_msg['error'] = 'User has permission to do this job'
+            return return_msg
 
         db.close()
 
-        return_msg["compare_ans"] = compare_ans
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
@@ -685,18 +712,9 @@ def upload_image_insert_db(json_obj):
         db = mysql()
         db.connect()
         
-        #check user level
-        sql = ("SELECT user_level FROM user WHERE user_id=" + str(user_id))
-        pure_result = db.query(sql)
-        try: 
-            if pure_result[0][0] < user_level_low_bound:
-                db.close()
-                return_msg["error"] = "user right is too low"
-                return return_msg
-        except:
-            db.close()
-            return_msg["error"] = "no such user id : " + str(user_id)
-            return return_msg
+        receive_msg = check_user_level(str(user_id))
+        if 'fail' in receive_msg:
+            return_msg['result'] = receive_msg['error']
         
         #get new file place
         sql = ("SELECT type_dir FROM data_type WHERE type_id=" + str(type_id))
@@ -940,14 +958,6 @@ def upload_text_insert_db(json_obj):
     try:
         return_msg = {}
         return_msg["result"] = "fail"
-        server_dir = ""
-        type_id = 1
-        text_start_date = ""
-        text_end_date = ""
-        text_start_time = ""
-        text_end_time = ""
-        text_display_time = 5
-        user_id = ""
         try:
             server_dir = json_obj["server_dir"]
             type_id = json_obj["file_type"]
@@ -975,18 +985,9 @@ def upload_text_insert_db(json_obj):
         db = mysql()
         db.connect()
         
-        #check user level
-        sql = ("SELECT user_level FROM user WHERE user_id=" + str(user_id))
-        pure_result = db.query(sql)
-        try: 
-            if int(pure_result[0][0]) < user_level_low_bound:
-                db.close()
-                return_msg["error"] = "user right is too low"
-                return return_msg
-        except:
-            db.close()
-            return_msg["error"] = "no such user id : " + str(user_id)
-            return return_msg
+        receive_msg = check_user_level(user_id)
+        if 'fail' in receive_msg:
+            return_msg['result'] = receive_msg['error']
 
         #generate new id
         sql = ("SELECT text_id FROM text_data ORDER BY text_upload_time DESC LIMIT 1")
@@ -1050,16 +1051,6 @@ def edit_text_data(json_obj):
     try:
         return_msg = {}
         return_msg["result"] = "fail"
-        server_dir = ""
-        text_id = ""
-        invisible_title = ""
-        type_id = 0
-        text_start_date = ""
-        text_end_date = ""
-        text_start_time = ""
-        text_end_time = ""
-        text_display_time = 5
-        user_id = ""
         try:
             server_dir = json_obj["server_dir"]
             text_id = json_obj["text_id"]
@@ -1221,9 +1212,6 @@ def delete_image_or_text_data(json_obj):
     try:
         return_msg = {}
         return_msg["result"] = "fail"
-        server_dir = ""
-        target_id = ""
-        user_id = ""
         target_dir = ""
         trash_dir = ""
         target_type_id = 0
@@ -1361,9 +1349,6 @@ def change_password(json_obj):
     try:
         return_msg = {}
         return_msg["result"] = "fail"
-        user_id = 0
-        old_password = ""
-        new_password = ""
         try:
             user_name = json_obj["user_name"]
             old_password = json_obj["old_password"]
@@ -1377,11 +1362,9 @@ def change_password(json_obj):
         db.connect()
         
         #get user_id 
-        sql = "SELECT user_id FROM user WHERE user_name = \""+user_name.decode("utf-8")+"\""
-        pure_result = db.query(sql)
-        try:
-            user_id = pure_result[0][0]
-        except:
+        user_name = user_name.decode('utf-8')
+        user_id  = get_user_id(user_name)
+        if type(user_id) == type(dict()):
             db.close()
             return_msg["error"] = "no such user name"
             return return_msg
@@ -1556,19 +1539,16 @@ def fortune_insert_db(json_obj):
         db = mysql()
         db.connect()
         #check
-        sql = "SELECT COUNT(*) FROM fortune WHERE fortune_date = '" +date+ "' AND constellation = '" + constellation + "'"
+        sql = 'SELECT COUNT(*) FROM fortune WHERE fortune_date = "{date}" AND constellation = "{constellation}"'.format(
+                date=date,constellation=constellation)
+
         check = db.query(sql)
 
         if check[0][0] == 0:
-            sql = "INSERT INTO fortune " \
-                    +" (`fortune_date`,`constellation`, `overall`, `love`, `career`, `wealth`)" \
-                    +" VALUES (" \
-                    + "\"" + date + "\", " \
-                    + "\"" + constellation + "\", " \
-                    + "\"" + overall + "\", " \
-                    + "\"" + love + "\", " \
-                    + "\"" + career + "\", " \
-                    + "\"" + wealth + "\")"
+            sql2 = 'INSERT INTO fortune '\
+                +' (`fortune_date`, `constellation`, `overall`, `love`, `career`, `wealth`)'\
+                +' VALUES ("{date}","{constellation}","{overall}","{love}","{career}","{wealth}")'.format(
+                date=date,constellation=constellation,overall=overall,love=love,career=career,wealth=wealth)
         db.cmd(sql)
         db.close()
         return_msg["result"] = "success"

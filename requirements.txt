@@ -6,3 +6,4 @@ google-api-python-client==1.6.2
 BeautifulSoup4==4.5.3
 PyQRCode==1.2.1
 pypng==0.0.18
+requests==2.10.0
