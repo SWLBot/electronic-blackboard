@@ -41,9 +41,13 @@ class Server_api(unittest.TestCase):
             db.connect()
             self.assertNotEqual(len(get_prefer_news(db,prefer)),0)
 
+    def test_Zodiac(self):
+        self.assertEqual(Zodiac(12,31),u'摩羯座')
+
 def suite():
     cases = ['test_find_now_schedule','test_check_bluetooth_mode_available','test_get_user_birthday',
-        'test_set_insert_customer_text_msg','test_collect_user_prefer_data','test_get_prefer_news']
+        'test_set_insert_customer_text_msg','test_collect_user_prefer_data','test_get_prefer_news',
+        'test_Zodiac']
     suite = unittest.TestSuite()
     for case in cases:
         suite.addTest(Server_api(case))
