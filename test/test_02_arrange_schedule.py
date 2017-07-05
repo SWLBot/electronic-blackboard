@@ -83,16 +83,5 @@ class Arrange_Schedule(unittest.TestCase):
         receive_msg = mark_now_activity()
         self.assertEqual(receive_msg['result'], 'success')
 
-def suite():
-    cases = ['test_read_arrange_mode','test_delete_old_cwb_img','test_crawler_cwb_img',
-        'test_check_news_QR_code_table','test_crawler_news','test_crawler_ptt_news',
-        'test_crawler_schedule','test_check_fortune_table','test_crawler_constellation_fortune',
-        'test_set_schedule_log','test_expire_data_check','test_find_cwb_type_id',
-        'test_mark_now_activity']
-    suite = unittest.TestSuite()
-    for case in cases:
-        suite.addTest(Arrange_Schedule(case))
-    return suite
-
 if __name__ == "__main__":
     unittest.main()

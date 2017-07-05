@@ -72,16 +72,5 @@ class Server_api(unittest.TestCase):
         except:
             self.fail("Failed with %s" % traceback.format_exc())
 
-def suite():
-    cases = ['test_find_now_schedule','test_check_bluetooth_mode_available','test_get_user_birthday',
-        'test_set_insert_customer_text_msg','test_collect_user_prefer_data','test_get_prefer_news',
-        'test_check_bluetooth_id_exist','test_Zodiac','test_check_user_existed_or_signup',
-        'test_register_no_right_user','test_check_user_password']
-    suite = unittest.TestSuite()
-    for case in cases:
-        suite.addTest(Server_api(case))
-
-    return suite
-
 if __name__ == "__main__":
     unittest.main()

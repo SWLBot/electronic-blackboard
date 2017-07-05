@@ -37,12 +37,5 @@ class Display_api(unittest.TestCase):
             check = True
         self.assertTrue(check)
 
-def suite():
-    cases = ['test_get_user_id','test_display_image','test_display_text','test_display_data_type']
-    suite = unittest.TestSuite()
-    for case in cases:
-        suite.addTest(Display_api(case))
-    return suite
-
 if __name__ == "__main__":
     unittest.main()
