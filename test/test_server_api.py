@@ -41,9 +41,15 @@ class Server_api(unittest.TestCase):
             db.connect()
             self.assertNotEqual(len(get_prefer_news(db,prefer)),0)
 
+    def test_register_no_right_user(self):
+        send_msg = {}
+        send_msg["bluetooth_id"] = 'test_bluetooth_id'
+        self.assertEqual(register_no_right_user(send_msg),1)
+
 def suite():
     cases = ['test_find_now_schedule','test_check_bluetooth_mode_available','test_get_user_birthday',
-        'test_set_insert_customer_text_msg','test_collect_user_prefer_data','test_get_prefer_news']
+        'test_set_insert_customer_text_msg','test_collect_user_prefer_data','test_get_prefer_news',
+        'test_register_no_right_user']
     suite = unittest.TestSuite()
     for case in cases:
         suite.addTest(Server_api(case))
