@@ -12,5 +12,24 @@ class Server_api(unittest.TestCase):
             db.connect()
             self.assertNotEqual(find_now_schedule(db),-1)
 
+    def test_check_bluetooth_mode_available(self):
+        ret = check_bluetooth_mode_available()
+        self.assertNotEqual(ret,-1)
+
+    def test_get_user_birthday(self):
+        try:
+            user_id = 1
+            get_user_birthday(user_id)
+        except:
+            self.fail("Failed with %s" % traceback.format_exc())
+
+def suite():
+    cases = ['test_find_now_schedule','test_check_bluetooth_mode_available','test_get_user_birthday']
+    suite = unittest.TestSuite()
+    for case in cases:
+        suite.addTest(Server_api(case))
+
+    return suite
+
 if __name__ == "__main__":
     unittest.main()

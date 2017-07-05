@@ -44,7 +44,8 @@ class SignupHandler(BaseHandler):
             self.redirect('/')
 
     def post(self):
-        user_info = get_user_name_and_password(self)
+        userArgUtil = UserArgumentsUtil(self)
+        user_info = userArgUtil.getArguments()
         ret = check_user_existed_or_signup(user_info)
         if 'error' in ret:
             self.render('signup.html',flash=ret['error'])
@@ -64,7 +65,8 @@ class LoginHandler(BaseHandler):
             self.write('<center>Blocked</center>')
             return
 
-        user_info = get_user_name_and_password(self)
+        userArgUtil = UserArgumentsUtil(self)
+        user_info = userArgUtil.getArguments()
         ret = check_user_password(user_info)
 
         if 'success' in ret:
@@ -82,10 +84,8 @@ class ChangePasswdHandler(BaseHandler):
         self.render("changepasswd.html",flash=None)
 
     def post(self):
-        send_msg = {}
-        send_msg['user_name'] = self.get_current_user()
-        send_msg['old_password'] = self.get_argument('old_password')
-        send_msg['new_password'] = self.get_argument('password')
+        userEditArgUtil = UserEditArgumentsUtil(self)
+        send_msg = userEditArgUtil.getArguments()
         receive_msg = change_password(send_msg)
         if receive_msg['result'] == "success":
             flash = "Change password success"
@@ -135,9 +135,11 @@ class UploadHandler(BaseHandler):
         else:
             receive_msg = upload_text_insert_db(send_msg)
             text_file = get_upload_text_data(self)
-            
-            with open(receive_msg["text_system_dir"],"w") as fp:
-                print(json.dumps(text_file),file=fp)
+
+            if text_file['result'] == 'success':
+                text_file.pop('result')
+                with open(receive_msg["text_system_dir"],"w") as fp:
+                    print(json.dumps(text_file),file=fp)
 
             data_types = display_data_types()
             self.render("upload.html",flash="Upload finish!",data_types=data_types)
