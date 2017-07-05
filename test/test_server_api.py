@@ -41,6 +41,14 @@ class Server_api(unittest.TestCase):
             db.connect()
             self.assertNotEqual(len(get_prefer_news(db,prefer)),0)
 
+    def test_check_bluetooth_id_exist(self):
+        with mysql() as db:
+            db.connect()
+            self.assertNotEqual(check_bluetooth_id_exist(db,'test'),-1)
+
+    def test_Zodiac(self):
+        self.assertEqual(Zodiac(12,31),u'摩羯座')
+
     def test_check_user_existed_or_signup(self):
         try:
             user_info = {}
@@ -53,7 +61,7 @@ class Server_api(unittest.TestCase):
 def suite():
     cases = ['test_find_now_schedule','test_check_bluetooth_mode_available','test_get_user_birthday',
         'test_set_insert_customer_text_msg','test_collect_user_prefer_data','test_get_prefer_news',
-        'test_check_user_existed_or_signup']
+        'test_check_bluetooth_id_exist','test_Zodiac','test_check_user_existed_or_signup']
     suite = unittest.TestSuite()
     for case in cases:
         suite.addTest(Server_api(case))
