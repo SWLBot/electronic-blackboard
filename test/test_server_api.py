@@ -41,9 +41,19 @@ class Server_api(unittest.TestCase):
             db.connect()
             self.assertNotEqual(len(get_prefer_news(db,prefer)),0)
 
+    def test_check_user_existed_or_signup(self):
+        try:
+            user_info = {}
+            user_info['user_name'] = 'admin'
+            user_info['user_password'] = 'admin'
+            check_user_existed_or_signup(user_info)
+        except:
+            self.fail("Failed with %s" % traceback.format_exc())
+
 def suite():
     cases = ['test_find_now_schedule','test_check_bluetooth_mode_available','test_get_user_birthday',
-        'test_set_insert_customer_text_msg','test_collect_user_prefer_data','test_get_prefer_news']
+        'test_set_insert_customer_text_msg','test_collect_user_prefer_data','test_get_prefer_news',
+        'test_check_user_existed_or_signup']
     suite = unittest.TestSuite()
     for case in cases:
         suite.addTest(Server_api(case))
