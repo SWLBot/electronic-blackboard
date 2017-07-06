@@ -69,6 +69,13 @@ class Arrange_Schedule(unittest.TestCase):
         send_msg['max_db_log'] = self.system_setting['max_db_log']
         receive_msg = set_schedule_log(send_msg)
         self.assertEqual(receive_msg['result'],'success')
+        
+    def test_crawler_google_drive_img(self):
+        send_msg = {}
+        send_msg['server_dir'] = self.system_setting['board_py_dir']
+        send_msg['user_id'] = 1
+        receive_msg = crawler_google_drive_img(send_msg)
+        self.assertEqual(receive_msg['result'],'success')
 
     def test_expire_data_check(self):
         receive_msg = expire_data_check()
