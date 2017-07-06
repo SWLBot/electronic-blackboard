@@ -37,5 +37,10 @@ class Display_api(unittest.TestCase):
             check = True
         self.assertTrue(check)
 
+    def test_display_data_types(self):
+        receive_msg = display_data_types()
+        #return dict type when error occurs
+        self.assertEqual(type(receive_msg),tuple)
+
 if __name__ == "__main__":
     unittest.main()

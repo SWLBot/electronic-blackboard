@@ -172,5 +172,6 @@ def display_data_types():
         return data_types
     except DB_Exception as e:
         db.close()
+        return_msg={}
         return_msg["error"] = e.args[1]
         return return_msg
