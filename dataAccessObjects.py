@@ -29,3 +29,12 @@ class UserDao(DefaultDao):
             #TODO raise exception
             return None
 
+    def getUserLevel(self,userId):
+        sql = 'SELECT user_level FROM user WHERE user_id  = {userId}'.format(userId=userId)
+        ret = self.db.query(sql)
+        if len(ret):
+            return int(ret[0][0])
+        else:
+            #TODO raise exception
+            return None
+

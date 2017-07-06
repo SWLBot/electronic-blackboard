@@ -655,14 +655,10 @@ def check_user_level(user_id):
         db.connect()
         
         #check user level
-        sql = "SELECT user_level FROM user WHERE user_id=" + str(user_id)
-                
-        pure_result = db.query(sql)
-        try:
-            user_level = int(pure_result[0][0])
-        except:
-            db.close()
-            return_msg["error"] = "no such user id : " + str(user_id)
+        with UserDao() as userDao:
+            user_level = userDao.getUserLevel(user_id)
+        if not user_level:
+            return_msg['error'] = 'No user_id "{user_id}"'.format(user_id=user_id)
             return return_msg
 
         if user_level < user_level_low_bound:
@@ -828,10 +824,12 @@ def edit_image_data(json_obj):
         db.connect()
         
         #check user level
-        sql = ("SELECT user_level FROM user WHERE user_id=" + str(user_id))
-        pure_result = db.query(sql)
-        try: 
-            user_level = pure_result[0][0]
+        with UserDao() as userDao:
+            user_level = userDao.getUserLevel(user_id)
+        if not user_level:
+            return_msg['error'] = 'No user_id "{user_id}"'.format(user_id=user_id)
+            return return_msg
+        else:
             if user_level < user_level_low_bound:
                 db.close()
                 return_msg["error"] = "user right is too low"
@@ -849,10 +847,6 @@ def edit_image_data(json_obj):
                 db.close()
                 return_msg["error"] = "no such image id : " + img_id
                 return return_msg
-        except:
-            db.close()
-            return_msg["error"] = "no such user id : " + str(user_id)
-            return return_msg
         
         
         #check if we need to move the file
@@ -1076,10 +1070,12 @@ def edit_text_data(json_obj):
         db.connect()
         
         #check user level
-        sql = ("SELECT user_level FROM user WHERE user_id=" + str(user_id))
-        pure_result = db.query(sql)
-        try: 
-            user_level = int(pure_result[0][0])
+        with UserDao() as userDao:
+            user_level = userDao.getUserLevel(user_id)
+        if not user_level:
+            return_msg['error'] = 'No user_id "{user_id}"'.format(user_id=user_id)
+            return return_msg
+        else:
             if user_level < user_level_low_bound:
                 db.close()
                 return_msg["error"] = "user right is too low"
@@ -1097,12 +1093,6 @@ def edit_text_data(json_obj):
                 db.close()
                 return_msg["error"] = "no such text id : " + text_id
                 return return_msg
-        except:
-            db.close()
-            return_msg["error"] = "no such user id : " + str(user_id)
-            return return_msg
-        
-        
         
         old_dir = ""
         new_dir = ""
@@ -1230,10 +1220,12 @@ def delete_image_or_text_data(json_obj):
         db.connect()
         
         #check user level
-        sql = ("SELECT user_level FROM user WHERE user_id=" + str(user_id))
-        pure_result = db.query(sql)
-        try: 
-            user_level = int(pure_result[0][0])
+        with UserDao() as userDao:
+            user_level = userDao.getUserLevel(user_id)
+        if not user_level:
+            return_msg['error'] = 'No user_id "{user_id}"'.format(user_id=user_id)
+            return return_msg
+        else:
             if user_level < user_level_low_bound:
                 db.close()
                 return_msg["error"] = "user right is too low"
@@ -1259,10 +1251,6 @@ def delete_image_or_text_data(json_obj):
                 db.close()
                 return_msg["error"] = "no such target id : " + str(target_id)
                 return return_msg
-        except:
-            db.close()
-            return_msg["error"] = "no such user id : " + str(user_id)
-            return return_msg
         
         #get file place
         sql = "SELECT type_dir FROM data_type WHERE type_id=" + str(target_type_id)
