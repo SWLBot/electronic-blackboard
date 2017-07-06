@@ -39,13 +39,10 @@ def display_image(argu_user):
         user_id = get_user_id(user_name)
 
         #check whether level is 10000
-        try:
-            sql = "SELECT user_level FROM user WHERE user_id  = %d" % (user_id)
-            pure_data = db.query(sql)
-            current_user_level = pure_data[0][0]
-        except:
-            db.close()
-            return_msg["error"] = "no such user"
+        with UserDao() as userDao:
+            current_user_level = userDao.getUserLevel(user_id)
+        if not current_user_level:
+            return_msg['error'] = 'No user "{user_name}"'.format(user_name=user_name)
             return return_msg
 
         #display image data from the same user
@@ -87,13 +84,10 @@ def display_text(argu_user):
         user_id = get_user_id(user_name)
 
         #check whether level is 10000
-        try:
-            sql = "SELECT user_level FROM user WHERE user_id  = %d" % (user_id)
-            pure_data = db.query(sql)
-            current_user_level = pure_data[0][0]
-        except:
-            db.close()
-            return_msg["error"] = "no such user"
+        with UserDao() as userDao:
+            current_user_level = userDao.getUserLevel(user_id)
+        if not current_user_level:
+            return_msg['error'] = 'No user "{user_name}"'.format(user_name=user_name)
             return return_msg
 
         #display text data from the same user
