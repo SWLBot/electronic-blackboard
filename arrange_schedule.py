@@ -41,8 +41,9 @@ def mark_now_activity():
         try:
             target_sn = int(pure_result[0][0])
         except:
+            #no schedule to mark
             db.close()
-            return_msg["error"] = "no schedule"
+            return_msg["result"] = "success"
             return return_msg
     
         #mark target
@@ -1499,11 +1500,8 @@ def main():
                 if receive_obj["result"] == "success":
                     "DO NOTHING"
                 else :
-                    if receive_obj["error"] == "no schedule":
-                        "DO NOTHING"
-                    else :
-                        receive_obj["error"] = "mark_now_activity : " + receive_obj["error"]
-                        set_system_log(receive_obj)
+                    receive_obj["error"] = "mark_now_activity : " + receive_obj["error"]
+                    set_system_log(receive_obj)
             
             #load next schedule
             send_obj["board_py_dir"] = board_py_dir
