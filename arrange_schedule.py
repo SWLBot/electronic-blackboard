@@ -117,10 +117,9 @@ def load_next_schedule(json_obj):
                 sql = ("SELECT type_id, text_system_name FROM text_data WHERE text_id='" + sche_target_id + "' ")
                 return_msg["file_type"] = "text"
             else :
-                # mark activity is used
                 if target_sn != 0:
-                    sql = ("UPDATE schedule SET sche_is_used=1 WHERE sche_sn=" + str(target_sn))
-                    db.cmd(sql)
+                    with ScheduleDao() as scheduleDao:
+                        scheduleDao.markExpiredSchedule(target_sn)
                     target_sn = 0
                 continue
             pure_result = db.query(sql)
@@ -128,10 +127,9 @@ def load_next_schedule(json_obj):
                 type_id = int(pure_result[0][0])
                 system_file_name = pure_result[0][1]
             except:
-                # mark activity is used
                 if target_sn != 0:
-                    sql = ("UPDATE schedule SET sche_is_used=1 WHERE sche_sn=" + str(target_sn))
-                    db.cmd(sql)
+                    with ScheduleDao() as scheduleDao:
+                        scheduleDao.markExpiredSchedule(target_sn)
                     target_sn = 0
                 continue
     
@@ -151,10 +149,9 @@ def load_next_schedule(json_obj):
                     "impossible"
                 pure_result = db.query(sql)
                 if len(pure_result)==0:
-                    # mark activity is used
                     if target_sn != 0:
-                        sql = ("UPDATE schedule SET sche_is_used=1 WHERE sche_sn=" + str(target_sn))
-                        db.cmd(sql)
+                        with ScheduleDao() as scheduleDao:
+                            scheduleDao.markExpiredSchedule(target_sn)
                         target_sn = 0
                     continue
             
@@ -176,10 +173,9 @@ def load_next_schedule(json_obj):
     
             #if text read file
             if not os.path.isfile(check_target_dir) :
-                # mark activity is used
                 if target_sn != 0:
-                    sql = ("UPDATE schedule SET sche_is_used=1 WHERE sche_sn=" + str(target_sn))
-                    db.cmd(sql)
+                    with ScheduleDao() as scheduleDao:
+                        scheduleDao.markExpiredSchedule(target_sn)
                     target_sn = 0
                 continue
             else :
