@@ -54,16 +54,12 @@ def find_next_schedule(db):
     try:
         return_msg = {}
         return_msg["result"] = "fail"
-        sql = ("SELECT sche_id, sche_target_id, sche_display_time, sche_is_artificial_edit, sche_sn "\
-                    +"FROM schedule WHERE sche_is_used=0 ORDER BY sche_sn ASC LIMIT 1")
-        pure_result = db.query(sql)
-        try:
-            return_msg["schedule_id"] = pure_result[0][0]
-            return_msg["sche_target_id"] = pure_result[0][1]
-            return_msg["display_time"] = int(pure_result[0][2])
-            return_msg["no_need_check_time"] = pure_result[0][3]
-            return_msg["target_sn"] = int(pure_result[0][4])
-        except:
+        with ScheduleDao() as scheduleDao:
+            ret = scheduleDao.getNextSchedule()
+
+        if ret:
+            return_msg.update(ret)
+        else:
             return_msg["error"] = "no schedule"
             return return_msg
         

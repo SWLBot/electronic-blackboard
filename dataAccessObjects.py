@@ -60,3 +60,19 @@ class ScheduleDao(DefaultDao):
     def markExpiredSchedule(self,scheSn=None):
         sql = 'UPDATE schedule SET sche_is_used=1 WHERE sche_sn={scheSn}'.format(scheSn)
         self.db.cmd(sql)
+
+    def getNextSchedule(self):
+        sql = 'SELECT sche_id, sche_target_id, sche_display_time, sche_is_artificial_edit, sche_sn '\
+                +"FROM schedule WHERE sche_is_used=0 ORDER BY sche_sn ASC LIMIT 1"
+        ret = self.db.query(sql)
+        if len(ret):
+            scheduleInfo = {}
+            scheduleInfo['schedule_id'] = ret[0][0]
+            scheduleInfo['sche_target_id'] = ret[0][1]
+            scheduleInfo['display_time'] = ret[0][2]
+            scheduleInfo['no_need_check_time'] = ret[0][3]
+            scheduleInfo['target_sn'] = ret[0][4]
+            return scheduleInfo
+        else:
+            #TODO raise exception
+            return None
