@@ -16,13 +16,6 @@ class Server_api(unittest.TestCase):
         ret = check_bluetooth_mode_available()
         self.assertNotEqual(ret,-1)
 
-    def test_get_user_birthday(self):
-        try:
-            user_id = 1
-            get_user_birthday(user_id)
-        except:
-            self.fail("Failed with %s" % traceback.format_exc())
-
     def test_set_insert_customer_text_msg(self):
         ret = set_insert_customer_text_msg()
         self.assertEqual(ret['result'],'success')

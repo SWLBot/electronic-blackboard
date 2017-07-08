@@ -270,20 +270,6 @@ def set_insert_customer_text_msg():
         send_msg["error"] = e
         return send_msg
 #
-def get_user_birthday(user_id):
-    try:
-        db = mysql()
-        db.connect()
-        pure_result = db.query('select user_birthday from user where user_id = %s' % user_id)
-        if len(pure_result) > 0:
-            return pure_result[0][0]
-        return None
-    except DB_Exception as e:
-        print(e)
-        return None
-    except Exception as e:
-        print(e)
-        return None
 def Zodiac(month, day):
     n = (u'摩羯座',u'水瓶座',u'雙鱼座',u'白羊座',u'金牛座',u'雙子座',u'巨蟹座',u'獅子座',u'處女座',u'天秤座',u'天蝎座',u'射手座')
     d = ((1,20),(2,19),(3,21),(4,21),(5,21),(6,22),(7,23),(8,23),(9,23),(10,23),(11,23),(12,23))
@@ -291,7 +277,8 @@ def Zodiac(month, day):
 #
 def random_constellation(user_id):
     return_msg = {}
-    date = get_user_birthday(user_id)
+    with UserDao() as userDao:
+        date = userDao.getUserBirthday()
     if date == None:
         constellation = ['摩羯座','水瓶座','雙鱼座','白羊座','金牛座','雙子座','巨蟹座','獅子座','處女座','天秤座','天蝎座','射手座']
         constellation = random.choice(constellation)

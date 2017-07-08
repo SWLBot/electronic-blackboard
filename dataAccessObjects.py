@@ -38,3 +38,11 @@ class UserDao(DefaultDao):
             #TODO raise exception
             return None
 
+    def getUserBirthday(self,userId):
+        sql = 'select user_birthday from user where user_id = {userId}'.format(userId=userId)
+        ret = self.db.query(sql)
+        if len(ret):
+            return int(ret[0][0])
+        else:
+            #TODO raise exception
+            return None
