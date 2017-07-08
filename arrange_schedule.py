@@ -435,6 +435,38 @@ def find_image_acticity(json_obj):
         return_msg["error"] = e.args[1]
         return return_msg
 
+def mix_image_and_text(arrange_mode,deal_obj):
+    if arrange_mode == 0 or arrange_mode == 3:
+        "DO NOTHING"
+    elif arrange_mode == 1 or arrange_mode == 4:
+        deal_obj = sample(deal_obj, len(deal_obj))
+    elif arrange_mode == 2 or arrange_mode == 5:
+        if len(deal_obj)>20:
+            deal_obj = sample(deal_obj, 20)
+    elif arrange_mode == 6 or arrange_mode == 7:
+        img_start_num = 0
+        for num1 in range(len(deal_obj)-1):
+            if deal_obj[num1][2] < deal_obj[num1+1][2]:
+                img_start_num = num1 + 1
+        num1 = 0
+        num2 = img_start_num
+        new_list = []
+        for num3 in range(len(deal_obj)):
+            if num1 == img_start_num:
+                new_list.append(deal_obj[num2])
+                num2 += 1
+            elif num2 == len(deal_obj):
+                new_list.append(deal_obj[num1])
+                num1 += 1
+            elif deal_obj[num1][2] >= deal_obj[num2][2]:
+                new_list.append(deal_obj[num1])
+                num1 += 1
+            else :
+                new_list.append(deal_obj[num2])
+                num2 += 1
+        deal_obj = new_list
+    return deal_obj
+
 #The API connect mysql and find image data that can be scheduled
 def find_activity(json_obj):
     return_msg = {}
@@ -471,36 +503,7 @@ def find_activity(json_obj):
         for num1 in range(len(receive_obj["ans_list"])):
             deal_obj.append(receive_obj["ans_list"][num1])
     
-    #mix image and text
-    if arrange_mode == 0 or arrange_mode == 3:
-        "DO NOTHING"
-    elif arrange_mode == 1 or arrange_mode == 4:
-        deal_obj = sample(deal_obj, len(deal_obj))
-    elif arrange_mode == 2 or arrange_mode == 5:        
-        if len(deal_obj)>20:
-            deal_obj = sample(deal_obj, 20)
-    elif arrange_mode == 6 or arrange_mode == 7:
-        img_start_num = 0
-        for num1 in range(len(deal_obj)-1):
-            if deal_obj[num1][2] < deal_obj[num1+1][2]:
-                img_start_num = num1 + 1
-        num1 = 0
-        num2 = img_start_num
-        new_list = []
-        for num3 in range(len(deal_obj)):
-            if num1 == img_start_num:
-                new_list.append(deal_obj[num2])
-                num2 += 1
-            elif num2 == len(deal_obj):
-                new_list.append(deal_obj[num1])
-                num1 += 1
-            elif deal_obj[num1][2] >= deal_obj[num2][2]:
-                new_list.append(deal_obj[num1])
-                num1 += 1
-            else :
-                new_list.append(deal_obj[num2])
-                num2 += 1
-        deal_obj = new_list
+    deal_obj = mix_image_and_text(arrange_mode,deal_obj)
 
     #reshape data
     content_id = ""
