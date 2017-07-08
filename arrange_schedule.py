@@ -23,6 +23,7 @@ import os.path
 import json
 from util import switch
 import config.settings as setting
+from dataAccessObjects import ScheduleDao
 
 #make now activity to is used
 def mark_now_activity():
@@ -36,11 +37,9 @@ def mark_now_activity():
         db.connect()
         
         #find schedule
-        sql = ("SELECT sche_sn FROM schedule WHERE sche_is_used=0 ORDER BY sche_sn ASC LIMIT 1")
-        pure_result = db.query(sql)
-        try:
-            target_sn = int(pure_result[0][0])
-        except:
+        with ScheduleDao() as scheduleDao:
+            target_sn = scheduleDao.getDisplayingSchedule()
+        if not target_sn:
             #no schedule to mark
             db.close()
             return_msg["result"] = "success"
