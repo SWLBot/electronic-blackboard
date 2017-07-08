@@ -35,9 +35,7 @@ class Server_api(unittest.TestCase):
             self.assertNotEqual(len(get_prefer_news(db,prefer)),0)
 
     def test_check_bluetooth_id_exist(self):
-        with mysql() as db:
-            db.connect()
-            self.assertNotEqual(check_bluetooth_id_exist(db,'test'),-1)
+        self.assertNotEqual(check_bluetooth_id_exist('test'),-1)
 
     def test_Zodiac(self):
         self.assertEqual(Zodiac(12,31),u'摩羯座')
