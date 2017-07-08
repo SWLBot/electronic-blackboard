@@ -46,3 +46,13 @@ class UserDao(DefaultDao):
         else:
             #TODO raise exception
             return None
+
+class ScheduleDao(DefaultDao):
+    def getDisplayingSchedule(self):
+        sql = 'SELECT sche_sn FROM schedule WHERE sche_is_used=0 ORDER BY sche_sn ASC LIMIT 1'
+        ret = self.db.query(sql)
+        if len(ret):
+            return int(ret[0][0])
+        else:
+            #TODO raise exception
+            return None
