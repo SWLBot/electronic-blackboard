@@ -30,30 +30,22 @@ def mark_now_activity():
     try:
         return_msg = {}
         return_msg["result"] = "fail"
-        target_sn = 0
     
-        #connect to mysql
-        db = mysql()
-        db.connect()
-        
         #find schedule
         with ScheduleDao() as scheduleDao:
             target_sn = scheduleDao.getDisplayingSchedule()
         if not target_sn:
             #no schedule to mark
-            db.close()
             return_msg["result"] = "success"
             return return_msg
     
         #mark target
-        sql = ("UPDATE schedule SET sche_is_used=1 WHERE sche_sn=" + str(target_sn))
-        db.cmd(sql)
+        with ScheduleDao() as scheduleDao:
+            scheduleDao.markExpiredSchedule(target_sn)
     
-        db.close()
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg
         

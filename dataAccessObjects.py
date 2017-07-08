@@ -56,3 +56,7 @@ class ScheduleDao(DefaultDao):
         else:
             #TODO raise exception
             return None
+
+    def markExpiredSchedule(self,scheSn=None):
+        sql = 'UPDATE schedule SET sche_is_used=1 WHERE sche_sn={scheSn}'.format(scheSn)
+        self.db.cmd(sql)
