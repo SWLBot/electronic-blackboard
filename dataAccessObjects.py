@@ -102,3 +102,13 @@ class ImageDao(DefaultDao):
                 +'or (TO_DAYS(NOW())=TO_DAYS(img_end_date) and TIME_TO_SEC(DATE_FORMAT(NOW(), "%H:%i:%s"))>TIME_TO_SEC(img_end_time)))'
         Ids = self.db.query(sql)
         return Ids
+
+class DataTypeDao(DefaultDao):
+    def getTypeDir(self,typeId):
+        sql = 'SELECT type_dir FROM data_type WHERE type_id={typeId}'.format(typeId=typeId)
+        ret = self.db.query(sql)
+        if len(ret):
+            return ret[0][0]
+        else:
+            #TODO raise exception
+            return None

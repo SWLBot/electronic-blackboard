@@ -23,7 +23,7 @@ import os.path
 import json
 from util import switch
 import config.settings as setting
-from dataAccessObjects import ScheduleDao,ImageDao
+from dataAccessObjects import ScheduleDao,ImageDao,DataTypeDao
 
 #make now activity to is used
 def mark_now_activity():
@@ -153,13 +153,13 @@ def load_next_schedule(json_obj):
             
             #find type dir
             check_target_dir = ""
-            sql = ("SELECT type_dir FROM data_type WHERE type_id=" + str(type_id))
-            pure_result = db.query(sql)
-            try:
+            with DataTypeDao() as dataTypeDao:
+                type_dir = dataTypeDao.getTypeDir(type_id)
+            if type_dir:
                 check_target_dir = os.path.join(target_dir, "static/")
-                check_target_dir = os.path.join(check_target_dir, pure_result[0][0])
+                check_target_dir = os.path.join(check_target_dir, type_dir)
                 check_target_dir = os.path.join(check_target_dir, system_file_name)
-            except:
+            else:
                 # mark activity is used
                 if target_sn != 0:
                     sql = ("UPDATE schedule SET sche_is_used=1 WHERE sche_sn=" + str(target_sn))
