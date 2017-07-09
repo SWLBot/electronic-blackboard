@@ -177,12 +177,11 @@ def register_preference(data):
         db.close()
         return 0
 #
-def check_bluetooth_id_exist(db, bluetooth_id):
+def check_bluetooth_id_exist(bluetooth_id):
     try:
-        sql = "SELECT count(*) FROM user WHERE user_bluetooth_id='"+str(bluetooth_id)+"'"
-        pure_result = db.query(sql)
-        return int(pure_result[0][0])
-
+        with UserDao() as userDao:
+            isUsed = userDao.checkBluetoothIdUsed(bluetooth_id)
+        return isUsed
     except:
         return -1
 #
@@ -515,7 +514,7 @@ def add_account_and_prefer(data):
         db.connect()
 
         #check bluetooth id exist or not
-        if check_bluetooth_id_exist(db, data["bluetooth_id"])!=0:
+        if check_bluetooth_id_exist(data["bluetooth_id"])!=0:
             db.close()
             return_msg["error"] = "bluetooth id exist"
             return return_msg
