@@ -94,3 +94,11 @@ class ScheduleDao(DefaultDao):
         else:
             #TODO raise exception
             return None
+
+class ImageDao(DefaultDao):
+    def getExpiredIds(self):
+        sql = 'SELECT img_id FROM image_data '\
+                +'WHERE img_is_delete=0 and img_is_expire=0 and (TO_DAYS(NOW())>TO_DAYS(img_end_date) '\
+                +'or (TO_DAYS(NOW())=TO_DAYS(img_end_date) and TIME_TO_SEC(DATE_FORMAT(NOW(), "%H:%i:%s"))>TIME_TO_SEC(img_end_time)))'
+        Ids = self.db.query(sql)
+        return Ids
