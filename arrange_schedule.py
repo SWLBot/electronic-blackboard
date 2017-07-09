@@ -519,7 +519,7 @@ def find_activity(json_obj):
     return return_msg
 
 #The API connect mysql and clean expire data
-def expire_data_check():
+def expire_data_check_():
     try:
         return_msg = {}
         return_msg["result"] = "fail"
@@ -1358,9 +1358,28 @@ def set_system_log(json_obj):
     return_msg["result"] = "success"
     return return_msg
         
+def expire_data_check(raw_time):
+    receive_obj = {}
+    try:
+        newpid = os.fork()
+        if newpid == 0: #child
+            shutdown = 1
+            receive_obj = expire_data_check_()
+            if receive_obj["result"] == "success":
+                "DO NOTHING"
+            else :
+                receive_obj["error"] = "expire_data_check : " + receive_obj["error"]
+                set_system_log(receive_obj)
+            os._exit(0)
+        else: #Parent
+            alarm_expire_data_check = raw_time + 1800.0
+    except:
+        receive_obj["result"] = "fail"
+        receive_obj["error"] = "fork1 error"
+        set_system_log(receive_obj)
+        alarm_expire_data_check = raw_time + 3.0
 
-    
-    
+    return alarm_expire_data_check,shutdown
 
 def main():
     just_startup = 1
@@ -1429,24 +1448,7 @@ def main():
         #expire_data_check
         if raw_time >= alarm_expire_data_check:
             print("#2 "+str(raw_time))
-            try:
-                newpid = os.fork()
-                if newpid == 0: #child
-                    shutdown = 1
-                    receive_obj = expire_data_check()
-                    if receive_obj["result"] == "success":
-                        "DO NOTHING"
-                    else :
-                        receive_obj["error"] = "expire_data_check : " + receive_obj["error"]
-                        set_system_log(receive_obj)
-                    os._exit(0)
-                else: #Parent
-                    alarm_expire_data_check = raw_time + 1800.0
-            except:
-                receive_obj["result"] = "fail"
-                receive_obj["error"] = "fork1 error"
-                set_system_log(receive_obj)
-                alarm_expire_data_check = raw_time + 3.0
+            alarm_expire_data_check,shutdown = expire_data_check(raw_time)
         
         #set_schedule_log
         if raw_time >= alarm_set_schedule_log:
