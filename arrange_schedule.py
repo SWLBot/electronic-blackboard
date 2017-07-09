@@ -611,20 +611,15 @@ def edit_schedule(json_obj):
             display_time = int(display_time_list[num0])
             
             #get now sn
-            sql = ("SELECT sche_sn FROM schedule WHERE sche_is_used=0 ORDER BY sche_sn ASC LIMIT 1")
-            pure_result = db.query(sql)
-            if len(pure_result)>0:
+            with ScheduleDao() as scheduleDao:
+                target_sn = scheduleDao.getDisplayingSchedule()
+            if target_sn:
                 #check use update or insert
-                sql = ("SELECT sche_sn FROM schedule WHERE sche_sn="+str(int(pure_result[0][0])+next_sn) +" and sche_id != 'sche0undecided'")
+                sql = ("SELECT sche_sn FROM schedule WHERE sche_sn="+str(target_sn+next_sn) +" and sche_id != 'sche0undecided'")
                 pure_result = db.query(sql)
                 if len(pure_result)>0:
-                    sql = ("UPDATE schedule SET sche_target_id='" + target_id + "', "\
-                        +"sche_display_time="+str(display_time)+", "\
-                        +"sche_arrange_time=now(), "\
-                        +"sche_arrange_mode="+str(arrange_mode_sn)+", "\
-                        +"sche_is_used=0, sche_is_artificial_edit=0 "\
-                        +" WHERE sche_sn="+str(pure_result[0][0]))
-                    db.cmd(sql)
+                    with ScheduleDao() as scheduleDao:
+                        scheduleDao.updateEditSchedule(target_id,display_time,arrange_mode_sn,pure_result[0][0])
                 else:
                     sql = ("INSERT INTO schedule (sche_id, sche_target_id, sche_display_time, sche_arrange_mode)"\
                         +" VALUES ('sche0undecided', '"+target_id+"', "+str(display_time)+", " + str(arrange_mode_sn) + ")")
