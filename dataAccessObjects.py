@@ -76,3 +76,12 @@ class ScheduleDao(DefaultDao):
         else:
             #TODO raise exception
             return None
+
+    def countUndisplaySchedule(self):
+        sql = 'SELECT count(sche_sn) FROM schedule WHERE sche_is_used=0'
+        ret = self.db.query(sql)
+        if len(ret):
+            return int(ret[0][0])
+        else:
+            #TODO raise exception
+            return None

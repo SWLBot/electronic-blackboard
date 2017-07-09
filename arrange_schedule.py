@@ -179,11 +179,9 @@ def load_next_schedule(json_obj):
                 break
         
         #check less activity number
-        sql = "SELECT count(sche_sn) FROM schedule WHERE sche_is_used=0"
-        pure_result = db.query(sql)
-        try:
-            return_msg["last_activity"] = int(pure_result[0][0])
-        except:
+        with ScheduleDao() as scheduleDao:
+            return_msg['last_activity'] = scheduleDao.countUndisplaySchedule()
+        if not return_msg['last_activity']:
             db.close()
             return_msg["error"] = "sql error"
             return return_msg
