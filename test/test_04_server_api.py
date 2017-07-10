@@ -62,6 +62,10 @@ class Server_api(unittest.TestCase):
             check_user_password(user_info)
         except:
             self.fail("Failed with %s" % traceback.format_exc())
+            
+    def test_check_user_level(self):
+        ret = check_user_level(1)
+        self.assertEqual(ret['result'],'success')
 
 if __name__ == "__main__":
     unittest.main()
