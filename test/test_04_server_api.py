@@ -62,6 +62,12 @@ class Server_api(unittest.TestCase):
             check_user_password(user_info)
         except:
             self.fail("Failed with %s" % traceback.format_exc())
+    
+    def test_add_new_data_type(self):
+        send_msg = {}
+        send_msg["type_name"] = 'test_type'
+        ret = add_new_data_type(send_msg)
+        self.assertTrue(ret['result']=='success' or ret['error']=='Type name has existed')
 
 if __name__ == "__main__":
     unittest.main()
