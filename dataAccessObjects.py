@@ -102,3 +102,7 @@ class ImageDao(DefaultDao):
                 +'or (TO_DAYS(NOW())=TO_DAYS(img_end_date) and TIME_TO_SEC(DATE_FORMAT(NOW(), "%H:%i:%s"))>TIME_TO_SEC(img_end_time)))'
         Ids = self.db.query(sql)
         return Ids
+
+    def markExpired(self,imgId):
+        sql = 'UPDATE image_data SET img_is_expire=1 WHERE img_id="{imgId}"'.format(imgId=imgId)
+        self.db.cmd(sql)
