@@ -531,11 +531,11 @@ def expire_data_check_():
             pure_result = imageDao.getExpiredIds()
 
         #update expire data
-        for num1 in range(len(pure_result)):
-            deal_result.append(pure_result[num1][0])
-            sql = ("UPDATE image_data SET img_is_expire=1 WHERE img_id='" + pure_result[num1][0] + "' ")
+        for expired_image_id in pure_result:
+            deal_result.appedn(expired_image_id[0])
             try:
-                db.cmd(sql)
+                with ImageDao() as imageDao:
+                    imageDao.markExpired(expired_image_id[0])
             except DB_Exception as e:
                 return_msg["error"] = e.args[1]
                 
