@@ -95,6 +95,15 @@ class ScheduleDao(DefaultDao):
             #TODO raise exception
             return None
 
+    def updateEditSchedule(self,targetId,displayTime,modeSn,scheSn):
+        sql = "UPDATE schedule SET sche_target_id='{targetId}', ".format(targetId=targetId)\
+            +"sche_display_time={displayTime}, ".format(displayTime=displayTime)\
+            +"sche_arrange_time=now(), "\
+            +"sche_arrange_mode={modeSn}, ".format(modeSn=modeSn)\
+            +"sche_is_used=0, sche_is_artificial_edit=0 "\
+            +" WHERE sche_sn={scheSn}".format(scheSn=scheSn)
+        self.db.cmd(sql)
+
 class ImageDao(DefaultDao):
     def getExpiredIds(self):
         sql = 'SELECT img_id FROM image_data '\
