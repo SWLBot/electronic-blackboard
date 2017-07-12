@@ -23,7 +23,7 @@ import os.path
 import json
 from util import switch
 import config.settings as setting
-from dataAccessObjects import ScheduleDao,ImageDao,DataTypeDao,ArrangeModeDao
+from dataAccessObjects import ScheduleDao,ImageDao,DataTypeDao,ArrangeModeDao,TextDao
 
 #make now activity to is used
 def mark_now_activity():
@@ -107,10 +107,12 @@ def load_next_schedule(json_obj):
     
             #find the file
             if sche_target_id[0:4]=="imge":
-                sql = ("SELECT type_id, img_system_name FROM image_data WHERE img_id='" + sche_target_id + "' ")
+                with ImageDao() as imageDao:
+                    file_info= imageDao.getFileInfo(sche_target_id)
                 return_msg["file_type"] = "image" 
             elif sche_target_id[0:4]=="text":
-                sql = ("SELECT type_id, text_system_name FROM text_data WHERE text_id='" + sche_target_id + "' ")
+                with TextDao() as textDao:
+                    file_info = textDao.getFileInfo(sche_target_id)
                 return_msg["file_type"] = "text"
             else :
                 if target_sn != 0:
@@ -118,11 +120,11 @@ def load_next_schedule(json_obj):
                         scheduleDao.markExpiredSchedule(target_sn)
                     target_sn = 0
                 continue
-            pure_result = db.query(sql)
-            try:
-                type_id = int(pure_result[0][0])
-                system_file_name = pure_result[0][1]
-            except:
+
+            if file_info:
+                type_id = file_info['typeId']
+                system_file_name = file_info['systemFileName']
+            else:
                 if target_sn != 0:
                     with ScheduleDao() as scheduleDao:
                         scheduleDao.markExpiredSchedule(target_sn)
