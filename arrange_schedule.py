@@ -23,7 +23,7 @@ import os.path
 import json
 from util import switch
 import config.settings as setting
-from dataAccessObjects import ScheduleDao,ImageDao
+from dataAccessObjects import ScheduleDao,ImageDao,DataTypeDao
 
 #make now activity to is used
 def mark_now_activity():
@@ -153,13 +153,13 @@ def load_next_schedule(json_obj):
             
             #find type dir
             check_target_dir = ""
-            sql = ("SELECT type_dir FROM data_type WHERE type_id=" + str(type_id))
-            pure_result = db.query(sql)
-            try:
+            with DataTypeDao() as dataTypeDao:
+                type_dir = dataTypeDao.getTypeDir(type_id)
+            if type_dir:
                 check_target_dir = os.path.join(target_dir, "static/")
-                check_target_dir = os.path.join(check_target_dir, pure_result[0][0])
+                check_target_dir = os.path.join(check_target_dir, type_dir)
                 check_target_dir = os.path.join(check_target_dir, system_file_name)
-            except:
+            else:
                 # mark activity is used
                 if target_sn != 0:
                     sql = ("UPDATE schedule SET sche_is_used=1 WHERE sche_sn=" + str(target_sn))
@@ -531,11 +531,11 @@ def expire_data_check_():
             pure_result = imageDao.getExpiredIds()
 
         #update expire data
-        for num1 in range(len(pure_result)):
-            deal_result.append(pure_result[num1][0])
-            sql = ("UPDATE image_data SET img_is_expire=1 WHERE img_id='" + pure_result[num1][0] + "' ")
+        for expired_image_id in pure_result:
+            deal_result.appedn(expired_image_id[0])
             try:
-                db.cmd(sql)
+                with ImageDao() as imageDao:
+                    imageDao.markExpired(expired_image_id[0])
             except DB_Exception as e:
                 return_msg["error"] = e.args[1]
                 
@@ -611,20 +611,15 @@ def edit_schedule(json_obj):
             display_time = int(display_time_list[num0])
             
             #get now sn
-            sql = ("SELECT sche_sn FROM schedule WHERE sche_is_used=0 ORDER BY sche_sn ASC LIMIT 1")
-            pure_result = db.query(sql)
-            if len(pure_result)>0:
+            with ScheduleDao() as scheduleDao:
+                target_sn = scheduleDao.getDisplayingSchedule()
+            if target_sn:
                 #check use update or insert
-                sql = ("SELECT sche_sn FROM schedule WHERE sche_sn="+str(int(pure_result[0][0])+next_sn) +" and sche_id != 'sche0undecided'")
+                sql = ("SELECT sche_sn FROM schedule WHERE sche_sn="+str(target_sn+next_sn) +" and sche_id != 'sche0undecided'")
                 pure_result = db.query(sql)
                 if len(pure_result)>0:
-                    sql = ("UPDATE schedule SET sche_target_id='" + target_id + "', "\
-                        +"sche_display_time="+str(display_time)+", "\
-                        +"sche_arrange_time=now(), "\
-                        +"sche_arrange_mode="+str(arrange_mode_sn)+", "\
-                        +"sche_is_used=0, sche_is_artificial_edit=0 "\
-                        +" WHERE sche_sn="+str(pure_result[0][0]))
-                    db.cmd(sql)
+                    with ScheduleDao() as scheduleDao:
+                        scheduleDao.updateEditSchedule(target_id,display_time,arrange_mode_sn,pure_result[0][0])
                 else:
                     sql = ("INSERT INTO schedule (sche_id, sche_target_id, sche_display_time, sche_arrange_mode)"\
                         +" VALUES ('sche0undecided', '"+target_id+"', "+str(display_time)+", " + str(arrange_mode_sn) + ")")
@@ -1355,6 +1350,7 @@ def set_system_log(json_obj):
     return return_msg
         
 def expire_data_check(raw_time):
+    shutdown = 0
     receive_obj = {}
     try:
         newpid = os.fork()

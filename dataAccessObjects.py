@@ -95,6 +95,15 @@ class ScheduleDao(DefaultDao):
             #TODO raise exception
             return None
 
+    def updateEditSchedule(self,targetId,displayTime,modeSn,scheSn):
+        sql = "UPDATE schedule SET sche_target_id='{targetId}', ".format(targetId=targetId)\
+            +"sche_display_time={displayTime}, ".format(displayTime=displayTime)\
+            +"sche_arrange_time=now(), "\
+            +"sche_arrange_mode={modeSn}, ".format(modeSn=modeSn)\
+            +"sche_is_used=0, sche_is_artificial_edit=0 "\
+            +" WHERE sche_sn={scheSn}".format(scheSn=scheSn)
+        self.db.cmd(sql)
+
 class ImageDao(DefaultDao):
     def getExpiredIds(self):
         sql = 'SELECT img_id FROM image_data '\
@@ -102,3 +111,17 @@ class ImageDao(DefaultDao):
                 +'or (TO_DAYS(NOW())=TO_DAYS(img_end_date) and TIME_TO_SEC(DATE_FORMAT(NOW(), "%H:%i:%s"))>TIME_TO_SEC(img_end_time)))'
         Ids = self.db.query(sql)
         return Ids
+
+    def markExpired(self,imgId):
+        sql = 'UPDATE image_data SET img_is_expire=1 WHERE img_id="{imgId}"'.format(imgId=imgId)
+        self.db.cmd(sql)
+
+class DataTypeDao(DefaultDao):
+    def getTypeDir(self,typeId):
+        sql = 'SELECT type_dir FROM data_type WHERE type_id={typeId}'.format(typeId=typeId)
+        ret = self.db.query(sql)
+        if len(ret):
+            return ret[0][0]
+        else:
+            #TODO raise exception
+            return None
