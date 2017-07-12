@@ -341,9 +341,8 @@ def collect_user_prefer_data(user_id, prefer_data_type):
         #date
         return_msg["date"] = time.strftime("%a. %Y.%m.%d", time.localtime(time.time()))
         #nickname
-        sql = "SELECT user_nickname FROM user WHERE user_id=" + str(user_id)
-        pure_result = db.query(sql)
-        return_msg["nickname"] = str(pure_result[0][0])
+        with UserDao() as userDao:
+            return_msg["nickname"] = userDao.getUserNickname(user_id)
         #constellation
         return_msg["constellation"] = random_constellation(user_id)
         #news

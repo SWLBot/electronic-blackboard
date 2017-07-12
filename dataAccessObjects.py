@@ -56,6 +56,15 @@ class UserDao(DefaultDao):
             #TODO raise exception
             return None
 
+    def getUserNickname(self,userId):
+        sql = 'select user_nickname from user where user_id = {userId}'.format(userId=userId)
+        ret = self.db.query(sql)
+        if len(ret):
+            return ret[0][0]
+        else:
+            #TODO raise exception
+            return None
+
 class ScheduleDao(DefaultDao):
     def getDisplayingSchedule(self):
         sql = 'SELECT sche_sn FROM schedule WHERE sche_is_used=0 ORDER BY sche_sn ASC LIMIT 1'
