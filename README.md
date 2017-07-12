@@ -42,16 +42,17 @@ $ python3 env_init.py
 ```
 
 ## Run test
-`$ python3 test/test.py`
+`$ pytest test/`
+
 if success, it should print
 ```
-test_close (test_mysql.Mysql) ... ok
-...
-test_set_schedule_log (test_arrange_schedule.Arrange_Schedule) ... ok
-----------------------------------------------------------------------
-Ran 12 tests in XXX.XXs
+============================= test session starts ==============================
+platform linux -- Python 3.4.6, pytest-3.1.3, py-1.4.33, pluggy-0.4.0
+rootdir: /home/travis/build/SWLBot/electronic-blackboard, inifile:
+plugins: ordering-0.5
+ ...
 
-OK
+=================== XX passed, XX warnings in 186.97 seconds ====================
 ```
 
 ## Start
