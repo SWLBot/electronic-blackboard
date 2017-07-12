@@ -1350,6 +1350,7 @@ def set_system_log(json_obj):
     return return_msg
         
 def expire_data_check(raw_time):
+    shutdown = 0
     receive_obj = {}
     try:
         newpid = os.fork()
