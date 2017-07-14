@@ -845,10 +845,10 @@ def read_arrange_mode():
 
 def find_cwb_type_id(db):
     return_msg = {}
-    sql = "SELECT type_id FROM data_type WHERE type_name='氣像雲圖'"
-    pure_result = db.query(sql)
-    if len(pure_result) != 0:
-        return int(pure_result[0][0])
+    with DataTypeDao() as dataTypeDao:
+        typeId = dataTypeDao.getTypeId('氣像雲圖')
+    if typeId != None:
+        return typeId
     else:
         return -1
 
@@ -1056,10 +1056,10 @@ def crawler_google_drive_img(json_obj):
         db.connect()
 
         #find google_drive_image type id 
-        sql = "SELECT type_id FROM data_type WHERE type_name='google_drive_image'"
-        pure_result = db.query(sql)
+        with DataTypeDao() as dataTypeDao:
+            typeId = dataTypeDao.getTypeId('google_drive_image')
         try:
-            data_type = int(pure_result[0][0])
+            data_type = typeId
         except:
             db.close()
             return_msg["error"] = "no google_drive_image data type"
