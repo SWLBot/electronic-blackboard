@@ -21,6 +21,7 @@ import httplib2
 from apiclient import discovery
 import datetime
 from dataAccessObjects import UserDao
+from dataAccessObjects import ScheduleDao
 
 class ArgumentUtil():
     def __init__(self,requestHandler):
@@ -83,10 +84,11 @@ def add_like_count(db, target_id):
 #find the current displaying schedule
 def find_now_schedule(db):
     try:
-        sql = "SELECT sche_target_id FROM schedule WHERE sche_is_used=0 ORDER BY sche_sn ASC LIMIT 1"
-        pure_result = db.query(sql)
-        if len(pure_result):
-            return str(pure_result[0][0])
+        with ScheduleDao() as scheduleDao:
+            next_schedule = scheduleDao.getNextSchedule()
+        # return sche_target_id
+        if next_schedule != None:
+            return str(next_schedule['sche_target_id'])
         else:
             return 0
     except:
