@@ -20,8 +20,7 @@ from oauth2client.file import Storage
 import httplib2
 from apiclient import discovery
 import datetime
-from dataAccessObjects import UserDao
-from dataAccessObjects import ScheduleDao
+from dataAccessObjects import UserDao, ScheduleDao, ImageDao
 
 class ArgumentUtil():
     def __init__(self,requestHandler):
@@ -611,12 +610,11 @@ def store_thumbnail_image(file_path,thumbnail_path):
 
 def get_img_meta(img_id):
     try:
-        db = mysql()
-        db.connect()
-        sql = 'select * from image_data where img_is_delete = 0 and img_id = "%s"' % img_id
-        return db.query(sql)[0]
+        with ImageDao() as imageDao:
+            img_data = ImageDao.getImgData(imgId=img_id)
+        #TODO Caller should check return value is not None
+        return img_data
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg
 
