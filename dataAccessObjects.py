@@ -134,3 +134,26 @@ class DataTypeDao(DefaultDao):
         else:
             #TODO raise exception
             return None
+
+class ArrangeModeDao(DefaultDao):
+    def getArrangeMode(self):
+        sql = 'SELECT armd_sn, armd_mode, armd_condition FROM arrange_mode WHERE armd_is_delete=0 and armd_is_expire=0 and '\
+                +'(TIME_TO_SEC(DATE_FORMAT(NOW(), "%H:%i:%s")) between TIME_TO_SEC(armd_start_time) and TIME_TO_SEC(armd_end_time))'\
+                +' ORDER BY armd_set_time DESC LIMIT 1'
+        ret = self.db.query(sql)
+        if len(ret):
+            arrangeMode = {}
+            arrangeMode['arrange_sn'] = int(ret[0][0])
+            arrangeMode['arrange_mode'] = int(ret[0][1])
+            arrangeMode['condition'] = []
+
+            if len(ret[0]) > 2 and ret[0][2] is not None:
+                conditionStr = ret[0][2].split(' ')
+                for condition in conditionStr:
+                    arrangeMode.append(int(condition))
+
+            return arrangeMode
+        else:
+            #TODO check need to raise exception or not
+            return None
+
