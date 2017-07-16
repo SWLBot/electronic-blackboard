@@ -20,7 +20,7 @@ from oauth2client.file import Storage
 import httplib2
 from apiclient import discovery
 import datetime
-from dataAccessObjects import UserDao, ScheduleDao, ImageDao
+from dataAccessObjects import UserDao, ScheduleDao, ImageDao, UserPreferDao
 
 class ArgumentUtil():
     def __init__(self,requestHandler):
@@ -155,11 +155,9 @@ def register_preference(data):
                 pref_str = pref_str[:-1]
 
         #generate new id
-        sql = ("SELECT pref_id FROM user_prefer ORDER BY pref_set_time DESC LIMIT 1")
-        pure_result = db.query(sql)
-        pref_id = "pref0000000001"
         try:
-            pref_id = "pref" + "{0:010d}".format(int(pure_result[0][0][4:]) + 1)
+            with UserPreferDao() as userPreferDao:
+                pref_id = userPreferDao.generateNewId()
         except:
             pref_id = "pref0000000001"
 
