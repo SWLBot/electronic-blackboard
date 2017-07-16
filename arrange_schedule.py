@@ -546,10 +546,9 @@ def expire_data_check_():
             return return_msg
 
         #find expire text data
-        sql = ("SELECT text_id FROM text_data "\
-            +"WHERE text_is_delete=0 and text_is_expire=0 and ( TO_DAYS(NOW())>TO_DAYS(text_end_date) "\
-            +"or (TO_DAYS(NOW())=TO_DAYS(text_end_date) and TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s'))>TIME_TO_SEC(text_end_time)))")  
-        pure_result = db.query(sql)
+        with TextDao() as textDao:
+            pure_result = textDao.getExpiredIds()
+
         #update expire data
         for num1 in range(len(pure_result)):
             deal_result.append(pure_result[num1][0])
