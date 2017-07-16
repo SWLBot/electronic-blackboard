@@ -143,6 +143,15 @@ class DataTypeDao(DefaultDao):
             #TODO raise exception
             return None
 
+    def getTypeId(self,typeName):
+        sql = 'SELECT type_id FROM data_type WHERE type_name="{typeName}"'.format(typeName=typeName)
+        ret = self.db.query(sql)
+        if len(ret):
+            return ret[0][0]
+        else:
+            #TODO raise exception
+            return None
+
 class ArrangeModeDao(DefaultDao):
     def getArrangeMode(self):
         sql = 'SELECT armd_sn, armd_mode, armd_condition FROM arrange_mode WHERE armd_is_delete=0 and armd_is_expire=0 and '\
