@@ -23,7 +23,7 @@ import os.path
 import json
 from util import switch
 import config.settings as setting
-from dataAccessObjects import ScheduleDao,ImageDao,DataTypeDao
+from dataAccessObjects import ScheduleDao,ImageDao,DataTypeDao,ArrangeModeDao
 
 #make now activity to is used
 def mark_now_activity():
@@ -828,34 +828,18 @@ def read_arrange_mode():
         return_msg = {}
         return_msg["result"] = "fail"
 
-        #connect to mysql
-        db = mysql()
-        db.connect()
+        with ArrangeModeDao() as arrangeModeDao:
+            arrange_mode = arrangeModeDao.getArrangeMode()
 
-        #find arrange mode
-        sql = ("SELECT armd_sn, armd_mode, armd_condition FROM arrange_mode WHERE armd_is_delete=0 and armd_is_expire=0 and "\
-            +"(TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(armd_start_time) and TIME_TO_SEC(armd_end_time))"\
-            +" ORDER BY armd_set_time DESC LIMIT 1")
-        pure_result = db.query(sql)
-        try:
-            return_msg["arrange_sn"] = int(pure_result[0][0])
-            return_msg["arrange_mode"] = int(pure_result[0][1])
-            return_msg["condition"] = []
-            
-            if len(pure_result[0]) > 2  and pure_result[0][2] is not None:
-                str_condition = pure_result[0][2].split(' ')
-                for num1 in range(len(str_condition)):
-                    return_msg["condition"].append(int(str_condition[num1]))
-        except:
-            db.close()
+        if arrange_mode:
+            return_msg.update(arrange_mode)
+        else:
             return_msg["error"] = "no match schedule mode"
             return return_msg
 
-        db.close()
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg
 
