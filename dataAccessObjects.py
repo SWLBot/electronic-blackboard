@@ -133,6 +133,27 @@ class ImageDao(DefaultDao):
             #TODO raise exception
             return None
 
+    def getFileInfo(self,imgId):
+        sql = 'SELECT type_id, img_system_name FROM image_data WHERE img_id="{imgId}"'.format(imgId=imgId)
+        ret = self.db.query(sql)
+        if len(ret) and isinstance(ret[0],tuple) and len(ret[0]) == 2:
+            fileInfo = dict(typeId=ret[0][0],systemFileName=ret[0][1])
+            return fileInfo
+        else:
+            #TODO raise exception
+            return None
+
+class TextDao(DefaultDao):
+    def getFileInfo(self,textId):
+        sql = 'SELECT type_id, text_system_name FROM text_data WHERE text_id="{textId}"'.format(textId=textId)
+        ret = self.db.query(sql)
+        if len(ret) and isinstance(ret[0],tuple) and len(ret[0]) == 2:
+            fileInfo = dict(typeId=ret[0][0],systemFileName=ret[0][1])
+            return fileInfo
+        else:
+            #TODO raise exception
+            return None
+
 class DataTypeDao(DefaultDao):
     def getTypeDir(self,typeId):
         sql = 'SELECT type_dir FROM data_type WHERE type_id={typeId}'.format(typeId=typeId)
