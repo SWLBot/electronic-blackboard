@@ -124,6 +124,14 @@ class ImageDao(DefaultDao):
     def markExpired(self,imgId):
         sql = 'UPDATE image_data SET img_is_expire=1 WHERE img_id="{imgId}"'.format(imgId=imgId)
         self.db.cmd(sql)
+    def getImgData(self,imgId):
+        sql = 'select * from image_data where img_is_delete = 0 and img_id = "{imgId}"'.format(imgId=imgId)
+        ret = self.db.query(sql)
+        if len(ret):
+            return ret[0]
+        else:
+            #TODO raise exception
+            return None
 
 class DataTypeDao(DefaultDao):
     def getTypeDir(self,typeId):
