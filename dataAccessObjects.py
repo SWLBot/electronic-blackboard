@@ -124,6 +124,7 @@ class ImageDao(DefaultDao):
     def markExpired(self,imgId):
         sql = 'UPDATE image_data SET img_is_expire=1 WHERE img_id="{imgId}"'.format(imgId=imgId)
         self.db.cmd(sql)
+
     def getImgData(self,imgId):
         sql = 'select * from image_data where img_is_delete = 0 and img_id = "{imgId}"'.format(imgId=imgId)
         ret = self.db.query(sql)
@@ -143,6 +144,10 @@ class ImageDao(DefaultDao):
             #TODO raise exception
             return None
 
+    def addLikeCount(self,targetId):
+        sql = 'UPDATE image_data SET img_like_count=img_like_count+1 WHERE img_id="{targetId}"'.format(targetId=str(targetId))
+        ret = self.db.cmd(sql)
+
 class TextDao(DefaultDao):
     def getFileInfo(self,textId):
         sql = 'SELECT type_id, text_system_name FROM text_data WHERE text_id="{textId}"'.format(textId=textId)
@@ -153,6 +158,10 @@ class TextDao(DefaultDao):
         else:
             #TODO raise exception
             return None
+
+    def addLikeCount(self,targetId):
+        sql = 'UPDATE text_data SET text_like_count=text_like_count+1 WHERE text_id="{targetId}"'.format(targetId=str(targetId))
+        ret = self.db.cmd(sql)
 
 class UserPreferDao(DefaultDao):
     def generateNewId(self):
