@@ -534,7 +534,7 @@ def expire_data_check_():
 
         #update expire data
         for expired_image_id in pure_result:
-            deal_result.appedn(expired_image_id[0])
+            deal_result.append(expired_image_id[0])
             try:
                 with ImageDao() as imageDao:
                     imageDao.markExpired(expired_image_id[0])
