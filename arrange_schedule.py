@@ -716,14 +716,9 @@ def clean_schedule():
         return_msg = {}
         return_msg["result"] = "fail"
 
-        #connect to mysql
-        db = mysql()
-        db.connect()
+        with ScheduleDao() as scheduleDao:
+            scheduleDao.cleanSchedule()
 
-        sql = "DELETE FROM schedule WHERE sche_is_used=0"
-        db.cmd(sql)
-        
-        db.close()
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
