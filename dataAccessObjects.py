@@ -154,6 +154,15 @@ class TextDao(DefaultDao):
             #TODO raise exception
             return None
 
+class UserPreferDao(DefaultDao):
+    def generateNewId(self):
+        sql ='SELECT pref_id FROM user_prefer ORDER BY pref_set_time DESC LIMIT 1'
+        res = self.db.query(sql)
+        if len(res):
+            return "pref{0:010d}".format(int(res[0][0][4:]) + 1)
+        else:
+            return "pref0000000001"
+
 class DataTypeDao(DefaultDao):
     def getTypeDir(self,typeId):
         sql = 'SELECT type_dir FROM data_type WHERE type_id={typeId}'.format(typeId=typeId)
