@@ -743,13 +743,8 @@ def set_schedule_log(json_obj):
         db = mysql()
         db.connect()
         
-        #count sche_is_used schedule
-        sql = ("SELECT count(sche_sn) FROM schedule WHERE sche_is_used=1")
-        pure_result = db.query(sql)
-        try:
-            is_used_count = int(pure_result[0][0])
-        except:
-            "DO NOTHING"
+        with ScheduleDao() as scheduleDao:
+            is_used_count = scheduleDao.countUsedSchedule()
         
         #if log > max_is_used then clean up
         if is_used_count > max_is_used:
