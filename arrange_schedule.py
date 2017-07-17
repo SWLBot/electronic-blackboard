@@ -563,12 +563,10 @@ def expire_data_check_():
             db.close()
             return return_msg
         
-        #update expire schedule
-        for num1 in range(len(deal_result)):
-            sql = ("UPDATE schedule SET sche_is_used=1 " \
-                +"WHERE sche_is_used=0 and sche_is_artificial_edit=0 and sche_target_id='" + deal_result[num1] + "'")
+        for target_id in deal_result:
             try:
-                db.cmd(sql)
+                with ScheduleDao() as scheduleDao:
+                    scheduleDao.markExpiredSchedule(targetId=target_id)
             except DB_Exception as e:
                 return_msg["error"] = e.args[1]
                 
