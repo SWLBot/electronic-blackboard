@@ -121,6 +121,15 @@ class ScheduleDao(DefaultDao):
         sql = 'DELETE FROM schedule WHERE sche_is_used=0'
         self.db.cmd(sql)
 
+    def countUsedSchedule(self):
+        sql = 'SELECT count(sche_sn) FROM schedule WHERE sche_is_used=1'
+        ret = self.db.query(sql)
+        if len(ret):
+            return int(ret[0][0])
+        else:
+            #TODO raise exception
+            return None
+
 class ImageDao(DefaultDao):
     def getExpiredIds(self):
         sql = 'SELECT img_id FROM image_data '\
