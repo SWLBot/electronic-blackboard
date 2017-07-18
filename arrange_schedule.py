@@ -1364,8 +1364,6 @@ def main():
     signal.signal(signal.SIGCHLD, CHLD_handler)
 
     #read initial setting
-    raw_time = time.time()
-    now_time = time.localtime(raw_time)
     receive_obj = read_system_setting()
     if receive_obj["result"] == "success":
         board_py_dir = str(receive_obj["board_py_dir"])
@@ -1398,7 +1396,7 @@ def main():
         
         #read_system_setting
         if raw_time >= alarm_read_system_setting:
-            print("#1 "+str(raw_time))
+            print("#1 "+ time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
             receive_obj = read_system_setting()
             if receive_obj["result"] == "success":
                 board_py_dir = str(receive_obj["board_py_dir"])
@@ -1412,12 +1410,12 @@ def main():
         
         #expire_data_check
         if raw_time >= alarm_expire_data_check:
-            print("#2 "+str(raw_time))
+            print("#2 "+ time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
             alarm_expire_data_check,shutdown = expire_data_check(raw_time)
         
         #set_schedule_log
         if raw_time >= alarm_set_schedule_log:
-            print("#3 "+str(raw_time))
+            print("#3 "+ time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
             try:
                 newpid = os.fork()
                 if newpid == 0: #child
@@ -1442,7 +1440,7 @@ def main():
 
         #load next schedule
         if not os.path.isfile(check_file_dir) or raw_time >= alarm_load_next_schedule:
-            print("#4 "+str(raw_time))
+            print("#4 "+ time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
             #mark now activity
             if just_startup == 0:
                 receive_obj = mark_now_activity()
@@ -1471,7 +1469,7 @@ def main():
 
         #add_schedule
         if raw_time >= alarm_add_schedule:
-            print("#5 "+str(raw_time))
+            print("#5 "+ time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
             #get arrange mode
             receive_obj = read_arrange_mode()
             if receive_obj["result"] == "success":
@@ -1529,7 +1527,7 @@ def main():
         
         #crawl cwb radar image
         if raw_time >= alarm_crawler_cwb_img:
-            print("#6 "+str(raw_time))
+            print("#6 "+ time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
             try:
                 newpid = os.fork()
                 if newpid == 0: #child
@@ -1553,7 +1551,7 @@ def main():
 
         #google calendar add to text data
         if raw_time >= alarm_google_calendar_text:
-            print("#7 "+str(raw_time))
+            print("#7 "+ time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
             try:
                 newpid = os.fork()
                 if newpid == 0: #child
@@ -1575,7 +1573,7 @@ def main():
         
         #google drive add to text data
         if raw_time >= alarm_crawler_google_drive_img:
-            print("#8 "+str(raw_time))
+            print("#8 "+ time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
             try:
                 newpid = os.fork()
                 if newpid == 0: #child
@@ -1599,7 +1597,7 @@ def main():
 
         #crawler
         if raw_time >= alarm_crawler_functions:
-            print("#9 "+str(raw_time))
+            print("#9 "+ time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
             try:
                 newpid = os.fork()
                 if newpid == 0: #child
