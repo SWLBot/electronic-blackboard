@@ -148,6 +148,13 @@ class ImageDao(DefaultDao):
             return None
 
 class TextDao(DefaultDao):
+    def getExpiredIds(self):
+        sql = ("SELECT text_id FROM text_data "\
+                +"WHERE text_is_delete=0 and text_is_expire=0 and ( TO_DAYS(NOW())>TO_DAYS(text_end_date) "\
+                +"or (TO_DAYS(NOW())=TO_DAYS(text_end_date) and TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s'))>TIME_TO_SEC(text_end_time)))") 
+        expiredIds = self.db.query(sql)
+        return expiredIds
+
     def getFileInfo(self,textId):
         sql = 'SELECT type_id, text_system_name FROM text_data WHERE text_id="{textId}"'.format(textId=textId)
         ret = self.db.query(sql)
