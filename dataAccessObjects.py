@@ -117,6 +117,10 @@ class ScheduleDao(DefaultDao):
             +" WHERE sche_sn={scheSn}".format(scheSn=scheSn)
         self.db.cmd(sql)
 
+    def cleanSchedule(self):
+        sql = 'DELETE FROM schedule WHERE sche_is_used=0'
+        self.db.cmd(sql)
+
 class ImageDao(DefaultDao):
     def getExpiredIds(self):
         sql = 'SELECT img_id FROM image_data '\
