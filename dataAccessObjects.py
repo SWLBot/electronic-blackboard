@@ -212,6 +212,13 @@ class UserPreferDao(DefaultDao):
         else:
             return "pref0000000001"
 
+    def insertUserPrefer(self,prefId,UserId,prefStr):
+        sql = 'INSERT INTO user_prefer' \
+            +'(pref_id,user_id,pref_data_type_01,pref_data_type_02,pref_data_type_03,pref_data_type_04,pref_data_type_05) VALUES (' \
+            +'{prefId},{useId},{prefStr},{prefStr},{prefStr},{prefStr},{prefStr})'\
+            .format(prefId=prefId,userId=str(userId),prefStr=prefStr)
+        db.cmd(sql)
+
 class DataTypeDao(DefaultDao):
     def getTypeDir(self,typeId):
         sql = 'SELECT type_dir FROM data_type WHERE type_id={typeId}'.format(typeId=typeId)
