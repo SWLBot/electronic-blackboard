@@ -20,7 +20,7 @@ from oauth2client.file import Storage
 import httplib2
 from apiclient import discovery
 import datetime
-from dataAccessObjects import UserDao, ScheduleDao, ImageDao, UserPreferDao
+from dataAccessObjects import *
 
 class ArgumentUtil():
     def __init__(self,requestHandler):
@@ -67,14 +67,14 @@ class UploadArgumentsUtil(ArgumentUtil):
 #
 def add_like_count(db, target_id):
     try:
-        sql = ""
         if target_id[0:4]=="imge":
-            sql = ("UPDATE image_data SET img_like_count=img_like_count+1 WHERE img_id='" + str(target_id) + "'")
+            with ImageDao() as imageDao:
+                imageDao.addLikeAcount(targetId=target_id)
         elif target_id[0:4]=="text":
-            sql = ("UPDATE text_data SET text_like_count=text_like_count+1 WHERE text_id='" + str(target_id) + "'")
+            with TextDao() as textDao:
+                textDao.addLikeAcount(targetId=target_id)
         else :
             return 0
-        db.cmd(sql)
         
         return 1
     except:
