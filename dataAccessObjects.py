@@ -142,6 +142,14 @@ class ImageDao(DefaultDao):
         sql = 'UPDATE image_data SET img_is_expire=1 WHERE img_id="{imgId}"'.format(imgId=imgId)
         self.db.cmd(sql)
 
+    def checkExpired(self,imgId):
+        sql = 'SELECT count(*) FROM image_data WHERE img_id="{imgId}"'.format(imgId=imgId)\
+                +' and img_is_delete=0 and img_is_expire=0 '\
+                +' and (TO_DAYS(NOW()) between TO_DAYS(img_start_date) and TO_DAYS(img_end_date)) '\
+                +' and (TIME_TO_SEC(DATE_FORMAT(NOW(), "%H:%i:%s")) between TIME_TO_SEC(img_start_time) and TIME_TO_SEC(img_end_time)) '
+        ret = self.db.query(sql)
+        return True if ret[0][0] == 0 else False
+
     def getImgData(self,imgId):
         sql = 'select * from image_data where img_is_delete = 0 and img_id = "{imgId}"'.format(imgId=imgId)
         ret = self.db.query(sql)
@@ -172,6 +180,14 @@ class TextDao(DefaultDao):
                 +"or (TO_DAYS(NOW())=TO_DAYS(text_end_date) and TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s'))>TIME_TO_SEC(text_end_time)))") 
         expiredIds = self.db.query(sql)
         return expiredIds
+
+    def checkExpired(self,textId):
+        sql = 'SELECT count(*) FROM text_data WHERE text_id="{textId}"'.format(textId=textId)\
+                +' and text_is_delete=0 and text_is_expire=0 '\
+                +' and (TO_DAYS(NOW()) between TO_DAYS(text_start_date) and TO_DAYS(text_end_date)) '\
+                +' and (TIME_TO_SEC(DATE_FORMAT(NOW(), "%H:%i:%s")) between TIME_TO_SEC(text_start_time) and TIME_TO_SEC(text_end_time))'
+        ret = self.db.query(sql)
+        return True if ret[0][0] == 0 else False
 
     def getFileInfo(self,textId):
         sql = 'SELECT type_id, text_system_name FROM text_data WHERE text_id="{textId}"'.format(textId=textId)

@@ -131,22 +131,18 @@ def load_next_schedule(json_obj):
                     target_sn = 0
                 continue
     
-            #check time if needed
+            # check display target expired
             if no_need_check_time == b'\x00':
                 if return_msg["file_type"]=="image":
-                    sql = ("SELECT type_id FROM image_data WHERE img_id='" + sche_target_id + "' "\
-                        +" and img_is_delete=0 and img_is_expire=0 "\
-                        +" and (TO_DAYS(NOW()) between TO_DAYS(img_start_date) and TO_DAYS(img_end_date)) " \
-                        +" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(img_start_time) and TIME_TO_SEC(img_end_time)) ")
+                    with ImageDao() as imageDao:
+                        expired = imageDao.checkExpired(sche_target_id)
                 elif return_msg["file_type"]=="text":
-                    sql = ("SELECT type_id FROM text_data WHERE text_id='" + sche_target_id + "' "\
-                        +" and text_is_delete=0 and text_is_expire=0 "\
-                        +" and (TO_DAYS(NOW()) between TO_DAYS(text_start_date) and TO_DAYS(text_end_date)) " \
-                        +" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(text_start_time) and TIME_TO_SEC(text_end_time)) ")
+                    with TextDao() as textDao:
+                        expired = textDao.checkExpired(sche_target_id)
                 else:
                     "impossible"
-                pure_result = db.query(sql)
-                if len(pure_result)==0:
+
+                if expired:
                     if target_sn != 0:
                         with ScheduleDao() as scheduleDao:
                             scheduleDao.markExpiredSchedule(target_sn)
