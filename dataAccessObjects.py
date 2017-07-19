@@ -223,3 +223,14 @@ class ArrangeModeDao(DefaultDao):
             #TODO check need to raise exception or not
             return None
 
+class FortuneDao(DefaultDao):
+    def getFortune(self,today,constellation):
+        sql = 'SELECT overall, love, career, wealth FROM fortune ' \
+            + 'WHERE fortune_date = "{today}" AND constellation = "{constellation}"' \
+            .format(today=today,constellation=constellation)
+        ret = self.db.query(sql)
+        if len(ret):
+            return ret
+        else:
+            #TODO check need to raise exception or not
+            return None

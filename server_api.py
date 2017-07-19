@@ -268,7 +268,6 @@ def Zodiac(month, day):
     return n[len(list(filter(lambda y:y<=(month,day), d)))%12]
 #
 def random_constellation(user_id):
-    return_msg = {}
     with UserDao() as userDao:
         date = userDao.getUserBirthday()
     if date == None:
@@ -276,23 +275,24 @@ def random_constellation(user_id):
         constellation = random.choice(constellation)
     else:
         constellation = Zodiac(date.month,date.day)
+
+    return_msg = {}
     try:
         today=str(datetime.date.today())
-        db = mysql()
-        db.connect()
-        sql = "SELECT overall, love, career, wealth FROM fortune " \
-            "WHERE fortune_date = '" +today+ "' AND constellation = '" + constellation + "'"
-        result = db.query(sql)
-        overall_str="整體運勢" + result[0][0]
-        love_str="愛情運勢" + result[0][1]
-        career_str="事業運勢" + result[0][2]
-        wealth_str="財運運勢" + result[0][3]
-        return_msg["name"] = constellation
-        return_msg["value"] = [overall_str,love_str,career_str,wealth_str]
-        return return_msg
-    except DB_Exception as e:
-        db.close()
-        return_msg["error"] = e.args[1]
+        with FortuneDao() as fortuneDao:
+            result = fortuneDao.getFortune(today=today,constellation=constellation)
+        if result != None:
+            overall_str="整體運勢" + result[0][0]
+            love_str="愛情運勢" + result[0][1]
+            career_str="事業運勢" + result[0][2]
+            wealth_str="財運運勢" + result[0][3]
+            return_msg["name"] = constellation
+            return_msg["value"] = [overall_str,love_str,career_str,wealth_str]
+            return return_msg
+        else:
+            return_msg["error"] = "Can't get fortune data."
+    except:
+        return_msg["error"] = "Can't get fortune data."
         return return_msg
 #
 def get_prefer_news(db, prefer_data_type):
