@@ -199,6 +199,10 @@ class TextDao(DefaultDao):
             #TODO raise exception
             return None
 
+    def markExpired(self,textId):
+        sql = 'UPDATE text_data SET text_is_expire=1 WHERE text_id="{textId}"'.format(textId=textId)
+        self.db.cmd(sql)
+
     def addLikeCount(self,targetId):
         sql = 'UPDATE text_data SET text_like_count=text_like_count+1 WHERE text_id="{targetId}"'.format(targetId=str(targetId))
         ret = self.db.cmd(sql)
