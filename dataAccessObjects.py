@@ -14,6 +14,14 @@ class DefaultDao():
     def __exit__(self, exc_type, exc_value, traceback):
         self.db.close()
 
+    def queryOneValue(self,sql):
+        ret = self.db.query(sql)
+        if len(ret):
+            return ret[0][0]
+        else:
+            #TODO raise exception
+            return None
+
 class UserDao(DefaultDao):
     def getUserId(self,userName=None,bluetoothId=None):
         sql = 'SELECT user_id FROM user WHERE '
@@ -22,58 +30,28 @@ class UserDao(DefaultDao):
         elif bluetoothId:
             sql += 'user_bluetooth_id = "{bluetoothId}"'.format(bluetoothId=bluetoothId)
 
-        ret = self.db.query(sql)
-        if len(ret):
-            return ret[0][0]
-        else:
-            #TODO raise exception
-            return None
+        return self.queryOneValue(sql)
 
     def getUserLevel(self,userId):
         sql = 'SELECT user_level FROM user WHERE user_id  = {userId}'.format(userId=userId)
-        ret = self.db.query(sql)
-        if len(ret):
-            return int(ret[0][0])
-        else:
-            #TODO raise exception
-            return None
+        return self.queryOneValue(sql)
 
     def getUserBirthday(self,userId):
         sql = 'select user_birthday from user where user_id = {userId}'.format(userId=userId)
-        ret = self.db.query(sql)
-        if len(ret):
-            return ret[0][0]
-        else:
-            #TODO raise exception
-            return None
+        return self.queryOneValue(sql)
 
     def checkBluetoothIdUsed(self,bluetoothId):
         sql = 'SELECT count(*) FROM user WHERE user_bluetooth_id="{bluetoothId}"'.format(bluetoothId=bluetoothId)
-        ret = self.db.query(sql)
-        if len(ret):
-            return int(ret[0][0])
-        else:
-            #TODO raise exception
-            return None
+        return self.queryOneValue(sql)
 
     def getUserNickname(self,userId):
         sql = 'select user_nickname from user where user_id = {userId}'.format(userId=userId)
-        ret = self.db.query(sql)
-        if len(ret):
-            return ret[0][0]
-        else:
-            #TODO raise exception
-            return None
+        return self.queryOneValue(sql)
 
 class ScheduleDao(DefaultDao):
     def getDisplayingSchedule(self):
         sql = 'SELECT sche_sn FROM schedule WHERE sche_is_used=0 ORDER BY sche_sn ASC LIMIT 1'
-        ret = self.db.query(sql)
-        if len(ret):
-            return int(ret[0][0])
-        else:
-            #TODO raise exception
-            return None
+        return self.queryOneValue(sql)
 
     def markExpiredSchedule(self,scheSn=None,targetId=None):
         if scheSn:
@@ -101,12 +79,7 @@ class ScheduleDao(DefaultDao):
 
     def countUndisplaySchedule(self):
         sql = 'SELECT count(sche_sn) FROM schedule WHERE sche_is_used=0'
-        ret = self.db.query(sql)
-        if len(ret):
-            return int(ret[0][0])
-        else:
-            #TODO raise exception
-            return None
+        return self.queryOneValue(sql)
 
     def updateEditSchedule(self,targetId,displayTime,modeSn,scheSn):
         sql = "UPDATE schedule SET sche_target_id='{targetId}', ".format(targetId=targetId)\
@@ -142,6 +115,14 @@ class ImageDao(DefaultDao):
         sql = 'UPDATE image_data SET img_is_expire=1 WHERE img_id="{imgId}"'.format(imgId=imgId)
         self.db.cmd(sql)
 
+    def checkExpired(self,imgId):
+        sql = 'SELECT count(*) FROM image_data WHERE img_id="{imgId}"'.format(imgId=imgId)\
+                +' and img_is_delete=0 and img_is_expire=0 '\
+                +' and (TO_DAYS(NOW()) between TO_DAYS(img_start_date) and TO_DAYS(img_end_date)) '\
+                +' and (TIME_TO_SEC(DATE_FORMAT(NOW(), "%H:%i:%s")) between TIME_TO_SEC(img_start_time) and TIME_TO_SEC(img_end_time)) '
+        ret = self.db.query(sql)
+        return True if ret[0][0] == 0 else False
+
     def getImgData(self,imgId):
         sql = 'select * from image_data where img_is_delete = 0 and img_id = "{imgId}"'.format(imgId=imgId)
         ret = self.db.query(sql)
@@ -172,6 +153,14 @@ class TextDao(DefaultDao):
                 +"or (TO_DAYS(NOW())=TO_DAYS(text_end_date) and TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s'))>TIME_TO_SEC(text_end_time)))") 
         expiredIds = self.db.query(sql)
         return expiredIds
+
+    def checkExpired(self,textId):
+        sql = 'SELECT count(*) FROM text_data WHERE text_id="{textId}"'.format(textId=textId)\
+                +' and text_is_delete=0 and text_is_expire=0 '\
+                +' and (TO_DAYS(NOW()) between TO_DAYS(text_start_date) and TO_DAYS(text_end_date)) '\
+                +' and (TIME_TO_SEC(DATE_FORMAT(NOW(), "%H:%i:%s")) between TIME_TO_SEC(text_start_time) and TIME_TO_SEC(text_end_time))'
+        ret = self.db.query(sql)
+        return True if ret[0][0] == 0 else False
 
     def getFileInfo(self,textId):
         sql = 'SELECT type_id, text_system_name FROM text_data WHERE text_id="{textId}"'.format(textId=textId)
@@ -207,24 +196,21 @@ class UserPreferDao(DefaultDao):
             #TODO raise exception
             return None
 
+    def insertUserPrefer(self,prefId,UserId,prefStr):
+        sql = 'INSERT INTO user_prefer' \
+            +'(pref_id,user_id,pref_data_type_01,pref_data_type_02,pref_data_type_03,pref_data_type_04,pref_data_type_05) VALUES (' \
+            +'{prefId},{useId},{prefStr},{prefStr},{prefStr},{prefStr},{prefStr})'\
+            .format(prefId=prefId,userId=str(userId),prefStr=prefStr)
+        db.cmd(sql)
+
 class DataTypeDao(DefaultDao):
     def getTypeDir(self,typeId):
         sql = 'SELECT type_dir FROM data_type WHERE type_id={typeId}'.format(typeId=typeId)
-        ret = self.db.query(sql)
-        if len(ret):
-            return ret[0][0]
-        else:
-            #TODO raise exception
-            return None
+        return self.queryOneValue(sql)
 
     def getTypeId(self,typeName):
         sql = 'SELECT type_id FROM data_type WHERE type_name="{typeName}"'.format(typeName=typeName)
-        ret = self.db.query(sql)
-        if len(ret):
-            return ret[0][0]
-        else:
-            #TODO raise exception
-            return None
+        return self.queryOneValue(sql)
 
 class ArrangeModeDao(DefaultDao):
     def getArrangeMode(self):

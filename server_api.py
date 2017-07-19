@@ -126,8 +126,6 @@ def add_now_like_count():
         return return_msg
 def register_preference(data):
     try:
-        db = mysql()
-        db.connect()
         inside_type = str(display_data_type(type_name='inside')[0])
         techOrange_type = str(display_data_type(type_name='techOrange')[0])
         medium_type = str(display_data_type(type_name='medium')[0])
@@ -165,15 +163,11 @@ def register_preference(data):
             user_id = userDao.getUserId(bluetoothId=data['bluetooth_id'])
 
         #insert user preference
-        sql = "INSERT INTO user_prefer" \
-        +"(pref_id,user_id,pref_data_type_01,pref_data_type_02,pref_data_type_03,pref_data_type_04,pref_data_type_05) VALUES ('" \
-            +pref_id+"', "+str(user_id)+",'"+pref_str+"','"+pref_str+"','"+pref_str+"','"+pref_str+"','"+pref_str+"')"
-        db.cmd(sql)
+        with UserPreferDao() as userPreferDao:
+            userPreferDao.insertUserPrefer(prefId=pref_id,userId=user_id,prefStr=pref_str)
 
-        db.close()
         return 1
-    except Exception as e:
-        db.close()
+    except:
         return 0
 #
 def check_bluetooth_id_exist(bluetooth_id):
