@@ -1018,7 +1018,124 @@ def check_event_exist_or_insert(event):
         with open(receive_msg["text_system_dir"],"w") as fp:
             print(json.dumps(text_file),file=fp)
 
-#crawler google drive image
+def find_drive_data_type():
+    return_msg = {}
+    with DataTypeDao() as dataTypeDao:
+        typeId = dataTypeDao.getTypeId('google_drive_image')
+    if typeId != None:
+        return_msg['data_type'] = int(typeId)
+        return_msg['result'] = 'success'
+        return return_msg
+    else:
+        return_msg['error'] = "no google_drive_image data type"
+        return_msg['result'] = 'fail'
+        return return_msg
+
+def search_google_drive_folder(service):
+    g_sql = "(name='1day' or name='3day' or name='7day' or name='14day')"
+    results = service.files().list(
+        q="mimeType='application/vnd.google-apps.folder' and trashed=false and " + g_sql, 
+        fields="nextPageToken, files(id, name)").execute()
+    items = results.get('files', [])
+    return items
+
+def search_google_drive_file(service):
+    #set time
+    now_time = time.time()
+    start_time = time.strftime("%Y-%m-%dT%H:%M:%S+08:00", time.localtime(now_time-43200))
+    results = service.files().list(
+        q="modifiedTime > '" + start_time + "' and mimeType contains 'image/'", 
+        fields="nextPageToken, files(id, name, parents)").execute()
+    items = results.get('files', [])
+    return items
+    
+def merge_files_and_days(days_limit, drive_file):
+    for num1 in range(len(drive_file)):
+        drive_file[num1]['time'] = 86400*7
+        for item in days_limit:
+            if item['id'] in drive_file[num1]['parents']:
+                drive_file[num1]['time'] = 86400 * int(item['name'][:-3])
+                break
+    return drive_file
+
+def check_drive_img_exist(db, data_type, file_name):
+    sql = "SELECT COUNT(*) FROM image_data WHERE img_is_expire=0 and img_is_delete=0 "
+    sql = sql + "and type_id={data_type} and img_file_name='{file_name}'".format(data_type=data_type, file_name=file_name)
+    pure_result = db.query(sql)
+    return pure_result[0][0]
+
+def save_google_drive_file(service, json_obj):
+    try:
+        db = mysql()
+        db.connect()
+        return_msg={}
+        return_msg['result'] = 'fail'
+        for item in json_obj['files']:
+            file_name = item['id'] + os.path.splitext(item['name'])[1]
+            download_file_place = os.path.join(json_obj['server_dir'], "static/img/"+file_name)
+            
+            #check if file is existed
+            if check_drive_img_exist(db, json_obj['data_type'], file_name):
+                continue
+            
+            #download files
+            request = service.files().get_media(fileId=item['id'])
+            fh = io.FileIO(download_file_place, mode='wb')
+            downloader = MediaIoBaseDownload(fh, request)
+            done = False
+            while done is False:
+                status, done = downloader.next_chunk()
+            
+            #upload new file
+            send_obj = {}
+            send_obj["server_dir"] = json_obj['server_dir']
+            send_obj["file_type"] = json_obj['data_type']
+            send_obj["file_dir"] = 'static/img/' + file_name
+            send_obj["start_date"] = time.strftime("%Y-%m-%d", time.localtime(time.time()))
+            send_obj["end_date"] = time.strftime("%Y-%m-%d", time.localtime(time.time()+item['time']))
+            send_obj["start_time"] = "00:00:00"
+            send_obj["end_time"] = "23:59:59"
+            send_obj["display_time"] = 3
+            send_obj["user_id"] = json_obj['user_id']
+            receive_obj = upload_image_insert_db(send_obj)
+
+            #save thumbnail image
+            try:
+                if receive_obj["result"] == "success":
+                    filepath = receive_obj["img_system_dir"]
+                    thumbnail_path = "static/thumbnail/"
+                    thumbnail_path = os.path.join(thumbnail_path,receive_obj["img_thumbnail_name"])
+                    im = Image.open(filepath)
+                    im.thumbnail((100,100))
+                    im.save(thumbnail_path)
+                else:
+                    db.close()
+                    return_msg = receive_obj
+                    return return_msg
+            except:
+                db.close()
+                return_msg["error"] = "save thumbnail image fail"
+                return return_msg
+        db.close()
+        return_msg['result'] = 'success'
+        return return_msg
+    except Exception as e:
+        db.close()
+        return_msg["error"] = str(e)
+        return return_msg
+
+def search_google_drive(service):
+    # find folder
+    days_limit = search_google_drive_folder(service)
+
+    # find file
+    drive_file = search_google_drive_file(service)
+
+    # merge files and days limit
+    receive_msg = merge_files_and_days(days_limit, drive_file)
+
+    return receive_msg
+
 def crawler_google_drive_img(json_obj):
     try:
         return_msg = {}
@@ -1032,97 +1149,32 @@ def crawler_google_drive_img(json_obj):
             return_msg["error"] = "input parameter missing"
             return return_msg
         data_type = 4
-        now_time = time.time()
-        send_obj = {}
         receive_obj = {}
 
-        #connect to mysql
-        db = mysql()
-        db.connect()
-
         #find google_drive_image type id 
-        with DataTypeDao() as dataTypeDao:
-            typeId = dataTypeDao.getTypeId('google_drive_image')
-        try:
-            data_type = typeId
-        except:
-            db.close()
-            return_msg["error"] = "no google_drive_image data type"
-            return return_msg
-
+        receive_msg = find_drive_data_type()
+        if receive_msg['result']=='fail':
+            return receive_msg
+        else:
+            json_obj['data_type'] = receive_msg['data_type']
+        
         #get google credentials
         credentials = get_credentials()
         http = credentials.authorize(httplib2.Http())
         service = discovery.build('drive', 'v3', http=http)
 
-        #set time
-        start_time = time.strftime("%Y-%m-%dT%H:%M:%S+08:00", time.localtime(now_time-86400))
-        results = service.files().list(
-            q="modifiedTime > '" + start_time + "' and mimeType contains 'image/'", 
-            fields="nextPageToken, files(id, name)").execute()
-        items = results.get('files', [])
-        if not items:
-            "No images found."
-        else:
-            #pprint(items)
-            for item in items:
-                #print('##{0} ({1})'.format(item['name'], item['id']))
-                file_name = item['id'] + os.path.splitext(item['name'])[1]
-                download_file_place = os.path.join(server_dir, "static/img/"+file_name)
-                
-                #check if file is existed
-                sql = "SELECT COUNT(*) FROM image_data WHERE img_is_expire=0 and img_is_delete=0 "
-                sql = sql + "and type_id=" + str(data_type) + " and img_file_name='" + file_name + "'"
-                pure_result = db.query(sql)
-                if pure_result[0][0]:
-                    #image existed
-                    continue
-            
-                #download files
-                request = service.files().get_media(fileId=item['id'])
-                fh = io.FileIO(download_file_place, mode='wb')
-                downloader = MediaIoBaseDownload(fh, request)
-                done = False
-                while done is False:
-                    status, done = downloader.next_chunk()
-                
-                #upload new file
-                send_obj["server_dir"] = server_dir
-                send_obj["file_type"] = data_type
-                send_obj["file_dir"] = 'static/img/' + file_name
-                send_obj["start_date"] = time.strftime("%Y-%m-%d", time.localtime(time.time()))
-                send_obj["end_date"] = time.strftime("%Y-%m-%d", time.localtime(time.time()+86400*7))
-                send_obj["start_time"] = "00:00:00"
-                send_obj["end_time"] = "23:59:59"
-                send_obj["display_time"] = 3
-                send_obj["user_id"] = user_id
-                receive_obj = upload_image_insert_db(send_obj)
-                #pprint(receive_obj)
-                #save thumbnail image
-                try:
-                    if receive_obj["result"] == "success":
-                        filepath = receive_obj["img_system_dir"]
-                        thumbnail_path = "static/thumbnail/"
-                        thumbnail_path = os.path.join(thumbnail_path,receive_obj["img_thumbnail_name"])
-                        im = Image.open(filepath)
-                        im.thumbnail((100,100))
-                        im.save(thumbnail_path)
-                        #print(thumbnail_path)
-                    else:
-                        db.close()
-                        return_msg = receive_obj
-                        return return_msg
-                except:
-                    db.close()
-                    return_msg["error"] = "save thumbnail image fail"
-                    return return_msg
-                
-        db.close()
+        #search_google_drive
+        json_obj['files'] = search_google_drive(service)
+
+        #deal with files
+        receive_msg = save_google_drive_file(service, json_obj)
+        if receive_msg['result']=='fail':
+            return receive_msg
+
         return_msg["result"] = "success"
         return return_msg
-    except DB_Exception as e:
-        db.close()
-        return_msg["error"] = e.args[1]
+    except Exception as e:
+        return_msg["error"] = str(e)
         return return_msg 
 
 def crawler_news(website):
