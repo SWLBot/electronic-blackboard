@@ -538,25 +538,22 @@ def add_account_and_prefer(data):
 def check_user_password(user_info):
     try:
         return_msg = {}
-        db = mysql()
-        db.connect()
 
-        sql = 'select `user_password` from user where `user_name` = "%s"' % user_info['user_name']
-        pure_result = db.query(sql)
+        with UserDao() as userDao:
+            password = userDao.getUserPassword(userName=user_info['user_name'])
 
-        if len(pure_result) == 0:
+        if password == None:
             return_msg['fail'] = 'No such user'
             return return_msg
 
-        hashed_passwd = pure_result[0][0].encode('utf-8')
+        hashed_passwd = password.encode('utf-8')
         if bcrypt.checkpw(user_info['user_password'].encode('utf-8'),hashed_passwd):
-            return_msg['success'] = 'Hello %s' % user_info['user_name']
+            return_msg['success'] = 'Hello {user_name}'.format(user_name=user_info['user_name'])
         else:
             return_msg['fail'] = 'Wrong password'
 
         return return_msg
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg
 
@@ -1336,11 +1333,11 @@ def change_password(json_obj):
             
 
         #check user
-        sql = "SELECT user_password FROM user WHERE user_id=" + str(user_id)
-        pure_result = db.query(sql)
+        with UserDao() as userDao:
+            password = userDao.getUserPassword(userId=user_id)
         hashed_key = ""
         try:
-            hashed_key = pure_result[0][0].encode('utf-8')
+            hashed_key = password.encode('utf-8')
             if bcrypt.checkpw(old_password.encode('utf-8'),hashed_key):
                 # old password correct
                 hashed_key = bcrypt.hashpw(new_password.encode('utf-8'),bcrypt.gensalt())

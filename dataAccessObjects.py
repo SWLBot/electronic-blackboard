@@ -48,6 +48,14 @@ class UserDao(DefaultDao):
         sql = 'select user_nickname from user where user_id = {userId}'.format(userId=userId)
         return self.queryOneValue(sql)
 
+    def getUserPassword(self,userId=None,userName=None):
+        sql = 'SELECT user_password FROM user WHERE '
+        if userId:
+            sql += 'user_id = "{userId}"'.format(userId=userId)
+        elif userName:
+            sql += 'user_name = "{userName}"'.format(userName=userName)
+        return self.queryOneValue(sql)
+
 class ScheduleDao(DefaultDao):
     def getDisplayingSchedule(self):
         sql = 'SELECT sche_sn FROM schedule WHERE sche_is_used=0 ORDER BY sche_sn ASC LIMIT 1'
