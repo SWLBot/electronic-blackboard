@@ -521,10 +521,6 @@ def expire_data_check_():
         return_msg["result"] = "fail"
         deal_result = []
 
-        #connect to mysql
-        db = mysql()
-        db.connect()
-
         with ImageDao() as imageDao:
             pure_result = imageDao.getExpiredIds()
 
@@ -538,7 +534,6 @@ def expire_data_check_():
                 return_msg["error"] = e.args[1]
                 
         if "error" in return_msg:
-            db.close()
             return return_msg
 
         #find expire text data
@@ -546,16 +541,15 @@ def expire_data_check_():
             pure_result = textDao.getExpiredIds()
 
         #update expire data
-        for num1 in range(len(pure_result)):
-            deal_result.append(pure_result[num1][0])
-            sql = ("UPDATE text_data SET text_is_expire=1 WHERE text_id='" + pure_result[num1][0] + "' ")
+        for expired_text_id in pure_result:
+            deal_result.append(expired_text_id[0])
             try:
-                db.cmd(sql)
+                with TextDao() as textDao:
+                    textDao.markExpired(expired_text_id[0])
             except DB_Exception as e:
                 return_msg["error"] = e.args[1]
                 
         if "error" in return_msg:
-            db.close()
             return return_msg
         
         for target_id in deal_result:
@@ -566,14 +560,11 @@ def expire_data_check_():
                 return_msg["error"] = e.args[1]
                 
         if "error" in return_msg:
-            db.close()
             return return_msg
 
-        db.close()
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg
 
