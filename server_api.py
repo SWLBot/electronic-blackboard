@@ -212,23 +212,22 @@ def check_bluetooth_mode_available():
 #
 def load_now_user_prefer(db, user_id):
     try:
-        sql = "SELECT "
         now_hour = time.localtime(time.time())[3]
         #use now time to choose preference rule
+        data_type = ""
         if now_hour >= 7 and now_hour < 11:
-            sql = sql + "pref_data_type_01 "
+            data_type = "01"
         elif now_hour >= 11 and now_hour < 13:
-            sql = sql + "pref_data_type_02 "
+            data_type = "02"
         elif now_hour >= 13 and now_hour < 18:
-            sql = sql + "pref_data_type_03 "
+            data_type = "03"
         elif now_hour >= 18 and now_hour < 22:
-            sql = sql + "pref_data_type_04 "
+            data_type = "04"
         else :
-            sql = sql + "pref_data_type_05 "
+            data_type = "05"
         
-        sql = sql + "FROM user_prefer WHERE pref_is_delete=0 and user_id=" + str(user_id)
-        sql = sql + " ORDER BY pref_set_time DESC LIMIT 1"
-        pure_result = db.query(sql)
+        with UserPreferDao() as userPreferDao:
+            pure_result = userPreferDao.getNowUserPrefer(dataType=data_type,UserId=user_id)
         
         #reshap pref_data_type_XX from varchar to int array
         data_type_array = []

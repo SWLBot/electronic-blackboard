@@ -197,6 +197,17 @@ class UserPreferDao(DefaultDao):
         else:
             return "pref0000000001"
 
+    def getNowUserPrefer(self,dataType,UserId):
+        sql = 'SELECT pref_data_type_{dataType}'.format(dataType=dataType) \
+            + ' FROM user_prefer WHERE pref_is_delete=0 and user_id="{UserId}"'.format(UserId=str(UserId)) \
+            + ' ORDER BY pref_set_time DESC LIMIT 1'
+        res = self.db.query(sql)
+        if len(res):
+            return res
+        else:
+            #TODO raise exception
+            return None
+
     def insertUserPrefer(self,prefId,UserId,prefStr):
         sql = 'INSERT INTO user_prefer' \
             +'(pref_id,user_id,pref_data_type_01,pref_data_type_02,pref_data_type_03,pref_data_type_04,pref_data_type_05) VALUES (' \
