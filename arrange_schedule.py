@@ -1261,9 +1261,6 @@ def crawler_constellation_fortune():
         return_msg = {}
         return_msg["result"] = "fail"
 
-        #connect to mysql
-        db = mysql()
-        db.connect()
         #check if table 'fortune' exists
         check_fortune_table()
         #start grab CONSTELLATION FORTUNE info
@@ -1273,11 +1270,9 @@ def crawler_constellation_fortune():
             return_msg["error"] = "ERROR occurs in FORTUNE crawler. Please check the correction of news_crawler"
             return return_msg
 
-        db.close()
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg
 
