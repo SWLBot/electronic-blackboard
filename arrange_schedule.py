@@ -23,7 +23,7 @@ import os.path
 import json
 from util import switch
 import config.settings as setting
-from dataAccessObjects import ScheduleDao,ImageDao,DataTypeDao,ArrangeModeDao,TextDao
+from dataAccessObjects import *
 
 #make now activity to is used
 def mark_now_activity():
@@ -1277,26 +1277,16 @@ def crawler_constellation_fortune():
         return return_msg
 
 def check_news_QR_code_table():
-    db = mysql()
-    db.connect()
-    check_sql = "SELECT count(*) \
-                 FROM information_schema.tables \
-                 WHERE table_schema = 'broadcast'\
-                 AND table_name = 'news_QR_code'"
-    check = db.query(check_sql)
-    if check[0][0] == 0:
+    with DatabaseDao() as databaseDao:
+        existed = databaseDao.checkTableExisted('news_QR_code')
+    if not existed:
         return create_news_table()
     return dict(result='success')
 
 def check_fortune_table():
-    db = mysql()
-    db.connect()
-    check_sql = "SELECT count(*) \
-                 FROM information_schema.tables \
-                 WHERE table_schema = 'broadcast'\
-                 AND table_name = 'fortune'"
-    check = db.query(check_sql)
-    if check[0][0] == 0:
+    with DatabaseDao() as databaseDao:
+        existed = databaseDao.checkTableExisted('fortune')
+    if not existed:
         return create_fortune_table()
     return dict(result='success')
 

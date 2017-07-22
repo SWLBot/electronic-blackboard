@@ -257,3 +257,11 @@ class FortuneDao(DefaultDao):
         else:
             #TODO check need to raise exception or not
             return None
+
+class DatabaseDao(DefaultDao):
+    def checkTableExisted(self,tableName):
+        sql = 'SELECT count(*) FROM information_schema.tables '\
+                +'WHERE table_schema = "broadcast" '\
+                +'AND table_name ="{tableName}"'.format(tableName=tableName)
+        existed = self.queryOneValue(sql)
+        return True if existed else False
