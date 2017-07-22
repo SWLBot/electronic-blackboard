@@ -313,10 +313,11 @@ def get_prefer_news(db, prefer_data_type):
         pure_result = db.query(sql)
         #reshape output data
         for num2 in range(len(pure_result)):
-            type_dir = db.query('select type_dir from data_type where type_id = %s' % pure_result[num2][2])[0]
+            with DataTypeDao() as dataTypeDao:
+                type_dir = dataTypeDao.getTypeDir(typeId=pure_result[num2][2])
             tmp_json = {}
             tmp_json["title"] = str(pure_result[num2][0])
-            tmp_json["QR"] = ('/static/%s' % type_dir)+ str(pure_result[num2][1]) + ".png"
+            tmp_json["QR"] = '/static/{type_dir}{name}.png'.format(type_dir=type_dir,name=str(pure_result[num2][1]))
             return_msg.append(tmp_json)
 
         return return_msg
