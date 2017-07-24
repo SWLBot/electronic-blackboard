@@ -610,11 +610,11 @@ def edit_schedule(json_obj):
                     sql = ("INSERT INTO schedule (sche_id, sche_target_id, sche_display_time, sche_arrange_mode)"\
                         +" VALUES ('sche0undecided', '"+target_id+"', "+str(display_time)+", " + str(arrange_mode_sn) + ")")
                     db.cmd(sql)
-                    sql = ("SELECT sche_sn FROM schedule WHERE sche_id='sche0undecided' ORDER BY sche_sn ASC LIMIT 1")
-                    pure_result = db.query(sql)
-                    if len(pure_result)>0:
-                        new_id = "sche" + "{0:010d}".format(int(pure_result[0][0]))
-                        sql = ("UPDATE schedule SET sche_id='" + new_id + "' WHERE sche_sn="+str(pure_result[0][0]))
+                    with ScheduleDao() as scheduleDao:
+                        pure_result = scheduleDao.checkToUpdateUndecidedSchedule()
+                    if pure_result:
+                        new_id = "sche" + "{0:010d}".format(int(pure_result))
+                        sql = ("UPDATE schedule SET sche_id='" + new_id + "' WHERE sche_sn="+str(pure_result))
                         db.cmd(sql)
                     else :
                         db.close()
@@ -624,12 +624,12 @@ def edit_schedule(json_obj):
                 sql = ("INSERT INTO schedule (sche_id, sche_target_id, sche_display_time, sche_arrange_mode)"\
                     +" VALUES ('sche0undecided', '"+target_id+"', "+str(display_time)+", " + str(arrange_mode_sn) + ")")
                 db.cmd(sql)
-                sql = ("SELECT sche_sn FROM schedule WHERE sche_id='sche0undecided' ORDER BY sche_sn ASC LIMIT 1")
-                pure_result = db.query(sql)
+                with ScheduleDao() as scheduleDao:
+                    pure_result = scheduleDao.checkToUpdateUndecidedSchedule()
                 
-                if len(pure_result)>0:
-                    new_id = "sche" + "{0:010d}".format(int(pure_result[0][0]))
-                    sql = ("UPDATE schedule SET sche_id='" + new_id + "' WHERE sche_sn="+str(pure_result[0][0]))
+                if pure_result:
+                    new_id = "sche" + "{0:010d}".format(int(pure_result))
+                    sql = ("UPDATE schedule SET sche_id='" + new_id + "' WHERE sche_sn="+str(pure_result))
                     db.cmd(sql)
                 else :
                     db.close()
@@ -675,11 +675,11 @@ def add_schedule(json_obj):
             sql = ("INSERT INTO schedule (sche_id, sche_target_id, sche_display_time, sche_arrange_mode)"\
                 +" VALUES ('sche0undecided', '"+target_id+"', "+str(display_time)+", " + str(arrange_mode_sn) + ")")
             db.cmd(sql)
-            sql = ("SELECT sche_sn FROM schedule WHERE sche_id='sche0undecided' ORDER BY sche_sn ASC LIMIT 1")
-            pure_result = db.query(sql)
-            if len(pure_result)!=0:
-                new_id = "sche" + "{0:010d}".format(int(pure_result[0][0]))
-                sql = ("UPDATE schedule SET sche_id='" + new_id + "' WHERE sche_sn="+str(pure_result[0][0]))
+            with ScheduleDao() as scheduleDao:
+                pure_result = scheduleDao.checkToUpdateUndecidedSchedule()
+            if pure_result:
+                new_id = "sche" + "{0:010d}".format(int(pure_result))
+                sql = ("UPDATE schedule SET sche_id='" + new_id + "' WHERE sche_sn="+str(pure_result))
                 db.cmd(sql)
             else :
                 db.close()
