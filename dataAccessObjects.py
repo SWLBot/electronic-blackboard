@@ -265,3 +265,15 @@ class DatabaseDao(DefaultDao):
                 +'AND table_name ="{tableName}"'.format(tableName=tableName)
         existed = self.queryOneValue(sql)
         return True if existed else False
+class NewsQRCodeDao(DefaultDao):
+    def getNews(self,preferStr):
+        sql = 'SELECT * FROM ' \
+            + '(SELECT title, serial_number,data_type ' \
+            + 'FROM news_QR_code where is_delete=0 and data_type IN {preferStr} '.format(preferStr=preferStr) \
+            + 'ORDER BY upload_time DESC LIMIT 10) as data ORDER BY RAND() LIMIT 2'
+        ret = self.db.query(sql)
+        if len(ret):
+            return ret
+        else:
+            #TODO check need to raise exception or not
+            return None
