@@ -25,6 +25,7 @@ from util import switch
 import config.settings as setting
 from dataAccessObjects import *
 from modeUtil import ModeUtil
+from worker import *
 
 #make now activity to is used
 def mark_now_activity():
@@ -1295,28 +1296,12 @@ def set_system_log(json_obj):
     return return_msg
         
 def expire_data_check(raw_time):
-    shutdown = 0
-    receive_obj = {}
-    try:
-        newpid = os.fork()
-        if newpid == 0: #child
-            shutdown = 1
-            receive_obj = expire_data_check_()
-            if receive_obj["result"] == "success":
-                "DO NOTHING"
-            else :
-                receive_obj["error"] = "expire_data_check : " + receive_obj["error"]
-                set_system_log(receive_obj)
-            os._exit(0)
-        else: #Parent
-            alarm_expire_data_check = raw_time + 1800.0
-    except:
-        receive_obj["result"] = "fail"
-        receive_obj["error"] = "fork1 error"
+    receive_obj = expire_data_check_()
+    if receive_obj["result"] == "success":
+        "DO NOTHING"
+    else :
+        receive_obj["error"] = "expire_data_check : {errorMsg}".format(errorMsg=receive_obj["error"])
         set_system_log(receive_obj)
-        alarm_expire_data_check = raw_time + 3.0
-
-    return alarm_expire_data_check,shutdown
 
 def main():
     just_startup = 1
@@ -1361,6 +1346,8 @@ def main():
     alarm_crawler_google_drive_img = raw_time + 13.0
     alarm_crawler_functions = raw_time + 15.0
 
+    check_expire_data_worker = Worker(job=expire_data_check,name='Check expired data')
+
     #start scheduling
     while shutdown == 0:
         raw_time = time.time()
@@ -1382,8 +1369,11 @@ def main():
         
         #expire_data_check
         if raw_time >= alarm_expire_data_check:
-            print("#2 "+ time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
-            alarm_expire_data_check,shutdown = expire_data_check(raw_time)
+            fork_failed = check_expire_data_worker.do(timestamp=time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
+            if fork_failed:
+                alarm_expire_data_check += 3.0
+            else:
+                alarm_expire_data_check += 1800.0
         
         #set_schedule_log
         if raw_time >= alarm_set_schedule_log:
