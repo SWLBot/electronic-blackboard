@@ -56,6 +56,11 @@ class UserDao(DefaultDao):
             sql += 'user_name = "{userName}"'.format(userName=userName)
         return self.queryOneValue(sql)
 
+    def checkUserExisted(self,userName):
+        sql = 'SELECT count(*) FROM user ' \
+            + 'WHERE user_name="{userName}"'.format(userName=userName)
+        return self.queryOneValue(sql)
+
 class ScheduleDao(DefaultDao):
     def getDisplayingSchedule(self):
         sql = 'SELECT sche_sn FROM schedule WHERE sche_is_used=0 ORDER BY sche_sn ASC LIMIT 1'

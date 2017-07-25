@@ -434,12 +434,11 @@ def check_user_existed_or_signup(user_info):
 
         cursor = db.cursor
 
-        sql = 'select Count(*) from `user` where `user_name`="%s"' % user_info['user_name']
-        pure_result = db.query(sql)
+        with UserDao() as userDao:
+            is_existed = userDao.checkUserExisted(userName=user_info['user_name'])
 
-        is_existed = pure_result[0][0]
         if is_existed:
-            return_msg['flash'] = 'The name "%s" has been used' % user_info['user_name']
+            return_msg['flash'] = 'The name "{name}" has been used'.format(name=user_info['user_name'])
             return return_msg
 
         hashed_passwd = bcrypt.hashpw(user_info['user_password'].encode('utf-8'),bcrypt.gensalt())
