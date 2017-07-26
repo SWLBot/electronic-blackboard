@@ -131,6 +131,10 @@ class ImageDao(DefaultDao):
         ret = self.db.query(sql)
         return True if ret[0][0] == 0 else False
 
+    def markOldImg(self, imgId):
+        sql = 'UPDATE image_data SET img_is_expire=1 WHERE img_is_expire=0 and img_is_delete=0 and img_id="{imgId}"'.format(imgId=imgId)
+        self.db.cmd(sql)
+
     def getImgData(self,imgId):
         sql = 'select * from image_data where img_is_delete = 0 and img_id = "{imgId}"'.format(imgId=imgId)
         ret = self.db.query(sql)
