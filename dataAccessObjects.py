@@ -55,6 +55,18 @@ class UserDao(DefaultDao):
         elif userName:
             sql += 'user_name = "{userName}"'.format(userName=userName)
         return self.queryOneValue(sql)
+    
+    def checkUserExisted(self,userName):
+        sql = 'SELECT count(*) FROM user ' \
+            + 'WHERE user_name="{userName}"'.format(userName=userName)
+        return self.queryOneValue(sql)
+
+    def createNewUser(self,userName,userPassword):
+        cursor = self.db.cursor
+        sql = 'INSERT INTO user (user_name,user_password) VALUES (%s,%s)'
+        data = (userName,userPassword)
+        ret = cursor.execute(sql,data)
+        self.db.db.commit()
 
 class ScheduleDao(DefaultDao):
     def getDisplayingSchedule(self):
