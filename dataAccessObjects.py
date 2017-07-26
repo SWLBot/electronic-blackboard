@@ -190,7 +190,7 @@ class TextDao(DefaultDao):
 
     def addLikeCount(self,targetId):
         sql = 'UPDATE text_data SET text_like_count=text_like_count+1 WHERE text_id="{targetId}"'.format(targetId=str(targetId))
-        ret = self.db.cmd(sql)
+        self.db.cmd(sql)
 
 class UserPreferDao(DefaultDao):
     def generateNewId(self):
