@@ -192,6 +192,11 @@ class TextDao(DefaultDao):
         sql = 'UPDATE text_data SET text_like_count=text_like_count+1 WHERE text_id="{targetId}"'.format(targetId=str(targetId))
         ret = self.db.cmd(sql)
 
+    def getTextMeta(self,textId):
+        sql = 'select * from text_data where text_is_delete = 0 and text_id = "{textId}"'.format(textId=textId)
+        ret = self.db.query(sql)
+        return ret[0]
+
 class UserPreferDao(DefaultDao):
     def generateNewId(self):
         sql ='SELECT pref_id FROM user_prefer ORDER BY pref_set_time DESC LIMIT 1'
