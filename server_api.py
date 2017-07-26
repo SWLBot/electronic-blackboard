@@ -606,13 +606,11 @@ def get_img_meta(img_id):
 
 def get_text_meta(text_id):
     try:
-        db = mysql()
-        db.connect()
-        sql = 'select * from text_data where text_is_delete = 0 and text_id = "%s"' % text_id
-        return db.query(sql)[0]
-    except DB_Exception as e:
-        db.close()
-        return_msg["error"] = e.args[1]
+        with TextDao() as textDao:
+            ret = textDao.getTextMeta(textId=text_id)
+        return ret
+    except:
+        return_msg["error"] = "Can't get text meta."
         return return_msg
 
 def check_user_level(user_id):
