@@ -430,10 +430,6 @@ def deal_with_bluetooth_id(bluetooth_id):
 def check_user_existed_or_signup(user_info):
     try:
         return_msg = {}
-        db = mysql()
-        db.connect()
-
-        cursor = db.cursor
 
         with UserDao() as userDao:
             is_existed = userDao.checkUserExisted(userName=user_info['user_name'])
@@ -443,14 +439,13 @@ def check_user_existed_or_signup(user_info):
             return return_msg
 
         hashed_passwd = bcrypt.hashpw(user_info['user_password'].encode('utf-8'),bcrypt.gensalt())
-        ret = cursor.execute('insert into `user` (`user_name`,`user_password`) values (%s,%s)',(user_info['user_name'],hashed_passwd))
-        db.db.commit()
+        with UserDao() as userdao:
+            userdao.createNewUser(userName=user_info['user_name'],userPassword=hashed_passwd)
 
-        return_msg['flash'] = 'User "%s" create success!' % user_info['user_name']
+        return_msg['flash'] = 'User "{name}" create success!'.format(name=user_info['user_name'])
         return return_msg
-    except DB_Exception as e:
-        db.close()
-        return_msg["error"] = e.args[1]
+    except:
+        return_msg["error"] = "Fail to check whether user is existed or create new user"
         return return_msg
 #
 def register_no_right_user(data):

@@ -61,6 +61,14 @@ class UserDao(DefaultDao):
             + 'WHERE user_name="{userName}"'.format(userName=userName)
         return self.queryOneValue(sql)
 
+    def createNewUser(self,userName,userPassword):
+        #TODO modify this function in the future
+        cursor = self.db.cursor
+        sql = 'INSERT INTO user (user_name,user_password) VALUES (%s,%s)'
+        data = (userName,userPassword)
+        ret = cursor.execute(sql,data)
+        self.db.db.commit()
+
 class ScheduleDao(DefaultDao):
     def getDisplayingSchedule(self):
         sql = 'SELECT sche_sn FROM schedule WHERE sche_is_used=0 ORDER BY sche_sn ASC LIMIT 1'
