@@ -160,8 +160,8 @@ def load_next_schedule(json_obj):
             else:
                 # mark activity is used
                 if target_sn != 0:
-                    sql = ("UPDATE schedule SET sche_is_used=1 WHERE sche_sn=" + str(target_sn))
-                    db.cmd(sql)
+                    with ScheduleDao() as scheduleDao:
+                        scheduleDao.markExpiredSchedule(scheSn=target_sn)
                     target_sn = 0
                 continue
     
