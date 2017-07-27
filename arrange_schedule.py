@@ -1222,21 +1222,16 @@ def crawler_ptt_news(boards):
     try:
         return_msg = {}
         return_msg["result"] = "fail"
-        data_type = 7
 
-        #connect to mysql
-        db = mysql()
-        db.connect()
         #check if table 'news_QR_code' exists
         check_news_QR_code_table()
         
-        #check inside data type existance and filter board_inhitbit 
         for board in boards:
-            check_sql = "SELECT COUNT(*) FROM data_type WHERE  type_name='ptt"+board+"'"
-            exist = db.query(check_sql)
-            if exist[0][0] == 0:
-                datatype='ptt'+board
-                create_data_type(datatype)
+            typeName = 'ptt'+board
+            with DataTypeDao() as dataTypeDao:
+                existed = dataTypeDao.checkTypeExisted(typeName)
+            if not existed:
+                create_data_type(typeName)
 
         #board with data_type but no crawling
         inhibit_boards = ["Beauty"]
@@ -1248,11 +1243,9 @@ def crawler_ptt_news(boards):
             return_msg["error"] = "ERROR occurs in PTT crawler. Please check the correction of news_crawler"
             return return_msg
 
-        db.close()
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg
 
