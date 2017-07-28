@@ -51,7 +51,7 @@ def mark_now_activity():
         return return_msg
         
 #child function of load_next_schedule
-def find_next_schedule(db):
+def find_next_schedule():
     try:
         return_msg = {}
         return_msg["result"] = "fail"
@@ -86,17 +86,12 @@ def load_next_schedule(json_obj):
         except:
             return_msg["error"] = "input parameter missing"
             return return_msg
-    
-        #connect to mysql
-        db = mysql()
-        db.connect()
         
         while True:
             #find schedule
             receive_msg = {}
-            receive_msg = find_next_schedule(db)
+            receive_msg = find_next_schedule()
             if receive_msg["result"]=="fail":
-                db.close()
                 return_msg["error"] = receive_msg["error"]
                 return return_msg
             
@@ -181,15 +176,12 @@ def load_next_schedule(json_obj):
         with ScheduleDao() as scheduleDao:
             return_msg['last_activity'] = scheduleDao.countUndisplaySchedule()
         if not return_msg['last_activity']:
-            db.close()
             return_msg["error"] = "sql error"
             return return_msg
 
-        db.close()
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg
     
