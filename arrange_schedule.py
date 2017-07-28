@@ -1177,7 +1177,7 @@ def crawler_news(website):
         db = mysql()
         db.connect()
         #check if table 'news_QR_code' exists
-        check_news_QR_code_table()
+        check_table(news=True)
 
         #check inside data type exist or not 
         check_sql = "SELECT COUNT(*) FROM data_type WHERE  type_name='{0}'".format(website)
@@ -1224,7 +1224,7 @@ def crawler_ptt_news(boards):
         return_msg["result"] = "fail"
 
         #check if table 'news_QR_code' exists
-        check_news_QR_code_table()
+        check_table(news=True)
         
         for board in boards:
             typeName = 'ptt'+board
@@ -1255,7 +1255,7 @@ def crawler_constellation_fortune():
         return_msg["result"] = "fail"
 
         #check if table 'fortune' exists
-        check_fortune_table()
+        check_table(fortune=True)
         #start grab CONSTELLATION FORTUNE info
         try:
             grab_constellation_fortune()
@@ -1269,18 +1269,16 @@ def crawler_constellation_fortune():
         return_msg["error"] = e.args[1]
         return return_msg
 
-def check_news_QR_code_table():
+def check_table(news=False,fortune=False):
     with DatabaseDao() as databaseDao:
-        existed = databaseDao.checkTableExisted('news_QR_code')
-    if not existed:
-        return create_news_table()
-    return dict(result='success')
-
-def check_fortune_table():
-    with DatabaseDao() as databaseDao:
-        existed = databaseDao.checkTableExisted('fortune')
-    if not existed:
-        return create_fortune_table()
+        if news:
+            existed = databaseDao.checkTableExisted('news_QR_code')
+            if not existed:
+                return create_news_table()
+        elif fortune:
+            existed = databaseDao.checkTableExisted('fortune')
+            if not existed:
+                return create_fortune_table()
     return dict(result='success')
 
 def crawler_schedule():
