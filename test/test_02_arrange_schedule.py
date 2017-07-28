@@ -36,7 +36,7 @@ class Arrange_Schedule(unittest.TestCase):
         self.assertEqual(receive_msg['result'],'success')
     
     def test_check_news_QR_code_table(self):
-        receive_msg = check_news_QR_code_table()
+        receive_msg = check_table(news=True)
         self.assertEqual(receive_msg['result'],'success')
     
     def test_crawler_news(self):
@@ -56,7 +56,7 @@ class Arrange_Schedule(unittest.TestCase):
         self.assertEqual(receive_msg['result'],'success')
 
     def test_check_fortune_table(self):
-        receive_msg = check_fortune_table()
+        receive_msg = check_table(fortune=True)
         self.assertEqual(receive_msg['result'],'success')
 
     def test_crawler_constellation_fortune(self):
