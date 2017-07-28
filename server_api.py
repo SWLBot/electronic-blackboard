@@ -677,10 +677,10 @@ def upload_image_insert_db(json_obj):
             return_msg['result'] = receive_msg['error']
         
         #get new file place
-        sql = ("SELECT type_dir FROM data_type WHERE type_id=" + str(type_id))
-        pure_result = db.query(sql)
+        with DataTypeDao() as dataTypeDao:
+            type_dir = dataTypeDao.getTypeDir(typeId=str(type_id))
         try:
-            img_new_file_dir = os.path.join(server_dir, "static/"+str(pure_result[0][0]))
+            img_new_file_dir = os.path.join(server_dir, "static/{type_dir}".format(type_dir=type_dir))
         except:
             db.close()
             return_msg["error"] = "no such type id : " + str(type_id)
