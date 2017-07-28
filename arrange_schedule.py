@@ -217,10 +217,8 @@ def find_text_acticity(json_obj):
         if arrange_mode in range(6):
             orderById = ModeUtil.checkOrderById(arrange_mode)
 
-            if arrange_mode in [3,4,5]:
-                conditionAssigned = True
-            else:
-                conditionAssigned = False
+            conditionAssigned = ModeUtil.checkConditionAssigned(arrange_mode)
+
             with ScheduleDao() as scheduleDao:
                 pure_result=scheduleDao.findTextActivitySchedule(conditionAssigned,orderById,arrange_mode,arrangeCondition=arrange_condition)
         elif arrange_mode == 6:
@@ -293,10 +291,7 @@ def find_image_acticity(json_obj):
         if arrange_mode in range(6):
             orderById = ModeUtil.checkOrderById(arrange_mode)
 
-            if arrange_mode in [3,4,5]:
-                conditionAssigned = True
-            else:
-                conditionAssigned = False
+            conditionAssigned = ModeUtil.checkConditionAssigned(arrange_mode)
 
             sql = "SELECT img_id, img_display_time FROM image_data" \
                 +" WHERE img_is_delete=0 and img_is_expire=0 "\
