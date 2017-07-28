@@ -1130,17 +1130,12 @@ def crawler_news(website):
         return_msg = {}
         return_msg["result"] = "fail"
 
-        #connect to mysql
-        db = mysql()
-        db.connect()
         #check if table 'news_QR_code' exists
         check_table(news=True)
 
-        #check inside data type exist or not 
-        check_sql = "SELECT COUNT(*) FROM data_type WHERE  type_name='{0}'".format(website)
-        exist = db.query(check_sql)
-        db.close()
-        if exist[0][0] == 0:
+        with DataTypeDao() as dataTypeDao:
+            existed = dataTypeDao.checkTypeExisted(website)
+        if not existed:
             create_data_type(website)
 
         for case in switch(website):
@@ -1171,7 +1166,6 @@ def crawler_news(website):
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg
 
