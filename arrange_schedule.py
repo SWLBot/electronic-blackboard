@@ -223,52 +223,14 @@ def find_text_acticity(json_obj):
                 conditionAssigned = True
             else:
                 conditionAssigned = False
-
-            sql = "SELECT text_id, text_display_time FROM text_data" \
-                +" WHERE text_is_delete=0 and text_is_expire=0 "\
-                +" and (TO_DAYS(NOW()) between TO_DAYS(text_start_date) and TO_DAYS(text_end_date)) " \
-                +" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(text_start_time) and TIME_TO_SEC(text_end_time))"
-            # condtionAssigned select type_id in arrange_condition
-            if conditionAssigned:
-                type_condition = ''
-                for idx,type_id in enumerate(arrange_condition):
-                    if idx == 0:
-                        type_condition += " type_id={type_id} ".format(type_id=type_id)
-                    else:
-                        type_condition += " or type_id={type_id} ".format(type_id=type_id)
-                sql += " and ({type_condition}) ".format(type_condition=type_condition)
-
-            if orderById:
-                sql += " ORDER BY text_id ASC"
-
+            with ScheduleDao() as scheduleDao:
+                pure_result=scheduleDao.findTextActivitySchedule(conditionAssigned,orderById,arrange_mode,arrangeCondition=arrange_condition)
         elif arrange_mode == 6:
-            sql = "SELECT a0.text_id, a0.text_display_time, a1.type_weight FROM " \
-                +" (SELECT text_id, type_id, text_display_time FROM text_data WHERE " \
-                +" text_is_delete=0 and text_is_expire=0 "\
-                +" and (TO_DAYS(NOW()) between TO_DAYS(text_start_date) and TO_DAYS(text_end_date)) " \
-                +" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(text_start_time) and TIME_TO_SEC(text_end_time))) AS a0 "\
-                +" LEFT JOIN (SELECT type_id, type_weight FROM data_type ) AS a1 "\
-                + " ON a0.type_id=a1.type_id ORDER BY a1.type_weight ASC"
+            with ScheduleDao() as scheduleDao:
+                pure_result=scheduleDao.findTextActivitySchedule(False,False,arrange_mode)
         elif arrange_mode == 7:
-            sql = "SELECT a0.text_id, a0.text_display_time, a1.type_weight FROM " \
-                +" (SELECT text_id, type_id, text_display_time FROM text_data WHERE ( "
-            for num1 in range(len(arrange_condition)):
-                if num1 == 0:
-                    sql = sql + " type_id=" + str(arrange_condition[num1]) + " "
-                else :
-                    sql = sql + " or type_id=" + str(arrange_condition[num1]) + " "
-            sql = sql + " ) and text_is_delete=0 and text_is_expire=0 "\
-                +" and (TO_DAYS(NOW()) between TO_DAYS(text_start_date) and TO_DAYS(text_end_date)) " \
-                +" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(text_start_time) and TIME_TO_SEC(text_end_time))) AS a0 "\
-                +" LEFT JOIN (SELECT type_id, type_weight FROM data_type WHERE ("
-            for num1 in range(len(arrange_condition)):
-                if num1 == 0:
-                    sql = sql + " type_id=" + str(arrange_condition[num1]) + " "
-                else :
-                    sql = sql + " or type_id=" + str(arrange_condition[num1]) + " "
-            sql = sql + ")) AS a1 ON a0.type_id=a1.type_id ORDER BY a1.type_weight ASC"
-        
-        pure_result = db.query(sql)
+            with ScheduleDao() as scheduleDao:
+                pure_result=scheduleDao.findTextActivitySchedule(True,False,arrange_mode,arrangeCondition=arrange_condition)
         #restruct results of query
         for result_row in pure_result:
             if len(result_row)==2:
