@@ -24,6 +24,7 @@ import json
 from util import switch
 import config.settings as setting
 from dataAccessObjects import *
+from modeUtil import ModeUtil
 
 #make now activity to is used
 def mark_now_activity():
@@ -214,10 +215,7 @@ def find_text_acticity(json_obj):
         
         #find images that may be schedule
         if arrange_mode in range(6):
-            if arrange_mode in [0,3]:
-                orderById = True
-            else:
-                orderById = False
+            orderById = ModeUtil.checkOrderById(arrange_mode)
 
             if arrange_mode in [3,4,5]:
                 conditionAssigned = True
@@ -331,10 +329,7 @@ def find_image_acticity(json_obj):
         
         #find images that may be schedule
         if arrange_mode in range(6):
-            if arrange_mode in [0,3]:
-                orderById = True
-            else:
-                orderById = False
+            orderById = ModeUtil.checkOrderById(arrange_mode)
 
             if arrange_mode in [3,4,5]:
                 conditionAssigned = True
