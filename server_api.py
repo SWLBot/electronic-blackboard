@@ -458,8 +458,8 @@ def register_no_right_user(data):
         db = mysql()
         db.connect()
         with UserDao() as userDao:
-            is_existed = userDao.checkUserExisted(userName=str(data["bluetooth_id"]))
-        if not is_existed:
+            existed = userDao.checkUserExisted(userName=data["bluetooth_id"])
+        if not existed:
             db.close()
             return 0
 
