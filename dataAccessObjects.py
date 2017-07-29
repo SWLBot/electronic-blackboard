@@ -341,3 +341,10 @@ class NewsQRCodeDao(DefaultDao):
         else:
             #TODO check need to raise exception or not
             return None
+
+    def insertNews(self,dataType,serialNumber,title):
+        sql = "INSERT INTO news_QR_code " \
+            +" (`data_type`, `serial_number`, `title`)" \
+            +" VALUES ({news_data_type},'{news_serial_number}','{news_title}')".format(
+            news_data_type=dataType,news_serial_number=serialNumber,news_title=title)
+        self.db.cmd(sql)
