@@ -76,6 +76,27 @@ class UserDao(DefaultDao):
         ret = cursor.execute(sql,data)
         self.db.db.commit()
 
+    def updateUserData(self,userInfo):
+        sql = "UPDATE user SET "
+        if "bluetooth_id" in userInfo and userInfo["bluetooth_id"] is not None:
+            sql = sql + 'user_bluetooth_id="{id}", '.format(id=str(userInfo["bluetooth_id"]))
+        if "nickName" in userInfo and userInfo["nickName"] is not None:
+            sql = sql + 'user_nickname="{nickname}", '.format(nickname=str(userInfo["nickName"]))
+        if "birthday" in userInfo and userInfo["birthday"] is not None:
+            sql = sql + 'user_birthday="{birthday}", '.format(birthday=str(userInfo["birthday"]))
+        if "occupation" in userInfo and userInfo["occupation"] is not None:
+            sql = sql + "user_profession="
+            if userInfo["occupation"]=="bachelor":
+                sql = sql + "1, "
+            elif userInfo["occupation"]=="masterDr":
+                sql = sql + "2, "
+            elif userInfo["occupation"]=="faculty":
+                sql = sql + "3, "
+            else:
+                sql = sql + "0, "
+        sql = sql + 'user_level=50 WHERE user_name="{userName}"'.format(userName=str(userInfo["bluetooth_id"]))
+        self.db.cmd(sql)
+
 class ScheduleDao(DefaultDao):
     def getDisplayingSchedule(self):
         sql = 'SELECT sche_sn FROM schedule WHERE sche_is_used=0 ORDER BY sche_sn ASC LIMIT 1'
