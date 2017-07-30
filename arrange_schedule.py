@@ -150,9 +150,8 @@ def load_next_schedule(json_obj):
             with DataTypeDao() as dataTypeDao:
                 type_dir = dataTypeDao.getTypeDir(type_id)
             if type_dir:
-                check_target_dir = os.path.join(target_dir, "static/")
-                check_target_dir = os.path.join(check_target_dir, type_dir)
-                check_target_dir = os.path.join(check_target_dir, system_file_name)
+                check_target_dir = os.path.join(target_dir,'static',
+                                        type_dir,system_file_name)
             else:
                 # mark activity is used
                 if target_sn != 0:
@@ -686,7 +685,7 @@ def set_schedule_log(json_obj):
             #generate log
             date_now = date.today()
             schedule_file = ("schedule_" + str(date_now.year) + "_" + str(date_now.month) + "_" + str(date_now.day) + ".txt")
-            schedule_file = os.path.join(log_dir,("static/log/"+schedule_file))
+            schedule_file = os.path.join(log_dir,'static','log',schedule_file)
             file_pointer = ''
             try:
                 if not os.path.isfile(schedule_file) :
@@ -1007,7 +1006,7 @@ def save_google_drive_file(service, json_obj):
         return_msg['result'] = 'fail'
         for item in json_obj['files']:
             file_name = item['id'] + os.path.splitext(item['name'])[1]
-            download_file_place = os.path.join(json_obj['server_dir'], "static/img/"+file_name)
+            download_file_place = os.path.join(json_obj['server_dir'],'static','img',file_name)
             
             #check if file is existed
             if check_drive_img_exist(db, json_obj['data_type'], file_name):
