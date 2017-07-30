@@ -25,6 +25,7 @@ from util import switch
 import config.settings as setting
 from dataAccessObjects import *
 from modeUtil import ModeUtil
+from worker import *
 
 #make now activity to is used
 def mark_now_activity():
@@ -51,7 +52,7 @@ def mark_now_activity():
         return return_msg
         
 #child function of load_next_schedule
-def find_next_schedule(db):
+def find_next_schedule():
     try:
         return_msg = {}
         return_msg["result"] = "fail"
@@ -86,17 +87,12 @@ def load_next_schedule(json_obj):
         except:
             return_msg["error"] = "input parameter missing"
             return return_msg
-    
-        #connect to mysql
-        db = mysql()
-        db.connect()
         
         while True:
             #find schedule
             receive_msg = {}
-            receive_msg = find_next_schedule(db)
+            receive_msg = find_next_schedule()
             if receive_msg["result"]=="fail":
-                db.close()
                 return_msg["error"] = receive_msg["error"]
                 return return_msg
             
@@ -155,9 +151,8 @@ def load_next_schedule(json_obj):
             with DataTypeDao() as dataTypeDao:
                 type_dir = dataTypeDao.getTypeDir(type_id)
             if type_dir:
-                check_target_dir = os.path.join(target_dir, "static/")
-                check_target_dir = os.path.join(check_target_dir, type_dir)
-                check_target_dir = os.path.join(check_target_dir, system_file_name)
+                check_target_dir = os.path.join(target_dir,'static',
+                                        type_dir,system_file_name)
             else:
                 # mark activity is used
                 if target_sn != 0:
@@ -181,15 +176,12 @@ def load_next_schedule(json_obj):
         with ScheduleDao() as scheduleDao:
             return_msg['last_activity'] = scheduleDao.countUndisplaySchedule()
         if not return_msg['last_activity']:
-            db.close()
             return_msg["error"] = "sql error"
             return return_msg
 
-        db.close()
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg
     
@@ -217,10 +209,8 @@ def find_text_acticity(json_obj):
         if arrange_mode in range(6):
             orderById = ModeUtil.checkOrderById(arrange_mode)
 
-            if arrange_mode in [3,4,5]:
-                conditionAssigned = True
-            else:
-                conditionAssigned = False
+            conditionAssigned = ModeUtil.checkConditionAssigned(arrange_mode)
+
             with ScheduleDao() as scheduleDao:
                 pure_result=scheduleDao.findTextActivitySchedule(conditionAssigned,orderById,arrange_mode,arrangeCondition=arrange_condition)
         elif arrange_mode == 6:
@@ -293,10 +283,7 @@ def find_image_acticity(json_obj):
         if arrange_mode in range(6):
             orderById = ModeUtil.checkOrderById(arrange_mode)
 
-            if arrange_mode in [3,4,5]:
-                conditionAssigned = True
-            else:
-                conditionAssigned = False
+            conditionAssigned = ModeUtil.checkConditionAssigned(arrange_mode)
 
             sql = "SELECT img_id, img_display_time FROM image_data" \
                 +" WHERE img_is_delete=0 and img_is_expire=0 "\
@@ -699,7 +686,7 @@ def set_schedule_log(json_obj):
             #generate log
             date_now = date.today()
             schedule_file = ("schedule_" + str(date_now.year) + "_" + str(date_now.month) + "_" + str(date_now.day) + ".txt")
-            schedule_file = os.path.join(log_dir,("static/log/"+schedule_file))
+            schedule_file = os.path.join(log_dir,'static','log',schedule_file)
             file_pointer = ''
             try:
                 if not os.path.isfile(schedule_file) :
@@ -1020,7 +1007,7 @@ def save_google_drive_file(service, json_obj):
         return_msg['result'] = 'fail'
         for item in json_obj['files']:
             file_name = item['id'] + os.path.splitext(item['name'])[1]
-            download_file_place = os.path.join(json_obj['server_dir'], "static/img/"+file_name)
+            download_file_place = os.path.join(json_obj['server_dir'],'static','img',file_name)
             
             #check if file is existed
             if check_drive_img_exist(db, json_obj['data_type'], file_name):
@@ -1130,17 +1117,12 @@ def crawler_news(website):
         return_msg = {}
         return_msg["result"] = "fail"
 
-        #connect to mysql
-        db = mysql()
-        db.connect()
         #check if table 'news_QR_code' exists
         check_table(news=True)
 
-        #check inside data type exist or not 
-        check_sql = "SELECT COUNT(*) FROM data_type WHERE  type_name='{0}'".format(website)
-        exist = db.query(check_sql)
-        db.close()
-        if exist[0][0] == 0:
+        with DataTypeDao() as dataTypeDao:
+            existed = dataTypeDao.checkTypeExisted(website)
+        if not existed:
             create_data_type(website)
 
         for case in switch(website):
@@ -1171,7 +1153,6 @@ def crawler_news(website):
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg
 
@@ -1295,28 +1276,12 @@ def set_system_log(json_obj):
     return return_msg
         
 def expire_data_check(raw_time):
-    shutdown = 0
-    receive_obj = {}
-    try:
-        newpid = os.fork()
-        if newpid == 0: #child
-            shutdown = 1
-            receive_obj = expire_data_check_()
-            if receive_obj["result"] == "success":
-                "DO NOTHING"
-            else :
-                receive_obj["error"] = "expire_data_check : " + receive_obj["error"]
-                set_system_log(receive_obj)
-            os._exit(0)
-        else: #Parent
-            alarm_expire_data_check = raw_time + 1800.0
-    except:
-        receive_obj["result"] = "fail"
-        receive_obj["error"] = "fork1 error"
+    receive_obj = expire_data_check_()
+    if receive_obj["result"] == "success":
+        "DO NOTHING"
+    else :
+        receive_obj["error"] = "expire_data_check : {errorMsg}".format(errorMsg=receive_obj["error"])
         set_system_log(receive_obj)
-        alarm_expire_data_check = raw_time + 3.0
-
-    return alarm_expire_data_check,shutdown
 
 def main():
     just_startup = 1
@@ -1361,6 +1326,8 @@ def main():
     alarm_crawler_google_drive_img = raw_time + 13.0
     alarm_crawler_functions = raw_time + 15.0
 
+    check_expire_data_worker = Worker(job=expire_data_check,name='Check expired data')
+
     #start scheduling
     while shutdown == 0:
         raw_time = time.time()
@@ -1382,8 +1349,11 @@ def main():
         
         #expire_data_check
         if raw_time >= alarm_expire_data_check:
-            print("#2 "+ time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
-            alarm_expire_data_check,shutdown = expire_data_check(raw_time)
+            fork_failed = check_expire_data_worker.do(timestamp=time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
+            if fork_failed:
+                alarm_expire_data_check += 3.0
+            else:
+                alarm_expire_data_check += 1800.0
         
         #set_schedule_log
         if raw_time >= alarm_set_schedule_log:

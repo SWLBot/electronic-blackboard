@@ -22,6 +22,13 @@ class DefaultDao():
             #TODO raise exception
             return None
 
+class DataManipulateDao(DefaultDao):
+    #TODO handle if derived class not assign dataName
+    def markExpired(self,targetId):
+        sql = 'UPDATE {dataName}_data SET {dataName}_is_expire=1 WHERE {dataName}_id="{targetId}"'.format(
+                dataName=self.dataName,targetId=targetId)
+        self.db.cmd(sql)
+
 class UserDao(DefaultDao):
     def getUserId(self,userName=None,bluetoothId=None):
         sql = 'SELECT user_id FROM user WHERE '
@@ -68,6 +75,27 @@ class UserDao(DefaultDao):
         data = (userName,userPassword)
         ret = cursor.execute(sql,data)
         self.db.db.commit()
+
+    def updateUserData(self,userInfo):
+        sql = "UPDATE user SET "
+        if "bluetooth_id" in userInfo and userInfo["bluetooth_id"] is not None:
+            sql = sql + 'user_bluetooth_id="{id}", '.format(id=str(userInfo["bluetooth_id"]))
+        if "nickName" in userInfo and userInfo["nickName"] is not None:
+            sql = sql + 'user_nickname="{nickname}", '.format(nickname=str(userInfo["nickName"]))
+        if "birthday" in userInfo and userInfo["birthday"] is not None:
+            sql = sql + 'user_birthday="{birthday}", '.format(birthday=str(userInfo["birthday"]))
+        if "occupation" in userInfo and userInfo["occupation"] is not None:
+            sql = sql + "user_profession="
+            if userInfo["occupation"]=="bachelor":
+                sql = sql + "1, "
+            elif userInfo["occupation"]=="masterDr":
+                sql = sql + "2, "
+            elif userInfo["occupation"]=="faculty":
+                sql = sql + "3, "
+            else:
+                sql = sql + "0, "
+        sql = sql + 'user_level=50 WHERE user_name="{userName}"'.format(userName=str(userInfo["bluetooth_id"]))
+        self.db.cmd(sql)
 
 class ScheduleDao(DefaultDao):
     def getDisplayingSchedule(self):
@@ -166,7 +194,8 @@ class ScheduleDao(DefaultDao):
         ret = self.db.query(sql)
         return ret
 
-class ImageDao(DefaultDao):
+class ImageDao(DataManipulateDao):
+    dataName = 'img'
     def getExpiredIds(self):
         sql = 'SELECT img_id FROM image_data '\
                 +'WHERE img_is_delete=0 and img_is_expire=0 and (TO_DAYS(NOW())>TO_DAYS(img_end_date) '\
@@ -175,8 +204,7 @@ class ImageDao(DefaultDao):
         return Ids
 
     def markExpired(self,imgId):
-        sql = 'UPDATE image_data SET img_is_expire=1 WHERE img_id="{imgId}"'.format(imgId=imgId)
-        self.db.cmd(sql)
+        super().markExpired(targetId=imgId)
 
     def checkExpired(self,imgId):
         sql = 'SELECT count(*) FROM image_data WHERE img_id="{imgId}"'.format(imgId=imgId)\
@@ -209,7 +237,8 @@ class ImageDao(DefaultDao):
         sql = 'UPDATE image_data SET img_like_count=img_like_count+1 WHERE img_id="{targetId}"'.format(targetId=str(targetId))
         ret = self.db.cmd(sql)
 
-class TextDao(DefaultDao):
+class TextDao(DataManipulateDao):
+    dataName = 'text'
     def getExpiredIds(self):
         sql = ("SELECT text_id FROM text_data "\
                 +"WHERE text_is_delete=0 and text_is_expire=0 and ( TO_DAYS(NOW())>TO_DAYS(text_end_date) "\
@@ -236,8 +265,7 @@ class TextDao(DefaultDao):
             return None
 
     def markExpired(self,textId):
-        sql = 'UPDATE text_data SET text_is_expire=1 WHERE text_id="{textId}"'.format(textId=textId)
-        self.db.cmd(sql)
+        super().markExpired(targetId=textId)
 
     def addLikeCount(self,targetId):
         sql = 'UPDATE text_data SET text_like_count=text_like_count+1 WHERE text_id="{targetId}"'.format(targetId=str(targetId))
@@ -341,3 +369,10 @@ class NewsQRCodeDao(DefaultDao):
         else:
             #TODO check need to raise exception or not
             return None
+
+    def insertNews(self,dataType,serialNumber,title):
+        sql = "INSERT INTO news_QR_code " \
+            +" (`data_type`, `serial_number`, `title`)" \
+            +" VALUES ({news_data_type},'{news_serial_number}','{news_title}')".format(
+            news_data_type=dataType,news_serial_number=serialNumber,news_title=title)
+        self.db.cmd(sql)

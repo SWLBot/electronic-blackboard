@@ -455,39 +455,16 @@ def register_no_right_user(data):
         send_msg["user_password"] = data["bluetooth_id"][0:6]
         check_user_existed_or_signup(send_msg)
 
-        db = mysql()
-        db.connect()
-        sql = "SELECT count(*) FROM user WHERE user_name='" + str(data["bluetooth_id"]) + "'"
-        pure_result = db.query(sql)
-        if int(pure_result[0][0])<1:
+        with UserDao() as userDao:
+            existed = userDao.checkUserExisted(userName=data["bluetooth_id"])
+        if not existed:
             db.close()
             return 0
 
-        sql = "UPDATE user SET "
-        if "bluetooth_id" in data and data["bluetooth_id"] is not None:
-            sql = sql + "user_bluetooth_id='" +str(data["bluetooth_id"])+ "', "
-        if "nickName" in data and data["nickName"] is not None:
-            sql = sql + "user_nickname='" +str(data["nickName"])+ "', "
-        if "birthday" in data and data["birthday"] is not None:
-            sql = sql + "user_birthday='" +str(data["birthday"])+ "', "
-        if "occupation" in data and data["occupation"] is not None:
-            sql = sql + "user_profession="
-            if data["occupation"]=="bachelor":
-                sql = sql + "1, "
-            elif data["occupation"]=="masterDr":
-                sql = sql + "2, "
-            elif data["occupation"]=="faculty":
-                sql = sql + "3, "
-            else:
-                sql = sql + "0, "
-        sql = sql + "user_level=50 WHERE user_name='" + str(data["bluetooth_id"]) + "'"
-        db.cmd(sql)
-
-        db.close()
+        with UserDao() as userDao:
+            userDao.updateUserData(userInfo=data)
         return 1
-    except DB_Exception as e:
-        print(e)
-        db.close()
+    except:
         return 0
 #
 def add_account_and_prefer(data):
@@ -677,10 +654,10 @@ def upload_image_insert_db(json_obj):
             return_msg['result'] = receive_msg['error']
         
         #get new file place
-        sql = ("SELECT type_dir FROM data_type WHERE type_id=" + str(type_id))
-        pure_result = db.query(sql)
+        with DataTypeDao() as dataTypeDao:
+            type_dir = dataTypeDao.getTypeDir(typeId=str(type_id))
         try:
-            img_new_file_dir = os.path.join(server_dir, "static/"+str(pure_result[0][0]))
+            img_new_file_dir = os.path.join(server_dir, "static/{type_dir}".format(type_dir=type_dir))
         except:
             db.close()
             return_msg["error"] = "no such type id : " + str(type_id)
@@ -1451,13 +1428,8 @@ def news_insert_db(json_obj):
         check = db.query(sql)
 
         if check[0][0] == 0:
-            sql = "INSERT INTO news_QR_code " \
-                    +" (`data_type`, `serial_number`, `title`)" \
-                    +" VALUES (" \
-                    + str(news_data_type) + ", "\
-                    + "\"" + news_serial_number + "\", " \
-                    + "\"" + news_title + "\")"
-        db.cmd(sql)
+            with NewsQRCodeDao() as newsQRCodeDao:
+                newsQRCodeDao.insertNews(news_data_type,news_serial_number,news_title)
         db.close()
         return_msg["result"] = "success"
 
