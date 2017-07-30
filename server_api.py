@@ -455,39 +455,16 @@ def register_no_right_user(data):
         send_msg["user_password"] = data["bluetooth_id"][0:6]
         check_user_existed_or_signup(send_msg)
 
-        db = mysql()
-        db.connect()
         with UserDao() as userDao:
             existed = userDao.checkUserExisted(userName=data["bluetooth_id"])
         if not existed:
             db.close()
             return 0
 
-        sql = "UPDATE user SET "
-        if "bluetooth_id" in data and data["bluetooth_id"] is not None:
-            sql = sql + "user_bluetooth_id='" +str(data["bluetooth_id"])+ "', "
-        if "nickName" in data and data["nickName"] is not None:
-            sql = sql + "user_nickname='" +str(data["nickName"])+ "', "
-        if "birthday" in data and data["birthday"] is not None:
-            sql = sql + "user_birthday='" +str(data["birthday"])+ "', "
-        if "occupation" in data and data["occupation"] is not None:
-            sql = sql + "user_profession="
-            if data["occupation"]=="bachelor":
-                sql = sql + "1, "
-            elif data["occupation"]=="masterDr":
-                sql = sql + "2, "
-            elif data["occupation"]=="faculty":
-                sql = sql + "3, "
-            else:
-                sql = sql + "0, "
-        sql = sql + "user_level=50 WHERE user_name='" + str(data["bluetooth_id"]) + "'"
-        db.cmd(sql)
-
-        db.close()
+        with UserDao() as userDao:
+            userDao.updateUserData(userInfo=data)
         return 1
-    except DB_Exception as e:
-        print(e)
-        db.close()
+    except:
         return 0
 #
 def add_account_and_prefer(data):
