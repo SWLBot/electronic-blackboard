@@ -1428,13 +1428,8 @@ def news_insert_db(json_obj):
         check = db.query(sql)
 
         if check[0][0] == 0:
-            sql = "INSERT INTO news_QR_code " \
-                    +" (`data_type`, `serial_number`, `title`)" \
-                    +" VALUES (" \
-                    + str(news_data_type) + ", "\
-                    + "\"" + news_serial_number + "\", " \
-                    + "\"" + news_title + "\")"
-        db.cmd(sql)
+            with NewsQRCodeDao() as newsQRCodeDao:
+                newsQRCodeDao.insertNews(news_data_type,news_serial_number,news_title)
         db.close()
         return_msg["result"] = "success"
 
