@@ -1234,6 +1234,8 @@ def crawler_schedule():
             and return_ptt["result"]=="success" and return_medium["result"]=="success" \
             and return_fortune["result"]=="success":
             return_msg["result"] = "success"
+        else:
+            return_msg['error'] = 'crawler schedule failed'
         return return_msg
     except:
         print("crawler execution fail")
@@ -1283,6 +1285,14 @@ def expire_data_check(raw_time):
         receive_obj["error"] = "expire_data_check : {errorMsg}".format(errorMsg=receive_obj["error"])
         set_system_log(receive_obj)
 
+def do_crawler_schedule():
+    receive_obj = crawler_schedule()
+    if receive_obj["result"] == "success":
+        "DO NOTHING"
+    else :
+        receive_obj["error"] = "crawler_news : " + receive_obj["error"]
+        set_system_log(receive_obj)
+
 def main():
     just_startup = 1
     board_py_dir = ""
@@ -1327,6 +1337,7 @@ def main():
     alarm_crawler_functions = raw_time + 15.0
 
     check_expire_data_worker = Worker(job=expire_data_check,name='Check expired data')
+    crawler_schedule_worker = Worker(job=do_crawler_schedule,name='Crawler for news')
 
     #start scheduling
     while shutdown == 0:
@@ -1539,25 +1550,11 @@ def main():
 
         #crawler
         if raw_time >= alarm_crawler_functions:
-            print("#9 "+ time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
-            try:
-                newpid = os.fork()
-                if newpid == 0: #child
-                    shutdown = 1
-                    receive_obj = crawler_schedule()
-                    if receive_obj["result"] == "success":
-                        "DO NOTHING"
-                    else :
-                        receive_obj["error"] = "crawler_news : " + receive_obj["error"]
-                        set_system_log(receive_obj)
-                    os._exit(0)
-                else: #Parent
-                    alarm_crawler_functions = raw_time + 3600.0
-            except:
-                receive_obj["result"] = "fail"
-                receive_obj["error"] = "fork7 error"
-                set_system_log(receive_obj)
-                alarm_crawler_functions = raw_time + 600.0
+            fork_failed = crawler_schedule_worker.do(time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
+            if fork_failed:
+                alarm_crawler_functions += 600.0
+            else:
+                alarm_crawler_functions += 3600.0
 
         #delay
         sleep(0.1)
