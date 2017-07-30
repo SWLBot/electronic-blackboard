@@ -329,6 +329,13 @@ class FortuneDao(DefaultDao):
             #TODO check need to raise exception or not
             return None
 
+    def insertFortune(self,date,constellation,overall,love,career,wealth):
+        sql = 'INSERT INTO fortune '\
+            +' (`fortune_date`, `constellation`, `overall`, `love`, `career`, `wealth`)'\
+            +' VALUES ("{date}","{constellation}","{overall}","{love}","{career}","{wealth}")'.format(
+            date=date,constellation=constellation,overall=overall,love=love,career=career,wealth=wealth)
+        self.db.cmd(sql)
+
 class DatabaseDao(DefaultDao):
     def checkTableExisted(self,tableName):
         sql = 'SELECT count(*) FROM information_schema.tables '\
