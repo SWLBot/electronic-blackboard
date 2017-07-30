@@ -25,9 +25,17 @@ class DefaultDao():
 class DataManipulateDao(DefaultDao):
     #TODO handle if derived class not assign dataName
     def markExpired(self,targetId):
-        sql = 'UPDATE {dataName}_data SET {dataName}_is_expire=1 WHERE {dataName}_id="{targetId}"'.format(
-                dataName=self.dataName,targetId=targetId)
+        sql = 'UPDATE {tableName} SET {dataName}_is_expire=1 WHERE {dataName}_id="{targetId}"'.format(
+                dataName=self.dataName,targetId=targetId,tableName=self.tableName)
         self.db.cmd(sql)
+
+    def getExpiredIds(self):
+        sql = 'SELECT {dataName}_id FROM {tableName} '\
+                +'WHERE {dataName}_is_delete=0 and {dataName}_is_expire=0 and (TO_DAYS(NOW())>TO_DAYS({dataName}_end_date) '\
+                +'or (TO_DAYS(NOW())=TO_DAYS({dataName}_end_date) and TIME_TO_SEC(DATE_FORMAT(NOW(), "%H:%i:%s"))>TIME_TO_SEC({dataName}_end_time)))'
+        sql = sql.format(dataName=self.dataName,tableName=self.tableName)
+        Ids = self.db.query(sql)
+        return Ids
 
 class UserDao(DefaultDao):
     def getUserId(self,userName=None,bluetoothId=None):
@@ -175,13 +183,7 @@ class ScheduleDao(DefaultDao):
 
 class ImageDao(DataManipulateDao):
     dataName = 'img'
-    def getExpiredIds(self):
-        sql = 'SELECT img_id FROM image_data '\
-                +'WHERE img_is_delete=0 and img_is_expire=0 and (TO_DAYS(NOW())>TO_DAYS(img_end_date) '\
-                +'or (TO_DAYS(NOW())=TO_DAYS(img_end_date) and TIME_TO_SEC(DATE_FORMAT(NOW(), "%H:%i:%s"))>TIME_TO_SEC(img_end_time)))'
-        Ids = self.db.query(sql)
-        return Ids
-
+    tableName = 'image_data'
     def markExpired(self,imgId):
         super().markExpired(targetId=imgId)
 
@@ -218,13 +220,7 @@ class ImageDao(DataManipulateDao):
 
 class TextDao(DataManipulateDao):
     dataName = 'text'
-    def getExpiredIds(self):
-        sql = ("SELECT text_id FROM text_data "\
-                +"WHERE text_is_delete=0 and text_is_expire=0 and ( TO_DAYS(NOW())>TO_DAYS(text_end_date) "\
-                +"or (TO_DAYS(NOW())=TO_DAYS(text_end_date) and TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s'))>TIME_TO_SEC(text_end_time)))") 
-        expiredIds = self.db.query(sql)
-        return expiredIds
-
+    tableName = 'text_data'
     def checkExpired(self,textId):
         sql = 'SELECT count(*) FROM text_data WHERE text_id="{textId}"'.format(textId=textId)\
                 +' and text_is_delete=0 and text_is_expire=0 '\
