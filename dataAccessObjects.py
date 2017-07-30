@@ -237,6 +237,14 @@ class ImageDao(DataManipulateDao):
         sql = 'UPDATE image_data SET img_like_count=img_like_count+1 WHERE img_id="{targetId}"'.format(targetId=str(targetId))
         ret = self.db.cmd(sql)
 
+    def generateNewId(self):
+        sql = 'SELECT img_id FROM image_data ORDER BY img_upload_time DESC LIMIT 1'
+        res = self.db.query(sql)
+        if len(res):
+            return "imge{0:010d}".format(int(res[0][0][4:]) + 1)
+        else:
+            return "imge0000000001"
+
 class TextDao(DataManipulateDao):
     dataName = 'text'
     def getExpiredIds(self):

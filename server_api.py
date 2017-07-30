@@ -665,16 +665,8 @@ def upload_image_insert_db(json_obj):
         
         
         #generate new id
-        sql = ("SELECT img_id FROM image_data ORDER BY img_upload_time DESC LIMIT 1")
-        pure_result = db.query(sql)
-        try:
-            img_id =  int(pure_result[0][0][4:]) + 1
-            img_id = "imge" + "{0:010d}".format(img_id)
-        except:
-            img_id = "imge0000000001"
-            #db.close()
-            #return_msg["error"] = "no basic image"
-            #return return_msg
+        with ImageDao() as imageDao:
+            img_id = imageDao.generateNewId()
         
 
         img_system_name = img_id + os.path.splitext(img_file_name)[1]
