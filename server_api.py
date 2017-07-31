@@ -1469,11 +1469,8 @@ def fortune_insert_db(json_obj):
         check = db.query(sql)
 
         if check[0][0] == 0:
-            sql2 = 'INSERT INTO fortune '\
-                +' (`fortune_date`, `constellation`, `overall`, `love`, `career`, `wealth`)'\
-                +' VALUES ("{date}","{constellation}","{overall}","{love}","{career}","{wealth}")'.format(
-                date=date,constellation=constellation,overall=overall,love=love,career=career,wealth=wealth)
-        db.cmd(sql)
+            with FortuneDao() as fortuneDao:
+                fortuneDao.insertFortune(date,constellation,overall,love,career,wealth)
         db.close()
         return_msg["result"] = "success"
 
