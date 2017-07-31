@@ -239,6 +239,14 @@ class ImageDao(DataManipulateDao):
         sql = 'UPDATE image_data SET img_like_count=img_like_count+1 WHERE img_id="{targetId}"'.format(targetId=str(targetId))
         ret = self.db.cmd(sql)
 
+    def generateNewId(self):
+        sql = 'SELECT img_id FROM image_data ORDER BY img_upload_time DESC LIMIT 1'
+        res = self.db.query(sql)
+        if len(res):
+            return "imge{0:010d}".format(int(res[0][0][4:]) + 1)
+        else:
+            return "imge0000000001"
+
 class TextDao(DataManipulateDao):
     dataName = 'text'
     tableName = 'text_data'
@@ -345,6 +353,13 @@ class FortuneDao(DefaultDao):
         else:
             #TODO check need to raise exception or not
             return None
+
+    def insertFortune(self,date,constellation,overall,love,career,wealth):
+        sql = 'INSERT INTO fortune '\
+            +' (`fortune_date`, `constellation`, `overall`, `love`, `career`, `wealth`)'\
+            +' VALUES ("{date}","{constellation}","{overall}","{love}","{career}","{wealth}")'.format(
+            date=date,constellation=constellation,overall=overall,love=love,career=career,wealth=wealth)
+        self.db.cmd(sql)
 
 class DatabaseDao(DefaultDao):
     def checkTableExisted(self,tableName):

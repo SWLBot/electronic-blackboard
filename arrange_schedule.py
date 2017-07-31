@@ -1275,7 +1275,7 @@ def set_system_log(json_obj):
     return_msg["result"] = "success"
     return return_msg
         
-def expire_data_check(raw_time):
+def expire_data_check():
     receive_obj = expire_data_check_()
     if receive_obj["result"] == "success":
         "DO NOTHING"

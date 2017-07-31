@@ -2,6 +2,7 @@ import tornado.ioloop
 import tornado.web
 import tornado.options
 import tornado.httpserver
+from tornado.options import define, options, parse_command_line
 import os.path
 import bcrypt
 from PIL import Image
@@ -9,7 +10,6 @@ from mysql import mysql
 from mysql import DB_Exception
 from server_api import *
 from display_api import *
-import argparse
 import json
 import config.settings
 
@@ -18,6 +18,8 @@ import httplib2
 from apiclient import discovery
 from pprint import pprint
 import datetime
+
+define('port',default=3000,help='run the server on the given port',type=int)
 
 class BaseHandler(tornado.web.RequestHandler):
     def get_current_user(self):
@@ -257,9 +259,7 @@ class AppRegisterHandler(BaseHandler):
             self.write(msg)
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--port",help="The port for backend sever")
-    args = parser.parse_args()
+    parse_command_line()
 
     base_dir = os.path.dirname(__file__)
     settings = {
@@ -285,10 +285,8 @@ def main():
         tornado.web.url(r"/appregister",AppRegisterHandler,name="appregister")
     ],**settings)
     http_server = tornado.httpserver.HTTPServer(application)
-    if args.port:
-        http_server.listen(args.port)
-    else:
-        http_server.listen(3000)
+
+    http_server.listen(options.port)
 
     tornado.ioloop.IOLoop.instance().start()
 

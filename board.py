@@ -1,10 +1,13 @@
 import tornado.ioloop
 import tornado.web
 import tornado.httpserver
+from tornado.options import define, options, parse_command_line
 import os.path
 from broadcast_api import load_schedule 
 import argparse
 import config.settings
+
+define('port',default=4000,help='run the server on the given port',type=int)
 
 class BaseHandler(tornado.web.RequestHandler):
     def get_current_user(self):
@@ -21,9 +24,6 @@ class Get_DB_Data(BaseHandler):
         self.write(load_schedule())
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--port",help="The port for electronic-blackboard")
-    args = parser.parse_args()
 
     base_dir = os.path.dirname(__file__)
     settings = {
@@ -39,10 +39,9 @@ def main():
         tornado.web.url(r"/db_schedule",Get_DB_Data),
     ],**settings)
     http_server = tornado.httpserver.HTTPServer(application)
-    if args.port:
-        http_server.listen(args.port)
-    else:
-        http_server.listen(4000)
+
+    http_server.listen(options.port)
+
     tornado.ioloop.IOLoop.instance().start()
 
 if __name__ == "__main__":
