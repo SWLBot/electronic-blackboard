@@ -25,8 +25,8 @@ class DefaultDao():
 class DataManipulateDao(DefaultDao):
     #TODO handle if derived class not assign dataName
     def markExpired(self,targetId):
-        sql = 'UPDATE {dataName}_data SET {dataName}_is_expire=1 WHERE {dataName}_id="{targetId}"'.format(
-                dataName=self.dataName,targetId=targetId)
+        sql = 'UPDATE {tableName} SET {dataName}_is_expire=1 WHERE {dataName}_id="{targetId}"'.format(
+                dataName=self.dataName,targetId=targetId,tableName=self.tableName)
         self.db.cmd(sql)
 
 class UserDao(DefaultDao):
@@ -196,6 +196,7 @@ class ScheduleDao(DefaultDao):
 
 class ImageDao(DataManipulateDao):
     dataName = 'img'
+    tableName = 'image_data'
     def getExpiredIds(self):
         sql = 'SELECT img_id FROM image_data '\
                 +'WHERE img_is_delete=0 and img_is_expire=0 and (TO_DAYS(NOW())>TO_DAYS(img_end_date) '\
@@ -247,6 +248,7 @@ class ImageDao(DataManipulateDao):
 
 class TextDao(DataManipulateDao):
     dataName = 'text'
+    tableName = 'text_data'
     def getExpiredIds(self):
         sql = ("SELECT text_id FROM text_data "\
                 +"WHERE text_is_delete=0 and text_is_expire=0 and ( TO_DAYS(NOW())>TO_DAYS(text_end_date) "\
