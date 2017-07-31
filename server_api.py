@@ -768,19 +768,16 @@ def edit_image_data(json_obj):
                 return_msg["error"] = "user right is too low"
                 return return_msg
             #check self image
-            sql = ("SELECT user_id, type_id FROM image_data WHERE img_id=\"" + img_id + "\"")
-            pure_result = db.query(sql)
+            with ImageDao() as imageDao:
+                imgInfo = imageDao.getImgCheck(imgId=str(img_id))
             try:
-                if pure_result[0][0] != user_id and user_level < user_level_high_bound:
-                    db.close()
+                if imgInfo["userId"] != user_id and user_level < user_level_high_bound:
                     return_msg["error"] = "can not modify other user image "
                     return return_msg
-                img_type_id = pure_result[0][1]
+                img_type_id = imgInfo["typeId"]
             except:
-                db.close()
-                return_msg["error"] = "no such image id : " + img_id
-                return return_msg
-        
+                return_msg["error"] = "no such image id : {img_id}".format(img_id=img_id)
+                return return_msg    
         
         #check if we need to move the file
         old_dir = ""
