@@ -16,6 +16,8 @@ class Worker():
             else:
                 return 0
         except Exception as e:
+            #TODO logging the error message
+            print(str(e))
             if pid is not None and pid == 0: # child fn() raise exception
                 exit(1)
             else: # fork fail
