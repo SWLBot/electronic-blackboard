@@ -202,19 +202,12 @@ def find_text_acticity(json_obj):
             return return_msg
 
         #find images that may be schedule
-        if arrange_mode in range(6):
-            orderById = ModeUtil.checkOrderById(arrange_mode)
+        orderById = ModeUtil.checkOrderById(arrange_mode)
 
-            conditionAssigned = ModeUtil.checkConditionAssigned(arrange_mode)
+        conditionAssigned = ModeUtil.checkConditionAssigned(arrange_mode)
 
-            with ScheduleDao() as scheduleDao:
-                pure_result=scheduleDao.findTextActivitySchedule(conditionAssigned,orderById,arrange_mode,arrangeCondition=arrange_condition)
-        elif arrange_mode == 6:
-            with ScheduleDao() as scheduleDao:
-                pure_result=scheduleDao.findTextActivitySchedule(False,False,arrange_mode)
-        elif arrange_mode == 7:
-            with ScheduleDao() as scheduleDao:
-                pure_result=scheduleDao.findTextActivitySchedule(True,False,arrange_mode,arrangeCondition=arrange_condition)
+        with ScheduleDao() as scheduleDao:
+            pure_result=scheduleDao.findTextActivitySchedule(conditionAssigned,orderById,arrange_mode,arrangeCondition=arrange_condition)
         #restruct results of query
         for result_row in pure_result:
             if len(result_row)==2:
