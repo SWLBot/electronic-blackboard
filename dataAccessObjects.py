@@ -29,6 +29,14 @@ class DataManipulateDao(DefaultDao):
                 dataName=self.dataName,targetId=targetId,tableName=self.tableName)
         self.db.cmd(sql)
 
+    def getExpiredIds(self):
+        sql = 'SELECT {dataName}_id FROM {tableName} '\
+                +'WHERE {dataName}_is_delete=0 and {dataName}_is_expire=0 and (TO_DAYS(NOW())>TO_DAYS({dataName}_end_date) '\
+                +'or (TO_DAYS(NOW())=TO_DAYS({dataName}_end_date) and TIME_TO_SEC(DATE_FORMAT(NOW(), "%H:%i:%s"))>TIME_TO_SEC({dataName}_end_time)))'
+        sql = sql.format(dataName=self.dataName,tableName=self.tableName)
+        Ids = self.db.query(sql)
+        return Ids
+
 class UserDao(DefaultDao):
     def getUserId(self,userName=None,bluetoothId=None):
         sql = 'SELECT user_id FROM user WHERE '
@@ -197,13 +205,6 @@ class ScheduleDao(DefaultDao):
 class ImageDao(DataManipulateDao):
     dataName = 'img'
     tableName = 'image_data'
-    def getExpiredIds(self):
-        sql = 'SELECT img_id FROM image_data '\
-                +'WHERE img_is_delete=0 and img_is_expire=0 and (TO_DAYS(NOW())>TO_DAYS(img_end_date) '\
-                +'or (TO_DAYS(NOW())=TO_DAYS(img_end_date) and TIME_TO_SEC(DATE_FORMAT(NOW(), "%H:%i:%s"))>TIME_TO_SEC(img_end_time)))'
-        Ids = self.db.query(sql)
-        return Ids
-
     def markExpired(self,imgId):
         super().markExpired(targetId=imgId)
 
@@ -249,13 +250,6 @@ class ImageDao(DataManipulateDao):
 class TextDao(DataManipulateDao):
     dataName = 'text'
     tableName = 'text_data'
-    def getExpiredIds(self):
-        sql = ("SELECT text_id FROM text_data "\
-                +"WHERE text_is_delete=0 and text_is_expire=0 and ( TO_DAYS(NOW())>TO_DAYS(text_end_date) "\
-                +"or (TO_DAYS(NOW())=TO_DAYS(text_end_date) and TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s'))>TIME_TO_SEC(text_end_time)))") 
-        expiredIds = self.db.query(sql)
-        return expiredIds
-
     def checkExpired(self,textId):
         sql = 'SELECT count(*) FROM text_data WHERE text_id="{textId}"'.format(textId=textId)\
                 +' and text_is_delete=0 and text_is_expire=0 '\
