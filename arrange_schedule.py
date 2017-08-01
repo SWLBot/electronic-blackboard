@@ -551,10 +551,8 @@ def edit_schedule(json_obj):
                     with ScheduleDao() as scheduleDao:
                         scheduleDao.updateEditSchedule(target_id,display_time,arrange_mode_sn,pure_result[0][0])
                 else:
-                    sql = ("INSERT INTO schedule (sche_id, sche_target_id, sche_display_time, sche_arrange_mode)"\
-                        +" VALUES ('sche0undecided', '"+target_id+"', "+str(display_time)+", " + str(arrange_mode_sn) + ")")
-                    db.cmd(sql)
                     with ScheduleDao() as scheduleDao:
+                        scheduleDao.insertUndecidedSchedule(target_id,display_time,arrange_mode_sn)
                         pure_result = scheduleDao.checkToUpdateUndecidedSchedule()
                     if pure_result:
                         new_id = "sche" + "{0:010d}".format(int(pure_result))
@@ -565,10 +563,8 @@ def edit_schedule(json_obj):
                         return_msg["error"] = "may be another arrange.exe is working"
                         return return_msg
             else :
-                sql = ("INSERT INTO schedule (sche_id, sche_target_id, sche_display_time, sche_arrange_mode)"\
-                    +" VALUES ('sche0undecided', '"+target_id+"', "+str(display_time)+", " + str(arrange_mode_sn) + ")")
-                db.cmd(sql)
                 with ScheduleDao() as scheduleDao:
+                    scheduleDao.insertUndecidedSchedule(target_id,display_time,arrange_mode_sn)
                     pure_result = scheduleDao.checkToUpdateUndecidedSchedule()
                 
                 if pure_result:
@@ -616,10 +612,8 @@ def add_schedule(json_obj):
             display_time = int(display_time_list[num0])
             
             #insert
-            sql = ("INSERT INTO schedule (sche_id, sche_target_id, sche_display_time, sche_arrange_mode)"\
-                +" VALUES ('sche0undecided', '"+target_id+"', "+str(display_time)+", " + str(arrange_mode_sn) + ")")
-            db.cmd(sql)
             with ScheduleDao() as scheduleDao:
+                scheduleDao.insertUndecidedSchedule(target_id,display_time,arrange_mode_sn)
                 pure_result = scheduleDao.checkToUpdateUndecidedSchedule()
             if pure_result:
                 new_id = "sche" + "{0:010d}".format(int(pure_result))
