@@ -1239,8 +1239,9 @@ def add_new_data_type(json_obj):
         db = mysql()
         db.connect()
 
-        sql = "SELECT count(*) FROM data_type WHERE type_name = \""+type_name+"\""
-        if db.query(sql)[0][0] >= 1:
+        with DataTypeDao() as dataTypeDao:
+            existed = dataTypeDao.checkTypeExisted(typeName=type_name)
+        if existed:
             return_msg["error"] = "Type name has existed"
             return return_msg
 
