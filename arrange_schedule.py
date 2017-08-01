@@ -201,10 +201,6 @@ def find_text_acticity(json_obj):
             return_msg["error"] = "input parameter missing"
             return return_msg
 
-        #connect to mysql
-        db = mysql()
-        db.connect()
-        
         #find images that may be schedule
         if arrange_mode in range(6):
             orderById = ModeUtil.checkOrderById(arrange_mode)
@@ -251,11 +247,9 @@ def find_text_acticity(json_obj):
         #reshape deal result
         return_msg["ans_list"] = deal_result
         
-        db.close()  
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg
 
@@ -650,7 +644,6 @@ def clean_schedule():
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg   
 
