@@ -247,6 +247,16 @@ class ImageDao(DataManipulateDao):
         else:
             return "imge0000000001"
 
+    def getImgIdData(self,imgId):
+        sql = 'SELECT user_id, type_id FROM image_data WHERE img_id="{imgId}"'.format(imgId=imgId)
+        ret = db.query(sql)
+        if len(ret) and len(ret[0]) == 2:
+            imgInfo = dict(userId=ret[0][0],typeId=ret[0][1])
+            return imgInfo
+        else:
+            #TODO raise exception
+            return None
+
 class TextDao(DataManipulateDao):
     dataName = 'text'
     tableName = 'text_data'
