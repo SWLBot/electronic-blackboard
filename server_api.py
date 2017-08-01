@@ -1236,20 +1236,14 @@ def add_new_data_type(json_obj):
         return_msg = {}
         return_msg["result"] = "fail"
         type_name = json_obj['type_name']
-        db = mysql()
-        db.connect()
 
         sql = "SELECT count(*) FROM data_type WHERE type_name = \""+type_name+"\""
         if db.query(sql)[0][0] >= 1:
             return_msg["error"] = "Type name has existed"
             return return_msg
 
-        sql = "INSERT INTO data_type (type_name,type_dir) VALUES (\"" \
-            +type_name+"\",\"" \
-            +type_name+"/\")"
-        db.cmd(sql)
-
-        db.close()
+        with DataTypeDao() as dataTypeDao:
+            dataTypeDao.insertType(typeName=type_name)
 
         if not os.path.exists("static/"+type_name):
             os.makedirs("static/"+type_name)
@@ -1257,7 +1251,6 @@ def add_new_data_type(json_obj):
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg  
 

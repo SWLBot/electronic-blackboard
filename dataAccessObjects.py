@@ -330,6 +330,10 @@ class DataTypeDao(DefaultDao):
         sql = 'SELECT COUNT(*) FROM data_type WHERE type_name="{typeName}"'.format(typeName=typeName)
         return self.queryOneValue(sql)
 
+    def insertType(self,typeName):
+        sql = 'INSERT INTO data_type (type_name,type_dir) VALUES ("{typeName}","{typeName}/")'.format(typeName=typeName)
+        self.db.cmd(sql)
+
 class ArrangeModeDao(DefaultDao):
     def getArrangeMode(self):
         sql = 'SELECT armd_sn, armd_mode, armd_condition FROM arrange_mode WHERE armd_is_delete=0 and armd_is_expire=0 and '\
