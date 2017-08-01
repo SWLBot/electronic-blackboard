@@ -1213,16 +1213,13 @@ def delete_image_or_text_data(json_obj):
                 return return_msg
 
         if target_id[0:4] == "imge":
-            sql = "UPDATE image_data SET img_is_delete=1, img_last_edit_user_id="+str(user_id)+" WHERE img_id='"+ target_id + "'"
+            with ImageDao() as imageDao:
+                imageDao.markDeleted(target_id,user_id)
         elif target_id[0:4] == "text":
-            sql = "UPDATE text_data SET text_is_delete=1, text_last_edit_user_id="+str(user_id)+" WHERE text_id='"+target_id+"'"
-        else :
-            sql = ""
-        db.cmd(sql)
-
+            with TextDao() as textDao:
+                textDao.markDeleted(target_id,user_id)
         
         db.close()
-
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
