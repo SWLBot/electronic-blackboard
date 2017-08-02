@@ -786,14 +786,13 @@ def edit_image_data(json_obj):
             "DO NOTHING"
         else :
             #get img_system_name
-            sql = ("SELECT img_system_name FROM image_data WHERE img_id=\"" + img_id + "\"")
-            pure_result = db.query(sql)
-            try: 
-                old_dir = pure_result[0][0]
-                new_dir = pure_result[0][0]
-            except:
-                db.close()
-                return_msg["error"] = "no such image id : " + img_id
+            with ImageDao() as imageDao:
+                img_sys_name = imageDao.getImgSystemName(imgId=str(img_id))
+            if img_sys_name: 
+                old_dir = img_sys_name
+                new_dir = img_sys_name
+            else:
+                return_msg["error"] = "no such image id : {img_id}".format(img_id=img_id)
                 return return_msg
             
             #get old image type dir

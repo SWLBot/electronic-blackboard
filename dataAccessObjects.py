@@ -271,6 +271,10 @@ class ImageDao(DataManipulateDao):
             #TODO raise exception
             return None
 
+    def getImgSystemName(self,imgId):
+        sql = 'SELECT img_system_name FROM image_data WHERE img_id="{imgId}"'.format(imgId=imgId)
+        return self.queryOneValue(sql)
+
 class TextDao(DataManipulateDao):
     dataName = 'text'
     tableName = 'text_data'
