@@ -28,7 +28,12 @@ class DataManipulateDao(DefaultDao):
         sql = 'UPDATE {tableName} SET {dataName}_is_expire=1 WHERE {dataName}_id="{targetId}"'.format(
                 dataName=self.dataName,targetId=targetId,tableName=self.tableName)
         self.db.cmd(sql)
-
+        
+    def markDeleted(self,targetId,userId):
+        sql = 'UPDATE {tableName} SET {dataName}_is_delete=1,{dataName}_last_edit_user_id={userId} WHERE {dataName}_id="{targetId}"'.format(
+                dataName=self.dataName,targetId=targetId,userId=userId,tableName=self.tableName)
+        self.db.cmd(sql)
+        
     def getExpiredIds(self):
         sql = 'SELECT {dataName}_id FROM {tableName} '\
                 +'WHERE {dataName}_is_delete=0 and {dataName}_is_expire=0 and (TO_DAYS(NOW())>TO_DAYS({dataName}_end_date) '\
@@ -213,6 +218,9 @@ class ImageDao(DataManipulateDao):
     tableName = 'image_data'
     def markExpired(self,imgId):
         super().markExpired(targetId=imgId)
+        
+    def markDeleted(self,imgId,userId):
+        super().markDeleted(targetId=imgId,userId=userId)
 
     def checkExpired(self,imgId):
         sql = 'SELECT count(*) FROM image_data WHERE img_id="{imgId}"'.format(imgId=imgId)\
@@ -286,6 +294,9 @@ class TextDao(DataManipulateDao):
 
     def markExpired(self,textId):
         super().markExpired(targetId=textId)
+
+    def markDeleted(self,textId,userId):
+        super().markDeleted(targetId=textId,userId=userId)
 
     def addLikeCount(self,targetId):
         sql = 'UPDATE text_data SET text_like_count=text_like_count+1 WHERE text_id="{targetId}"'.format(targetId=str(targetId))
