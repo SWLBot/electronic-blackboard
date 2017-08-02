@@ -42,6 +42,15 @@ class DataManipulateDao(DefaultDao):
         Ids = self.db.query(sql)
         return Ids
 
+    def generateNewId(self):
+        sql = 'SELECT {dataName}_id FROM {tableName} ORDER BY {dataName}_upload_time DESC LIMIT 1'.format(
+                dataName=self.dataName,tableName=self.tableName)
+        Id = self.db.query(sql)
+        if len(Id):
+            return "{prefix}{num:010d}".format(prefix=self.prefix,num=(int(Id[0][0][4:]) + 1))
+        else:
+            return "{prefix}0000000001".format(prefix=self.prefix)
+
 class UserDao(DefaultDao):
     def getUserId(self,userName=None,bluetoothId=None):
         sql = 'SELECT user_id FROM user WHERE '
@@ -216,6 +225,7 @@ class ScheduleDao(DefaultDao):
 class ImageDao(DataManipulateDao):
     dataName = 'img'
     tableName = 'image_data'
+    prefix = 'imge'
     def markExpired(self,imgId):
         super().markExpired(targetId=imgId)
         
@@ -254,12 +264,7 @@ class ImageDao(DataManipulateDao):
         ret = self.db.cmd(sql)
 
     def generateNewId(self):
-        sql = 'SELECT img_id FROM image_data ORDER BY img_upload_time DESC LIMIT 1'
-        res = self.db.query(sql)
-        if len(res):
-            return "imge{0:010d}".format(int(res[0][0][4:]) + 1)
-        else:
-            return "imge0000000001"
+        return super().generateNewId()
 
     def getImgIdData(self,imgId):
         sql = 'SELECT user_id, type_id FROM image_data WHERE img_id="{imgId}"'.format(imgId=imgId)
@@ -274,6 +279,7 @@ class ImageDao(DataManipulateDao):
 class TextDao(DataManipulateDao):
     dataName = 'text'
     tableName = 'text_data'
+    prefix = 'text'
     def checkExpired(self,textId):
         sql = 'SELECT count(*) FROM text_data WHERE text_id="{textId}"'.format(textId=textId)\
                 +' and text_is_delete=0 and text_is_expire=0 '\
@@ -306,6 +312,9 @@ class TextDao(DataManipulateDao):
         sql = 'select * from text_data where text_is_delete = 0 and text_id = "{textId}"'.format(textId=textId)
         ret = self.db.query(sql)
         return ret[0]
+
+    def generateNewId():
+        return super().generateNewId()
 
 class UserPreferDao(DefaultDao):
     def generateNewId(self):
