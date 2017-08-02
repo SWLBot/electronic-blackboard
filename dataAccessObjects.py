@@ -33,6 +33,46 @@ class DataManipulateDao(DefaultDao):
         sql = 'UPDATE {tableName} SET {dataName}_is_delete=1,{dataName}_last_edit_user_id={userId} WHERE {dataName}_id="{targetId}"'.format(
                 dataName=self.dataName,targetId=targetId,userId=userId,tableName=self.tableName)
         self.db.cmd(sql)
+
+    def findActivities(self,conditionAssigned,orderById,arrangeMode,arrangeCondition=None):
+        if conditionAssigned:
+            type_condition = ''
+            for idx,type_id in enumerate(arrangeCondition):
+                if idx == 0:
+                    type_condition += " type_id={type_id} ".format(type_id=type_id)
+                else:
+                    type_condition += " or type_id={type_id} ".format(type_id=type_id)
+        if arrangeMode in range(6):
+            sql = "SELECT {dataName}_id, {dataName}_display_time FROM {tableName}" \
+                +" WHERE {dataName}_is_delete=0 and {dataName}_is_expire=0 "\
+                +" and (TO_DAYS(NOW()) between TO_DAYS({dataName}_start_date) and TO_DAYS({dataName}_end_date)) " \
+                +" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC({dataName}_start_time) and TIME_TO_SEC({dataName}_end_time))"
+            if conditionAssigned:
+                sql += " and ({type_condition}) ".format(type_condition=type_condition)
+            if orderById:
+                sql += " ORDER BY {dataName}_id ASC".format(dataName=self.dataName)
+        elif arrangeMode == 6:
+            sql = "SELECT a0.{dataName}_id, a0.{dataName}_display_time, a1.type_weight FROM " \
+                +" (SELECT {dataName}_id, type_id, {dataName}_display_time FROM {tableName} WHERE " \
+                +" {dataName}_is_delete=0 and {dataName}_is_expire=0 "\
+                +" and (TO_DAYS(NOW()) between TO_DAYS({dataName}_start_date) and TO_DAYS({dataName}_end_date)) " \
+                +" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC({dataName}_start_time) and TIME_TO_SEC({dataName}_end_time))) AS a0 "\
+                +" LEFT JOIN (SELECT type_id, type_weight FROM data_type ) AS a1 "\
+                +" ON a0.type_id=a1.type_id ORDER BY a1.type_weight ASC"
+        elif arrangeMode == 7:
+            sql = "SELECT a0.{dataName}_id, a0.{dataName}_display_time, a1.type_weight FROM " \
+                +" (SELECT {dataName}_id, type_id, {dataName}_display_time FROM {tableName} WHERE "\
+                +" ({type_condition})".format(type_condition=type_condition)\
+                +" and {dataName}_is_delete=0 and {dataName}_is_expire=0 "\
+                +" and (TO_DAYS(NOW()) between TO_DAYS({dataName}_start_date) and TO_DAYS({dataName}_end_date)) " \
+                +" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC({dataName}_start_time) and TIME_TO_SEC({dataName}_end_time))) AS a0 "\
+                +" LEFT JOIN (SELECT type_id, type_weight FROM data_type WHERE "\
+                +" ({type_condition})".format(type_condition=type_condition)\
+                +" ) AS a1 ON a0.type_id=a1.type_id ORDER BY a1.type_weight ASC"
+
+        sql = sql.format(dataName=self.dataName,tableName=self.tableName)
+        ret = self.db.query(sql)
+        return ret
         
     def getExpiredIds(self):
         sql = 'SELECT {dataName}_id FROM {tableName} '\
@@ -190,44 +230,6 @@ class ScheduleDao(DefaultDao):
     def updateNewIdSchedule(self,scheNewId,scheSn):
         sql = "UPDATE schedule SET sche_id='{scheId}' WHERE sche_sn={scheSn}".format(scheId=scheNewId,scheSn=scheSn)
         self.db.cmd(sql)
-
-    def findTextActivitySchedule(self,conditionAssigned,orderById,arrangeMode,arrangeCondition=None):
-        if conditionAssigned:
-            type_condition = ''
-            for idx,type_id in enumerate(arrangeCondition):
-                if idx == 0:
-                    type_condition += " type_id={type_id} ".format(type_id=type_id)
-                else:
-                    type_condition += " or type_id={type_id} ".format(type_id=type_id)
-        if arrangeMode in range(6):
-            sql = "SELECT text_id, text_display_time FROM text_data" \
-                +" WHERE text_is_delete=0 and text_is_expire=0 "\
-                +" and (TO_DAYS(NOW()) between TO_DAYS(text_start_date) and TO_DAYS(text_end_date)) " \
-                +" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(text_start_time) and TIME_TO_SEC(text_end_time))"
-            if conditionAssigned:
-                sql += " and ({type_condition}) ".format(type_condition=type_condition)
-            if orderById:
-                sql += " ORDER BY text_id ASC"
-        elif arrangeMode == 6:
-            sql = "SELECT a0.text_id, a0.text_display_time, a1.type_weight FROM " \
-                +" (SELECT text_id, type_id, text_display_time FROM text_data WHERE " \
-                +" text_is_delete=0 and text_is_expire=0 "\
-                +" and (TO_DAYS(NOW()) between TO_DAYS(text_start_date) and TO_DAYS(text_end_date)) " \
-                +" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(text_start_time) and TIME_TO_SEC(text_end_time))) AS a0 "\
-                +" LEFT JOIN (SELECT type_id, type_weight FROM data_type ) AS a1 "\
-                +" ON a0.type_id=a1.type_id ORDER BY a1.type_weight ASC"
-        elif arrangeMode == 7:
-            sql = "SELECT a0.text_id, a0.text_display_time, a1.type_weight FROM " \
-                +" (SELECT text_id, type_id, text_display_time FROM text_data WHERE "\
-                +" ({type_condition})".format(type_condition=type_condition)\
-                +" and text_is_delete=0 and text_is_expire=0 "\
-                +" and (TO_DAYS(NOW()) between TO_DAYS(text_start_date) and TO_DAYS(text_end_date)) " \
-                +" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(text_start_time) and TIME_TO_SEC(text_end_time))) AS a0 "\
-                +" LEFT JOIN (SELECT type_id, type_weight FROM data_type WHERE "\
-                +" ({type_condition})".format(type_condition=type_condition)\
-                +" ) AS a1 ON a0.type_id=a1.type_id ORDER BY a1.type_weight ASC"
-        ret = self.db.query(sql)
-        return ret
 
 class ImageDao(DataManipulateDao):
     dataName = 'img'
