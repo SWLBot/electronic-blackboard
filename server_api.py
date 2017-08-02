@@ -796,23 +796,21 @@ def edit_image_data(json_obj):
                 return return_msg
             
             #get old image type dir
-            sql = ("SELECT type_dir FROM data_type WHERE type_id=" + str(img_type_id))
-            pure_result = db.query(sql)
-            try: 
-                old_dir = pure_result[0][0] + old_dir
-            except:
-                db.close()
-                return_msg["error"] = "no such image type : " + str(img_type_id)
+            with DataTypeDao() as dataTypeDao:
+                type_dir = dataTypeDao.getTypeDir(typeId=str(img_type_id))
+            if type_dir: 
+                old_dir = type_dir + old_dir
+            else:
+                return_msg["error"] = "no such image type : {type_id}".format(type_id=str(img_type_id))
                 return return_msg
                     
-            #get new image type dir     
-            sql = ("SELECT type_dir FROM data_type WHERE type_id=" + str(type_id))
-            pure_result = db.query(sql)
-            try: 
-                new_dir = pure_result[0][0] + new_dir
-            except:
-                db.close()
-                return_msg["error"] = "no such image type : " + str(type_id)
+            #get new image type dir
+            with DataTypeDao() as dataTypeDao:
+                type_dir = dataTypeDao.getTypeDir(typeId=str(type_id))
+            if type_dir: 
+                new_dir = type_dir + new_dir
+            else:
+                return_msg["error"] = "no such image type : {type_id}".format(type_id=str(type_id))
                 return return_msg
             
             #check if we need to move the file
