@@ -1432,7 +1432,6 @@ def fortune_insert_db(json_obj):
     try:
         return_msg = {}
         return_msg["result"] = "fail"
-
         constellation = ""
         overall = ""
         love = ""
@@ -1449,23 +1448,17 @@ def fortune_insert_db(json_obj):
             return_msg["error"] = "input parameter missing"
             return return_msg
 
-        #insert fortune data
-        db = mysql()
-        db.connect()
         #check
-        sql = 'SELECT COUNT(*) FROM fortune WHERE fortune_date = "{date}" AND constellation = "{constellation}"'.format(
-                date=date,constellation=constellation)
+        with FortuneDao() as fortuneDao:
+            existed = fortuneDao.checkFortuneExisted(date=date,constellation=constellation)
 
-        check = db.query(sql)
-
-        if check[0][0] == 0:
+        if not existed:
             with FortuneDao() as fortuneDao:
                 fortuneDao.insertFortune(date,constellation,overall,love,career,wealth)
-        db.close()
-        return_msg["result"] = "success"
 
+        return_msg["result"] = "success"
+        return return_msg
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg
 

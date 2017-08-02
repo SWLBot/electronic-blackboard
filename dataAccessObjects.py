@@ -376,6 +376,11 @@ class FortuneDao(DefaultDao):
             +' VALUES ("{date}","{constellation}","{overall}","{love}","{career}","{wealth}")'.format(
             date=date,constellation=constellation,overall=overall,love=love,career=career,wealth=wealth)
         self.db.cmd(sql)
+        
+    def checkFortuneExisted(self,date,constellation):
+        sql = 'SELECT COUNT(*) FROM fortune WHERE fortune_date="{date}" AND constellation="{constellation}"'.format(
+                date=date,constellation=constellation)
+        return self.queryOneValue(sql)
 
 class DatabaseDao(DefaultDao):
     def checkTableExisted(self,tableName):
@@ -384,6 +389,7 @@ class DatabaseDao(DefaultDao):
                 +'AND table_name ="{tableName}"'.format(tableName=tableName)
         existed = self.queryOneValue(sql)
         return True if existed else False
+
 class NewsQRCodeDao(DefaultDao):
     def getNews(self,preferStr):
         sql = 'SELECT * FROM ' \
