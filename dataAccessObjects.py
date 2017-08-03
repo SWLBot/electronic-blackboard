@@ -165,7 +165,7 @@ class ScheduleDao(DefaultDao):
             #TODO raise exception
             return None
 
-    def checkToUpdateUndecidedSchedule(self):
+    def getUndecidedScheduleSn(self):
         sql = "SELECT sche_sn FROM schedule WHERE sche_id='sche0undecided' ORDER BY sche_sn ASC LIMIT 1"
         return self.queryOneValue(sql)
 

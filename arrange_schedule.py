@@ -540,10 +540,10 @@ def edit_schedule(json_obj):
                 else:
                     with ScheduleDao() as scheduleDao:
                         scheduleDao.insertUndecidedSchedule(target_id,display_time,arrange_mode_sn)
-                        pure_result = scheduleDao.checkToUpdateUndecidedSchedule()
-                    if pure_result:
-                        new_id = "sche" + "{0:010d}".format(int(pure_result))
-                        sql = ("UPDATE schedule SET sche_id='" + new_id + "' WHERE sche_sn="+str(pure_result))
+                        sche_sn = scheduleDao.getUndecidedScheduleSn()
+                    if sche_sn:
+                        new_id = "sche" + "{0:010d}".format(int(sche_sn))
+                        sql = ("UPDATE schedule SET sche_id='" + new_id + "' WHERE sche_sn="+str(sche_sn))
                         db.cmd(sql)
                     else :
                         db.close()
@@ -552,11 +552,11 @@ def edit_schedule(json_obj):
             else :
                 with ScheduleDao() as scheduleDao:
                     scheduleDao.insertUndecidedSchedule(target_id,display_time,arrange_mode_sn)
-                    pure_result = scheduleDao.checkToUpdateUndecidedSchedule()
+                    sche_sn = scheduleDao.getUndecidedScheduleSn()
                 
-                if pure_result:
-                    new_id = "sche" + "{0:010d}".format(int(pure_result))
-                    sql = ("UPDATE schedule SET sche_id='" + new_id + "' WHERE sche_sn="+str(pure_result))
+                if sche_sn:
+                    new_id = "sche" + "{0:010d}".format(int(sche_sn))
+                    sql = ("UPDATE schedule SET sche_id='" + new_id + "' WHERE sche_sn="+str(sche_sn))
                     db.cmd(sql)
                 else :
                     db.close()
@@ -601,10 +601,10 @@ def add_schedule(json_obj):
             #insert
             with ScheduleDao() as scheduleDao:
                 scheduleDao.insertUndecidedSchedule(target_id,display_time,arrange_mode_sn)
-                pure_result = scheduleDao.checkToUpdateUndecidedSchedule()
-            if pure_result:
-                new_id = "sche" + "{0:010d}".format(int(pure_result))
-                sql = ("UPDATE schedule SET sche_id='" + new_id + "' WHERE sche_sn="+str(pure_result))
+                sche_sn = scheduleDao.getUndecidedScheduleSn()
+            if sche_sn:
+                new_id = "sche" + "{0:010d}".format(int(sche_sn))
+                sql = ("UPDATE schedule SET sche_id='" + new_id + "' WHERE sche_sn="+str(sche_sn))
                 db.cmd(sql)
             else :
                 db.close()
