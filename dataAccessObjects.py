@@ -152,8 +152,11 @@ class ScheduleDao(DefaultDao):
             +" WHERE sche_sn={scheSn}".format(scheSn=scheSn)
         self.db.cmd(sql)
 
-    def cleanSchedule(self):
-        sql = 'DELETE FROM schedule WHERE sche_is_used=0'
+    def cleanSchedule(self,scheSn=None):
+        if scheSn:
+            sql = "DELETE FROM schedule WHERE sche_sn={scheSn}".format(scheSn=scheSn)
+        else:
+            sql = 'DELETE FROM schedule WHERE sche_is_used=0'
         self.db.cmd(sql)
 
     def countUsedSchedule(self):
