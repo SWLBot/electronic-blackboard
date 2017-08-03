@@ -311,10 +311,11 @@ def get_prefer_news(db, prefer_data_type):
             pure_result = newsQRCodeDao.getNews(preferStr=prefer_str)
         #reshape output data
         for num2 in range(len(pure_result)):
-            type_dir = db.query('select type_dir from data_type where type_id = %s' % pure_result[num2][2])[0]
+            with DataTypeDao() as dataTypeDao:
+                type_dir = dataTypeDao.getTypeDir(typeId=pure_result[num2][2])
             tmp_json = {}
             tmp_json["title"] = str(pure_result[num2][0])
-            tmp_json["QR"] = ('/static/%s' % type_dir)+ str(pure_result[num2][1]) + ".png"
+            tmp_json["QR"] = '/static/{type_dir}{name}.png'.format(type_dir=type_dir,name=str(pure_result[num2][1]))
             return_msg.append(tmp_json)
 
         return return_msg
@@ -429,28 +430,22 @@ def deal_with_bluetooth_id(bluetooth_id):
 def check_user_existed_or_signup(user_info):
     try:
         return_msg = {}
-        db = mysql()
-        db.connect()
 
-        cursor = db.cursor
+        with UserDao() as userDao:
+            is_existed = userDao.checkUserExisted(userName=user_info['user_name'])
 
-        sql = 'select Count(*) from `user` where `user_name`="%s"' % user_info['user_name']
-        pure_result = db.query(sql)
-
-        is_existed = pure_result[0][0]
         if is_existed:
-            return_msg['flash'] = 'The name "%s" has been used' % user_info['user_name']
+            return_msg['flash'] = 'The name "{name}" has been used'.format(name=user_info['user_name'])
             return return_msg
 
         hashed_passwd = bcrypt.hashpw(user_info['user_password'].encode('utf-8'),bcrypt.gensalt())
-        ret = cursor.execute('insert into `user` (`user_name`,`user_password`) values (%s,%s)',(user_info['user_name'],hashed_passwd))
-        db.db.commit()
+        with UserDao() as userdao:
+            userdao.createNewUser(userName=user_info['user_name'],userPassword=hashed_passwd)
 
-        return_msg['flash'] = 'User "%s" create success!' % user_info['user_name']
+        return_msg['flash'] = 'User "{name}" create success!'.format(name=user_info['user_name'])
         return return_msg
-    except DB_Exception as e:
-        db.close()
-        return_msg["error"] = e.args[1]
+    except:
+        return_msg["error"] = "Fail to check whether user is existed or create new user"
         return return_msg
 #
 def register_no_right_user(data):
@@ -460,39 +455,16 @@ def register_no_right_user(data):
         send_msg["user_password"] = data["bluetooth_id"][0:6]
         check_user_existed_or_signup(send_msg)
 
-        db = mysql()
-        db.connect()
-        sql = "SELECT count(*) FROM user WHERE user_name='" + str(data["bluetooth_id"]) + "'"
-        pure_result = db.query(sql)
-        if int(pure_result[0][0])<1:
+        with UserDao() as userDao:
+            existed = userDao.checkUserExisted(userName=data["bluetooth_id"])
+        if not existed:
             db.close()
             return 0
 
-        sql = "UPDATE user SET "
-        if "bluetooth_id" in data and data["bluetooth_id"] is not None:
-            sql = sql + "user_bluetooth_id='" +str(data["bluetooth_id"])+ "', "
-        if "nickName" in data and data["nickName"] is not None:
-            sql = sql + "user_nickname='" +str(data["nickName"])+ "', "
-        if "birthday" in data and data["birthday"] is not None:
-            sql = sql + "user_birthday='" +str(data["birthday"])+ "', "
-        if "occupation" in data and data["occupation"] is not None:
-            sql = sql + "user_profession="
-            if data["occupation"]=="bachelor":
-                sql = sql + "1, "
-            elif data["occupation"]=="masterDr":
-                sql = sql + "2, "
-            elif data["occupation"]=="faculty":
-                sql = sql + "3, "
-            else:
-                sql = sql + "0, "
-        sql = sql + "user_level=50 WHERE user_name='" + str(data["bluetooth_id"]) + "'"
-        db.cmd(sql)
-
-        db.close()
+        with UserDao() as userDao:
+            userDao.updateUserData(userInfo=data)
         return 1
-    except DB_Exception as e:
-        print(e)
-        db.close()
+    except:
         return 0
 #
 def add_account_and_prefer(data):
@@ -606,13 +578,11 @@ def get_img_meta(img_id):
 
 def get_text_meta(text_id):
     try:
-        db = mysql()
-        db.connect()
-        sql = 'select * from text_data where text_is_delete = 0 and text_id = "%s"' % text_id
-        return db.query(sql)[0]
-    except DB_Exception as e:
-        db.close()
-        return_msg["error"] = e.args[1]
+        with TextDao() as textDao:
+            ret = textDao.getTextMeta(textId=text_id)
+        return ret
+    except:
+        return_msg["error"] = "Can't get text meta."
         return return_msg
 
 def check_user_level(user_id):
@@ -684,10 +654,10 @@ def upload_image_insert_db(json_obj):
             return_msg['result'] = receive_msg['error']
         
         #get new file place
-        sql = ("SELECT type_dir FROM data_type WHERE type_id=" + str(type_id))
-        pure_result = db.query(sql)
+        with DataTypeDao() as dataTypeDao:
+            type_dir = dataTypeDao.getTypeDir(typeId=str(type_id))
         try:
-            img_new_file_dir = os.path.join(server_dir, "static/"+str(pure_result[0][0]))
+            img_new_file_dir = os.path.join(server_dir, "static/{type_dir}".format(type_dir=type_dir))
         except:
             db.close()
             return_msg["error"] = "no such type id : " + str(type_id)
@@ -695,16 +665,8 @@ def upload_image_insert_db(json_obj):
         
         
         #generate new id
-        sql = ("SELECT img_id FROM image_data ORDER BY img_upload_time DESC LIMIT 1")
-        pure_result = db.query(sql)
-        try:
-            img_id =  int(pure_result[0][0][4:]) + 1
-            img_id = "imge" + "{0:010d}".format(img_id)
-        except:
-            img_id = "imge0000000001"
-            #db.close()
-            #return_msg["error"] = "no basic image"
-            #return return_msg
+        with ImageDao() as imageDao:
+            img_id = imageDao.generateNewId()
         
 
         img_system_name = img_id + os.path.splitext(img_file_name)[1]
@@ -806,19 +768,16 @@ def edit_image_data(json_obj):
                 return_msg["error"] = "user right is too low"
                 return return_msg
             #check self image
-            sql = ("SELECT user_id, type_id FROM image_data WHERE img_id=\"" + img_id + "\"")
-            pure_result = db.query(sql)
+            with ImageDao() as imageDao:
+                imgInfo = imageDao.getImgCheck(imgId=str(img_id))
             try:
-                if pure_result[0][0] != user_id and user_level < user_level_high_bound:
-                    db.close()
+                if imgInfo["userId"] != user_id and user_level < user_level_high_bound:
                     return_msg["error"] = "can not modify other user image "
                     return return_msg
-                img_type_id = pure_result[0][1]
+                img_type_id = imgInfo["typeId"]
             except:
-                db.close()
-                return_msg["error"] = "no such image id : " + img_id
-                return return_msg
-        
+                return_msg["error"] = "no such image id : {img_id}".format(img_id=img_id)
+                return return_msg    
         
         #check if we need to move the file
         old_dir = ""
@@ -827,34 +786,31 @@ def edit_image_data(json_obj):
             "DO NOTHING"
         else :
             #get img_system_name
-            sql = ("SELECT img_system_name FROM image_data WHERE img_id=\"" + img_id + "\"")
-            pure_result = db.query(sql)
-            try: 
-                old_dir = pure_result[0][0]
-                new_dir = pure_result[0][0]
-            except:
-                db.close()
-                return_msg["error"] = "no such image id : " + img_id
+            with ImageDao() as imageDao:
+                img_sys_name = imageDao.getImgSystemName(imgId=str(img_id))
+            if img_sys_name: 
+                old_dir = img_sys_name
+                new_dir = img_sys_name
+            else:
+                return_msg["error"] = "no such image id : {img_id}".format(img_id=img_id)
                 return return_msg
             
             #get old image type dir
-            sql = ("SELECT type_dir FROM data_type WHERE type_id=" + str(img_type_id))
-            pure_result = db.query(sql)
-            try: 
-                old_dir = pure_result[0][0] + old_dir
-            except:
-                db.close()
-                return_msg["error"] = "no such image type : " + str(img_type_id)
+            with DataTypeDao() as dataTypeDao:
+                type_dir = dataTypeDao.getTypeDir(typeId=str(img_type_id))
+            if type_dir: 
+                old_dir = type_dir + old_dir
+            else:
+                return_msg["error"] = "no such image type : {type_id}".format(type_id=str(img_type_id))
                 return return_msg
                     
-            #get new image type dir     
-            sql = ("SELECT type_dir FROM data_type WHERE type_id=" + str(type_id))
-            pure_result = db.query(sql)
-            try: 
-                new_dir = pure_result[0][0] + new_dir
-            except:
-                db.close()
-                return_msg["error"] = "no such image type : " + str(type_id)
+            #get new image type dir
+            with DataTypeDao() as dataTypeDao:
+                type_dir = dataTypeDao.getTypeDir(typeId=str(type_id))
+            if type_dir: 
+                new_dir = type_dir + new_dir
+            else:
+                return_msg["error"] = "no such image type : {type_id}".format(type_id=str(type_id))
                 return return_msg
             
             #check if we need to move the file
@@ -955,16 +911,8 @@ def upload_text_insert_db(json_obj):
             return_msg['result'] = receive_msg['error']
 
         #generate new id
-        sql = ("SELECT text_id FROM text_data ORDER BY text_upload_time DESC LIMIT 1")
-        pure_result = db.query(sql)
-        try:
-            text_id =  int(pure_result[0][0][4:]) + 1
-            text_id = "text" + "{0:010d}".format(text_id)
-        except:
-            text_id = "text0000000001"
-            #db.close()
-            #return_msg["error"] = "no basic image"
-            #return return_msg
+        with TextDao() as textDao:
+            text_id = textDao.generateNewId()
 
         if "invisible_title" in json_obj:
             invisible_title = json_obj["invisible_title"]
@@ -1254,16 +1202,13 @@ def delete_image_or_text_data(json_obj):
                 return return_msg
 
         if target_id[0:4] == "imge":
-            sql = "UPDATE image_data SET img_is_delete=1, img_last_edit_user_id="+str(user_id)+" WHERE img_id='"+ target_id + "'"
+            with ImageDao() as imageDao:
+                imageDao.markDeleted(target_id,user_id)
         elif target_id[0:4] == "text":
-            sql = "UPDATE text_data SET text_is_delete=1, text_last_edit_user_id="+str(user_id)+" WHERE text_id='"+target_id+"'"
-        else :
-            sql = ""
-        db.cmd(sql)
-
+            with TextDao() as textDao:
+                textDao.markDeleted(target_id,user_id)
         
         db.close()
-
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
@@ -1277,20 +1222,15 @@ def add_new_data_type(json_obj):
         return_msg = {}
         return_msg["result"] = "fail"
         type_name = json_obj['type_name']
-        db = mysql()
-        db.connect()
 
-        sql = "SELECT count(*) FROM data_type WHERE type_name = \""+type_name+"\""
-        if db.query(sql)[0][0] >= 1:
+        with DataTypeDao() as dataTypeDao:
+            existed = dataTypeDao.checkTypeExisted(typeName=type_name)
+        if existed:
             return_msg["error"] = "Type name has existed"
             return return_msg
 
-        sql = "INSERT INTO data_type (type_name,type_dir) VALUES (\"" \
-            +type_name+"\",\"" \
-            +type_name+"/\")"
-        db.cmd(sql)
-
-        db.close()
+        with DataTypeDao() as dataTypeDao:
+            dataTypeDao.insertType(typeName=type_name)
 
         if not os.path.exists("static/"+type_name):
             os.makedirs("static/"+type_name)
@@ -1298,7 +1238,6 @@ def add_new_data_type(json_obj):
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg  
 
@@ -1458,13 +1397,8 @@ def news_insert_db(json_obj):
         check = db.query(sql)
 
         if check[0][0] == 0:
-            sql = "INSERT INTO news_QR_code " \
-                    +" (`data_type`, `serial_number`, `title`)" \
-                    +" VALUES (" \
-                    + str(news_data_type) + ", "\
-                    + "\"" + news_serial_number + "\", " \
-                    + "\"" + news_title + "\")"
-        db.cmd(sql)
+            with NewsQRCodeDao() as newsQRCodeDao:
+                newsQRCodeDao.insertNews(news_data_type,news_serial_number,news_title)
         db.close()
         return_msg["result"] = "success"
 
@@ -1477,7 +1411,6 @@ def fortune_insert_db(json_obj):
     try:
         return_msg = {}
         return_msg["result"] = "fail"
-
         constellation = ""
         overall = ""
         love = ""
@@ -1494,26 +1427,17 @@ def fortune_insert_db(json_obj):
             return_msg["error"] = "input parameter missing"
             return return_msg
 
-        #insert fortune data
-        db = mysql()
-        db.connect()
         #check
-        sql = 'SELECT COUNT(*) FROM fortune WHERE fortune_date = "{date}" AND constellation = "{constellation}"'.format(
-                date=date,constellation=constellation)
+        with FortuneDao() as fortuneDao:
+            existed = fortuneDao.checkFortuneExisted(date=date,constellation=constellation)
 
-        check = db.query(sql)
+        if not existed:
+            with FortuneDao() as fortuneDao:
+                fortuneDao.insertFortune(date,constellation,overall,love,career,wealth)
 
-        if check[0][0] == 0:
-            sql2 = 'INSERT INTO fortune '\
-                +' (`fortune_date`, `constellation`, `overall`, `love`, `career`, `wealth`)'\
-                +' VALUES ("{date}","{constellation}","{overall}","{love}","{career}","{wealth}")'.format(
-                date=date,constellation=constellation,overall=overall,love=love,career=career,wealth=wealth)
-        db.cmd(sql)
-        db.close()
         return_msg["result"] = "success"
-
+        return return_msg
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg
 

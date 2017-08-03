@@ -10,7 +10,6 @@ from server_api import upload_text_insert_db
 from server_api import delete_image_or_text_data
 from server_api import get_credentials
 from server_api import get_upcoming_events
-from pprint import pprint
 from apiclient.http import MediaIoBaseDownload
 from apiclient import discovery
 from news_crawler.news_crawler import *
@@ -24,6 +23,8 @@ import json
 from util import switch
 import config.settings as setting
 from dataAccessObjects import *
+from modeUtil import ModeUtil
+from worker import *
 
 #make now activity to is used
 def mark_now_activity():
@@ -50,7 +51,7 @@ def mark_now_activity():
         return return_msg
         
 #child function of load_next_schedule
-def find_next_schedule(db):
+def find_next_schedule():
     try:
         return_msg = {}
         return_msg["result"] = "fail"
@@ -85,17 +86,12 @@ def load_next_schedule(json_obj):
         except:
             return_msg["error"] = "input parameter missing"
             return return_msg
-    
-        #connect to mysql
-        db = mysql()
-        db.connect()
         
         while True:
             #find schedule
             receive_msg = {}
-            receive_msg = find_next_schedule(db)
+            receive_msg = find_next_schedule()
             if receive_msg["result"]=="fail":
-                db.close()
                 return_msg["error"] = receive_msg["error"]
                 return return_msg
             
@@ -154,14 +150,13 @@ def load_next_schedule(json_obj):
             with DataTypeDao() as dataTypeDao:
                 type_dir = dataTypeDao.getTypeDir(type_id)
             if type_dir:
-                check_target_dir = os.path.join(target_dir, "static/")
-                check_target_dir = os.path.join(check_target_dir, type_dir)
-                check_target_dir = os.path.join(check_target_dir, system_file_name)
+                check_target_dir = os.path.join(target_dir,'static',
+                                        type_dir,system_file_name)
             else:
                 # mark activity is used
                 if target_sn != 0:
-                    sql = ("UPDATE schedule SET sche_is_used=1 WHERE sche_sn=" + str(target_sn))
-                    db.cmd(sql)
+                    with ScheduleDao() as scheduleDao:
+                        scheduleDao.markExpiredSchedule(scheSn=target_sn)
                     target_sn = 0
                 continue
     
@@ -180,15 +175,12 @@ def load_next_schedule(json_obj):
         with ScheduleDao() as scheduleDao:
             return_msg['last_activity'] = scheduleDao.countUndisplaySchedule()
         if not return_msg['last_activity']:
-            db.close()
             return_msg["error"] = "sql error"
             return return_msg
 
-        db.close()
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg
     
@@ -208,67 +200,13 @@ def find_text_acticity(json_obj):
             return_msg["error"] = "input parameter missing"
             return return_msg
 
-        #connect to mysql
-        db = mysql()
-        db.connect()
-        
         #find images that may be schedule
-        if arrange_mode in range(6):
-            if arrange_mode in [0,3]:
-                orderById = True
-            else:
-                orderById = False
+        orderById = ModeUtil.checkOrderById(arrange_mode)
 
-            if arrange_mode in [3,4,5]:
-                conditionAssigned = True
-            else:
-                conditionAssigned = False
+        conditionAssigned = ModeUtil.checkConditionAssigned(arrange_mode)
 
-            sql = "SELECT text_id, text_display_time FROM text_data" \
-                +" WHERE text_is_delete=0 and text_is_expire=0 "\
-                +" and (TO_DAYS(NOW()) between TO_DAYS(text_start_date) and TO_DAYS(text_end_date)) " \
-                +" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(text_start_time) and TIME_TO_SEC(text_end_time))"
-            # condtionAssigned select type_id in arrange_condition
-            if conditionAssigned:
-                type_condition = ''
-                for idx,type_id in enumerate(arrange_condition):
-                    if idx == 0:
-                        type_condition += " type_id={type_id} ".format(type_id=type_id)
-                    else:
-                        type_condition += " or type_id={type_id} ".format(type_id=type_id)
-                sql += " and ({type_condition}) ".format(type_condition=type_condition)
-
-            if orderById:
-                sql += " ORDER BY text_id ASC"
-
-        elif arrange_mode == 6:
-            sql = "SELECT a0.text_id, a0.text_display_time, a1.type_weight FROM " \
-                +" (SELECT text_id, type_id, text_display_time FROM text_data WHERE " \
-                +" text_is_delete=0 and text_is_expire=0 "\
-                +" and (TO_DAYS(NOW()) between TO_DAYS(text_start_date) and TO_DAYS(text_end_date)) " \
-                +" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(text_start_time) and TIME_TO_SEC(text_end_time))) AS a0 "\
-                +" LEFT JOIN (SELECT type_id, type_weight FROM data_type ) AS a1 "\
-                + " ON a0.type_id=a1.type_id ORDER BY a1.type_weight ASC"
-        elif arrange_mode == 7:
-            sql = "SELECT a0.text_id, a0.text_display_time, a1.type_weight FROM " \
-                +" (SELECT text_id, type_id, text_display_time FROM text_data WHERE ( "
-            for num1 in range(len(arrange_condition)):
-                if num1 == 0:
-                    sql = sql + " type_id=" + str(arrange_condition[num1]) + " "
-                else :
-                    sql = sql + " or type_id=" + str(arrange_condition[num1]) + " "
-            sql = sql + " ) and text_is_delete=0 and text_is_expire=0 "\
-                +" and (TO_DAYS(NOW()) between TO_DAYS(text_start_date) and TO_DAYS(text_end_date)) " \
-                +" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(text_start_time) and TIME_TO_SEC(text_end_time))) AS a0 "\
-                +" LEFT JOIN (SELECT type_id, type_weight FROM data_type WHERE ("
-            for num1 in range(len(arrange_condition)):
-                if num1 == 0:
-                    sql = sql + " type_id=" + str(arrange_condition[num1]) + " "
-                else :
-                    sql = sql + " or type_id=" + str(arrange_condition[num1]) + " "
-            sql = sql + ")) AS a1 ON a0.type_id=a1.type_id ORDER BY a1.type_weight ASC"
-        
-        pure_result = db.query(sql)
+        with ScheduleDao() as scheduleDao:
+            pure_result=scheduleDao.findTextActivitySchedule(conditionAssigned,orderById,arrange_mode,arrangeCondition=arrange_condition)
         #restruct results of query
         for result_row in pure_result:
             if len(result_row)==2:
@@ -301,11 +239,9 @@ def find_text_acticity(json_obj):
         #reshape deal result
         return_msg["ans_list"] = deal_result
         
-        db.close()  
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg
 
@@ -331,15 +267,9 @@ def find_image_acticity(json_obj):
         
         #find images that may be schedule
         if arrange_mode in range(6):
-            if arrange_mode in [0,3]:
-                orderById = True
-            else:
-                orderById = False
+            orderById = ModeUtil.checkOrderById(arrange_mode)
 
-            if arrange_mode in [3,4,5]:
-                conditionAssigned = True
-            else:
-                conditionAssigned = False
+            conditionAssigned = ModeUtil.checkConditionAssigned(arrange_mode)
 
             sql = "SELECT img_id, img_display_time FROM image_data" \
                 +" WHERE img_is_delete=0 and img_is_expire=0 "\
@@ -607,29 +537,25 @@ def edit_schedule(json_obj):
                     with ScheduleDao() as scheduleDao:
                         scheduleDao.updateEditSchedule(target_id,display_time,arrange_mode_sn,pure_result[0][0])
                 else:
-                    sql = ("INSERT INTO schedule (sche_id, sche_target_id, sche_display_time, sche_arrange_mode)"\
-                        +" VALUES ('sche0undecided', '"+target_id+"', "+str(display_time)+", " + str(arrange_mode_sn) + ")")
-                    db.cmd(sql)
-                    sql = ("SELECT sche_sn FROM schedule WHERE sche_id='sche0undecided' ORDER BY sche_sn ASC LIMIT 1")
-                    pure_result = db.query(sql)
-                    if len(pure_result)>0:
-                        new_id = "sche" + "{0:010d}".format(int(pure_result[0][0]))
-                        sql = ("UPDATE schedule SET sche_id='" + new_id + "' WHERE sche_sn="+str(pure_result[0][0]))
+                    with ScheduleDao() as scheduleDao:
+                        scheduleDao.insertUndecidedSchedule(target_id,display_time,arrange_mode_sn)
+                        sche_sn = scheduleDao.getUndecidedScheduleSn()
+                    if sche_sn:
+                        new_id = "sche" + "{0:010d}".format(int(sche_sn))
+                        sql = ("UPDATE schedule SET sche_id='" + new_id + "' WHERE sche_sn="+str(sche_sn))
                         db.cmd(sql)
                     else :
                         db.close()
                         return_msg["error"] = "may be another arrange.exe is working"
                         return return_msg
             else :
-                sql = ("INSERT INTO schedule (sche_id, sche_target_id, sche_display_time, sche_arrange_mode)"\
-                    +" VALUES ('sche0undecided', '"+target_id+"', "+str(display_time)+", " + str(arrange_mode_sn) + ")")
-                db.cmd(sql)
-                sql = ("SELECT sche_sn FROM schedule WHERE sche_id='sche0undecided' ORDER BY sche_sn ASC LIMIT 1")
-                pure_result = db.query(sql)
+                with ScheduleDao() as scheduleDao:
+                    scheduleDao.insertUndecidedSchedule(target_id,display_time,arrange_mode_sn)
+                    sche_sn = scheduleDao.getUndecidedScheduleSn()
                 
-                if len(pure_result)>0:
-                    new_id = "sche" + "{0:010d}".format(int(pure_result[0][0]))
-                    sql = ("UPDATE schedule SET sche_id='" + new_id + "' WHERE sche_sn="+str(pure_result[0][0]))
+                if sche_sn:
+                    new_id = "sche" + "{0:010d}".format(int(sche_sn))
+                    sql = ("UPDATE schedule SET sche_id='" + new_id + "' WHERE sche_sn="+str(sche_sn))
                     db.cmd(sql)
                 else :
                     db.close()
@@ -672,14 +598,12 @@ def add_schedule(json_obj):
             display_time = int(display_time_list[num0])
             
             #insert
-            sql = ("INSERT INTO schedule (sche_id, sche_target_id, sche_display_time, sche_arrange_mode)"\
-                +" VALUES ('sche0undecided', '"+target_id+"', "+str(display_time)+", " + str(arrange_mode_sn) + ")")
-            db.cmd(sql)
-            sql = ("SELECT sche_sn FROM schedule WHERE sche_id='sche0undecided' ORDER BY sche_sn ASC LIMIT 1")
-            pure_result = db.query(sql)
-            if len(pure_result)!=0:
-                new_id = "sche" + "{0:010d}".format(int(pure_result[0][0]))
-                sql = ("UPDATE schedule SET sche_id='" + new_id + "' WHERE sche_sn="+str(pure_result[0][0]))
+            with ScheduleDao() as scheduleDao:
+                scheduleDao.insertUndecidedSchedule(target_id,display_time,arrange_mode_sn)
+                sche_sn = scheduleDao.getUndecidedScheduleSn()
+            if sche_sn:
+                new_id = "sche" + "{0:010d}".format(int(sche_sn))
+                sql = ("UPDATE schedule SET sche_id='" + new_id + "' WHERE sche_sn="+str(sche_sn))
                 db.cmd(sql)
             else :
                 db.close()
@@ -706,7 +630,6 @@ def clean_schedule():
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg   
 
@@ -742,7 +665,7 @@ def set_schedule_log(json_obj):
             #generate log
             date_now = date.today()
             schedule_file = ("schedule_" + str(date_now.year) + "_" + str(date_now.month) + "_" + str(date_now.day) + ".txt")
-            schedule_file = os.path.join(log_dir,("static/log/"+schedule_file))
+            schedule_file = os.path.join(log_dir,'static','log',schedule_file)
             file_pointer = ''
             try:
                 if not os.path.isfile(schedule_file) :
@@ -764,9 +687,9 @@ def set_schedule_log(json_obj):
             
             #delete schedule
             for num1 in range(len(pure_result)):
-                sql = "DELETE FROM schedule WHERE sche_sn=" + str(pure_result[num1][0])
                 try:
-                    db.cmd(sql)
+                    with ScheduleDao() as scheduleDao:
+                        scheduleDao.cleanSchedule(scheSn=pure_result[num1][0])
                 except DB_Exception as e:
                     return_msg["error"] = e.args[1]
             if "error" in return_msg:
@@ -902,7 +825,6 @@ def crawler_cwb_img(json_obj):
             send_obj["display_time"] = 5
             send_obj["user_id"] = user_id
             receive_obj = upload_image_insert_db(send_obj)
-            #pprint(receive_obj)
             try:
                 if receive_obj["result"] == "success":
                     filepath = receive_obj["img_system_dir"]
@@ -1063,7 +985,7 @@ def save_google_drive_file(service, json_obj):
         return_msg['result'] = 'fail'
         for item in json_obj['files']:
             file_name = item['id'] + os.path.splitext(item['name'])[1]
-            download_file_place = os.path.join(json_obj['server_dir'], "static/img/"+file_name)
+            download_file_place = os.path.join(json_obj['server_dir'],'static','img',file_name)
             
             #check if file is existed
             if check_drive_img_exist(db, json_obj['data_type'], file_name):
@@ -1173,17 +1095,12 @@ def crawler_news(website):
         return_msg = {}
         return_msg["result"] = "fail"
 
-        #connect to mysql
-        db = mysql()
-        db.connect()
         #check if table 'news_QR_code' exists
-        check_news_QR_code_table()
+        check_table(news=True)
 
-        #check inside data type exist or not 
-        check_sql = "SELECT COUNT(*) FROM data_type WHERE  type_name='{0}'".format(website)
-        exist = db.query(check_sql)
-        db.close()
-        if exist[0][0] == 0:
+        with DataTypeDao() as dataTypeDao:
+            existed = dataTypeDao.checkTypeExisted(website)
+        if not existed:
             create_data_type(website)
 
         for case in switch(website):
@@ -1214,7 +1131,6 @@ def crawler_news(website):
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg
 
@@ -1222,21 +1138,16 @@ def crawler_ptt_news(boards):
     try:
         return_msg = {}
         return_msg["result"] = "fail"
-        data_type = 7
 
-        #connect to mysql
-        db = mysql()
-        db.connect()
         #check if table 'news_QR_code' exists
-        check_news_QR_code_table()
+        check_table(news=True)
         
-        #check inside data type existance and filter board_inhitbit 
         for board in boards:
-            check_sql = "SELECT COUNT(*) FROM data_type WHERE  type_name='ptt"+board+"'"
-            exist = db.query(check_sql)
-            if exist[0][0] == 0:
-                datatype='ptt'+board
-                create_data_type(datatype)
+            typeName = 'ptt'+board
+            with DataTypeDao() as dataTypeDao:
+                existed = dataTypeDao.checkTypeExisted(typeName)
+            if not existed:
+                create_data_type(typeName)
 
         #board with data_type but no crawling
         inhibit_boards = ["Beauty"]
@@ -1248,11 +1159,9 @@ def crawler_ptt_news(boards):
             return_msg["error"] = "ERROR occurs in PTT crawler. Please check the correction of news_crawler"
             return return_msg
 
-        db.close()
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg
 
@@ -1262,7 +1171,7 @@ def crawler_constellation_fortune():
         return_msg["result"] = "fail"
 
         #check if table 'fortune' exists
-        check_fortune_table()
+        check_table(fortune=True)
         #start grab CONSTELLATION FORTUNE info
         try:
             grab_constellation_fortune()
@@ -1276,18 +1185,16 @@ def crawler_constellation_fortune():
         return_msg["error"] = e.args[1]
         return return_msg
 
-def check_news_QR_code_table():
+def check_table(news=False,fortune=False):
     with DatabaseDao() as databaseDao:
-        existed = databaseDao.checkTableExisted('news_QR_code')
-    if not existed:
-        return create_news_table()
-    return dict(result='success')
-
-def check_fortune_table():
-    with DatabaseDao() as databaseDao:
-        existed = databaseDao.checkTableExisted('fortune')
-    if not existed:
-        return create_fortune_table()
+        if news:
+            existed = databaseDao.checkTableExisted('news_QR_code')
+            if not existed:
+                return create_news_table()
+        elif fortune:
+            existed = databaseDao.checkTableExisted('fortune')
+            if not existed:
+                return create_fortune_table()
     return dict(result='success')
 
 def crawler_schedule():
@@ -1305,6 +1212,8 @@ def crawler_schedule():
             and return_ptt["result"]=="success" and return_medium["result"]=="success" \
             and return_fortune["result"]=="success":
             return_msg["result"] = "success"
+        else:
+            return_msg['error'] = 'crawler schedule failed'
         return return_msg
     except:
         print("crawler execution fail")
@@ -1346,29 +1255,21 @@ def set_system_log(json_obj):
     return_msg["result"] = "success"
     return return_msg
         
-def expire_data_check(raw_time):
-    shutdown = 0
-    receive_obj = {}
-    try:
-        newpid = os.fork()
-        if newpid == 0: #child
-            shutdown = 1
-            receive_obj = expire_data_check_()
-            if receive_obj["result"] == "success":
-                "DO NOTHING"
-            else :
-                receive_obj["error"] = "expire_data_check : " + receive_obj["error"]
-                set_system_log(receive_obj)
-            os._exit(0)
-        else: #Parent
-            alarm_expire_data_check = raw_time + 1800.0
-    except:
-        receive_obj["result"] = "fail"
-        receive_obj["error"] = "fork1 error"
+def expire_data_check():
+    receive_obj = expire_data_check_()
+    if receive_obj["result"] == "success":
+        "DO NOTHING"
+    else :
+        receive_obj["error"] = "expire_data_check : {errorMsg}".format(errorMsg=receive_obj["error"])
         set_system_log(receive_obj)
-        alarm_expire_data_check = raw_time + 3.0
 
-    return alarm_expire_data_check,shutdown
+def do_crawler_schedule():
+    receive_obj = crawler_schedule()
+    if receive_obj["result"] == "success":
+        "DO NOTHING"
+    else :
+        receive_obj["error"] = "crawler_news : " + receive_obj["error"]
+        set_system_log(receive_obj)
 
 def main():
     just_startup = 1
@@ -1413,6 +1314,9 @@ def main():
     alarm_crawler_google_drive_img = raw_time + 13.0
     alarm_crawler_functions = raw_time + 15.0
 
+    check_expire_data_worker = Worker(job=expire_data_check,name='Check expired data')
+    crawler_schedule_worker = Worker(job=do_crawler_schedule,name='Crawler for news')
+
     #start scheduling
     while shutdown == 0:
         raw_time = time.time()
@@ -1434,8 +1338,11 @@ def main():
         
         #expire_data_check
         if raw_time >= alarm_expire_data_check:
-            print("#2 "+ time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
-            alarm_expire_data_check,shutdown = expire_data_check(raw_time)
+            fork_failed = check_expire_data_worker.do(timestamp=time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
+            if fork_failed:
+                alarm_expire_data_check += 3.0
+            else:
+                alarm_expire_data_check += 1800.0
         
         #set_schedule_log
         if raw_time >= alarm_set_schedule_log:
@@ -1621,25 +1528,11 @@ def main():
 
         #crawler
         if raw_time >= alarm_crawler_functions:
-            print("#9 "+ time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
-            try:
-                newpid = os.fork()
-                if newpid == 0: #child
-                    shutdown = 1
-                    receive_obj = crawler_schedule()
-                    if receive_obj["result"] == "success":
-                        "DO NOTHING"
-                    else :
-                        receive_obj["error"] = "crawler_news : " + receive_obj["error"]
-                        set_system_log(receive_obj)
-                    os._exit(0)
-                else: #Parent
-                    alarm_crawler_functions = raw_time + 3600.0
-            except:
-                receive_obj["result"] = "fail"
-                receive_obj["error"] = "fork7 error"
-                set_system_log(receive_obj)
-                alarm_crawler_functions = raw_time + 600.0
+            fork_failed = crawler_schedule_worker.do(time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
+            if fork_failed:
+                alarm_crawler_functions += 600.0
+            else:
+                alarm_crawler_functions += 3600.0
 
         #delay
         sleep(0.1)

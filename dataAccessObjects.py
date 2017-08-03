@@ -22,6 +22,35 @@ class DefaultDao():
             #TODO raise exception
             return None
 
+class DataManipulateDao(DefaultDao):
+    #TODO handle if derived class not assign dataName
+    def markExpired(self,targetId):
+        sql = 'UPDATE {tableName} SET {dataName}_is_expire=1 WHERE {dataName}_id="{targetId}"'.format(
+                dataName=self.dataName,targetId=targetId,tableName=self.tableName)
+        self.db.cmd(sql)
+        
+    def markDeleted(self,targetId,userId):
+        sql = 'UPDATE {tableName} SET {dataName}_is_delete=1,{dataName}_last_edit_user_id={userId} WHERE {dataName}_id="{targetId}"'.format(
+                dataName=self.dataName,targetId=targetId,userId=userId,tableName=self.tableName)
+        self.db.cmd(sql)
+        
+    def getExpiredIds(self):
+        sql = 'SELECT {dataName}_id FROM {tableName} '\
+                +'WHERE {dataName}_is_delete=0 and {dataName}_is_expire=0 and (TO_DAYS(NOW())>TO_DAYS({dataName}_end_date) '\
+                +'or (TO_DAYS(NOW())=TO_DAYS({dataName}_end_date) and TIME_TO_SEC(DATE_FORMAT(NOW(), "%H:%i:%s"))>TIME_TO_SEC({dataName}_end_time)))'
+        sql = sql.format(dataName=self.dataName,tableName=self.tableName)
+        Ids = self.db.query(sql)
+        return Ids
+
+    def generateNewId(self):
+        sql = 'SELECT {dataName}_id FROM {tableName} ORDER BY {dataName}_upload_time DESC LIMIT 1'.format(
+                dataName=self.dataName,tableName=self.tableName)
+        Id = self.db.query(sql)
+        if len(Id):
+            return "{prefix}{num:010d}".format(prefix=self.prefix,num=(int(Id[0][0][4:]) + 1))
+        else:
+            return "{prefix}0000000001".format(prefix=self.prefix)
+
 class UserDao(DefaultDao):
     def getUserId(self,userName=None,bluetoothId=None):
         sql = 'SELECT user_id FROM user WHERE '
@@ -55,6 +84,40 @@ class UserDao(DefaultDao):
         elif userName:
             sql += 'user_name = "{userName}"'.format(userName=userName)
         return self.queryOneValue(sql)
+
+    def checkUserExisted(self,userName):
+        sql = 'SELECT count(*) FROM user ' \
+            + 'WHERE user_name="{userName}"'.format(userName=userName)
+        return self.queryOneValue(sql)
+
+    def createNewUser(self,userName,userPassword):
+        #TODO modify this function in the future
+        cursor = self.db.cursor
+        sql = 'INSERT INTO user (user_name,user_password) VALUES (%s,%s)'
+        data = (userName,userPassword)
+        ret = cursor.execute(sql,data)
+        self.db.db.commit()
+
+    def updateUserData(self,userInfo):
+        sql = "UPDATE user SET "
+        if "bluetooth_id" in userInfo and userInfo["bluetooth_id"] is not None:
+            sql = sql + 'user_bluetooth_id="{id}", '.format(id=str(userInfo["bluetooth_id"]))
+        if "nickName" in userInfo and userInfo["nickName"] is not None:
+            sql = sql + 'user_nickname="{nickname}", '.format(nickname=str(userInfo["nickName"]))
+        if "birthday" in userInfo and userInfo["birthday"] is not None:
+            sql = sql + 'user_birthday="{birthday}", '.format(birthday=str(userInfo["birthday"]))
+        if "occupation" in userInfo and userInfo["occupation"] is not None:
+            sql = sql + "user_profession="
+            if userInfo["occupation"]=="bachelor":
+                sql = sql + "1, "
+            elif userInfo["occupation"]=="masterDr":
+                sql = sql + "2, "
+            elif userInfo["occupation"]=="faculty":
+                sql = sql + "3, "
+            else:
+                sql = sql + "0, "
+        sql = sql + 'user_level=50 WHERE user_name="{userName}"'.format(userName=str(userInfo["bluetooth_id"]))
+        self.db.cmd(sql)
 
 class ScheduleDao(DefaultDao):
     def getDisplayingSchedule(self):
@@ -98,8 +161,11 @@ class ScheduleDao(DefaultDao):
             +" WHERE sche_sn={scheSn}".format(scheSn=scheSn)
         self.db.cmd(sql)
 
-    def cleanSchedule(self):
-        sql = 'DELETE FROM schedule WHERE sche_is_used=0'
+    def cleanSchedule(self,scheSn=None):
+        if scheSn:
+            sql = "DELETE FROM schedule WHERE sche_sn={scheSn}".format(scheSn=scheSn)
+        else:
+            sql = 'DELETE FROM schedule WHERE sche_is_used=0'
         self.db.cmd(sql)
 
     def countUsedSchedule(self):
@@ -111,19 +177,68 @@ class ScheduleDao(DefaultDao):
             #TODO raise exception
             return None
 
-class ImageDao(DefaultDao):
-    def getExpiredIds(self):
-        sql = 'SELECT img_id FROM image_data '\
-                +'WHERE img_is_delete=0 and img_is_expire=0 and (TO_DAYS(NOW())>TO_DAYS(img_end_date) '\
-                +'or (TO_DAYS(NOW())=TO_DAYS(img_end_date) and TIME_TO_SEC(DATE_FORMAT(NOW(), "%H:%i:%s"))>TIME_TO_SEC(img_end_time)))'
-        Ids = self.db.query(sql)
-        return Ids
+    def getUndecidedScheduleSn(self):
+        sql = "SELECT sche_sn FROM schedule WHERE sche_id='sche0undecided' ORDER BY sche_sn ASC LIMIT 1"
+        return self.queryOneValue(sql)
 
     def markExpired(self,imgId, markOldImg=None):
         sql = 'UPDATE image_data SET img_is_expire=1 WHERE img_id="{imgId}"'.format(imgId=imgId)
         if markOldImg:
             sql += ' and img_is_expire=0 and img_is_delete=0'
+            
+    def insertUndecidedSchedule(self,targetId,displayTime,arrangeModeSn):
+        sql = "INSERT INTO schedule (sche_id, sche_target_id, sche_display_time, sche_arrange_mode)"\
+            +" VALUES ('sche0undecided','{targetId}',{displayTime},{arrangeModeSn})".format(
+            targetId=targetId,displayTime=displayTime,arrangeModeSn=arrangeModeSn)
         self.db.cmd(sql)
+
+    def findTextActivitySchedule(self,conditionAssigned,orderById,arrangeMode,arrangeCondition=None):
+        if conditionAssigned:
+            type_condition = ''
+            for idx,type_id in enumerate(arrangeCondition):
+                if idx == 0:
+                    type_condition += " type_id={type_id} ".format(type_id=type_id)
+                else:
+                    type_condition += " or type_id={type_id} ".format(type_id=type_id)
+        if arrangeMode in range(6):
+            sql = "SELECT text_id, text_display_time FROM text_data" \
+                +" WHERE text_is_delete=0 and text_is_expire=0 "\
+                +" and (TO_DAYS(NOW()) between TO_DAYS(text_start_date) and TO_DAYS(text_end_date)) " \
+                +" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(text_start_time) and TIME_TO_SEC(text_end_time))"
+            if conditionAssigned:
+                sql += " and ({type_condition}) ".format(type_condition=type_condition)
+            if orderById:
+                sql += " ORDER BY text_id ASC"
+        elif arrangeMode == 6:
+            sql = "SELECT a0.text_id, a0.text_display_time, a1.type_weight FROM " \
+                +" (SELECT text_id, type_id, text_display_time FROM text_data WHERE " \
+                +" text_is_delete=0 and text_is_expire=0 "\
+                +" and (TO_DAYS(NOW()) between TO_DAYS(text_start_date) and TO_DAYS(text_end_date)) " \
+                +" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(text_start_time) and TIME_TO_SEC(text_end_time))) AS a0 "\
+                +" LEFT JOIN (SELECT type_id, type_weight FROM data_type ) AS a1 "\
+                +" ON a0.type_id=a1.type_id ORDER BY a1.type_weight ASC"
+        elif arrangeMode == 7:
+            sql = "SELECT a0.text_id, a0.text_display_time, a1.type_weight FROM " \
+                +" (SELECT text_id, type_id, text_display_time FROM text_data WHERE "\
+                +" ({type_condition})".format(type_condition=type_condition)\
+                +" and text_is_delete=0 and text_is_expire=0 "\
+                +" and (TO_DAYS(NOW()) between TO_DAYS(text_start_date) and TO_DAYS(text_end_date)) " \
+                +" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(text_start_time) and TIME_TO_SEC(text_end_time))) AS a0 "\
+                +" LEFT JOIN (SELECT type_id, type_weight FROM data_type WHERE "\
+                +" ({type_condition})".format(type_condition=type_condition)\
+                +" ) AS a1 ON a0.type_id=a1.type_id ORDER BY a1.type_weight ASC"
+        ret = self.db.query(sql)
+        return ret
+
+class ImageDao(DataManipulateDao):
+    dataName = 'img'
+    tableName = 'image_data'
+    prefix = 'imge'
+    def markExpired(self,imgId):
+        super().markExpired(targetId=imgId)
+        
+    def markDeleted(self,imgId,userId):
+        super().markDeleted(targetId=imgId,userId=userId)
 
     def checkExpired(self,imgId):
         sql = 'SELECT count(*) FROM image_data WHERE img_id="{imgId}"'.format(imgId=imgId)\
@@ -156,14 +271,27 @@ class ImageDao(DefaultDao):
         sql = 'UPDATE image_data SET img_like_count=img_like_count+1 WHERE img_id="{targetId}"'.format(targetId=str(targetId))
         ret = self.db.cmd(sql)
 
-class TextDao(DefaultDao):
-    def getExpiredIds(self):
-        sql = ("SELECT text_id FROM text_data "\
-                +"WHERE text_is_delete=0 and text_is_expire=0 and ( TO_DAYS(NOW())>TO_DAYS(text_end_date) "\
-                +"or (TO_DAYS(NOW())=TO_DAYS(text_end_date) and TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s'))>TIME_TO_SEC(text_end_time)))") 
-        expiredIds = self.db.query(sql)
-        return expiredIds
+    def generateNewId(self):
+        return super().generateNewId()
 
+    def getImgIdData(self,imgId):
+        sql = 'SELECT user_id, type_id FROM image_data WHERE img_id="{imgId}"'.format(imgId=imgId)
+        ret = db.query(sql)
+        if len(ret) and len(ret[0]) == 2:
+            imgInfo = dict(userId=ret[0][0],typeId=ret[0][1])
+            return imgInfo
+        else:
+            #TODO raise exception
+            return None
+
+    def getImgSystemName(self,imgId):
+        sql = 'SELECT img_system_name FROM image_data WHERE img_id="{imgId}"'.format(imgId=imgId)
+        return self.queryOneValue(sql)
+
+class TextDao(DataManipulateDao):
+    dataName = 'text'
+    tableName = 'text_data'
+    prefix = 'text'
     def checkExpired(self,textId):
         sql = 'SELECT count(*) FROM text_data WHERE text_id="{textId}"'.format(textId=textId)\
                 +' and text_is_delete=0 and text_is_expire=0 '\
@@ -183,12 +311,22 @@ class TextDao(DefaultDao):
             return None
 
     def markExpired(self,textId):
-        sql = 'UPDATE text_data SET text_is_expire=1 WHERE text_id="{textId}"'.format(textId=textId)
-        self.db.cmd(sql)
+        super().markExpired(targetId=textId)
+
+    def markDeleted(self,textId,userId):
+        super().markDeleted(targetId=textId,userId=userId)
 
     def addLikeCount(self,targetId):
         sql = 'UPDATE text_data SET text_like_count=text_like_count+1 WHERE text_id="{targetId}"'.format(targetId=str(targetId))
-        ret = self.db.cmd(sql)
+        self.db.cmd(sql)
+
+    def getTextMeta(self,textId):
+        sql = 'select * from text_data where text_is_delete = 0 and text_id = "{textId}"'.format(textId=textId)
+        ret = self.db.query(sql)
+        return ret[0]
+
+    def generateNewId():
+        return super().generateNewId()
 
 class UserPreferDao(DefaultDao):
     def generateNewId(self):
@@ -226,6 +364,14 @@ class DataTypeDao(DefaultDao):
         sql = 'SELECT type_id FROM data_type WHERE type_name="{typeName}"'.format(typeName=typeName)
         return self.queryOneValue(sql)
 
+    def checkTypeExisted(self,typeName):
+        sql = 'SELECT COUNT(*) FROM data_type WHERE type_name="{typeName}"'.format(typeName=typeName)
+        return self.queryOneValue(sql)
+
+    def insertType(self,typeName):
+        sql = 'INSERT INTO data_type (type_name,type_dir) VALUES ("{typeName}","{typeName}/")'.format(typeName=typeName)
+        self.db.cmd(sql)
+
 class ArrangeModeDao(DefaultDao):
     def getArrangeMode(self):
         sql = 'SELECT armd_sn, armd_mode, armd_condition FROM arrange_mode WHERE armd_is_delete=0 and armd_is_expire=0 and '\
@@ -260,6 +406,18 @@ class FortuneDao(DefaultDao):
             #TODO check need to raise exception or not
             return None
 
+    def insertFortune(self,date,constellation,overall,love,career,wealth):
+        sql = 'INSERT INTO fortune '\
+            +' (`fortune_date`, `constellation`, `overall`, `love`, `career`, `wealth`)'\
+            +' VALUES ("{date}","{constellation}","{overall}","{love}","{career}","{wealth}")'.format(
+            date=date,constellation=constellation,overall=overall,love=love,career=career,wealth=wealth)
+        self.db.cmd(sql)
+        
+    def checkFortuneExisted(self,date,constellation):
+        sql = 'SELECT COUNT(*) FROM fortune WHERE fortune_date="{date}" AND constellation="{constellation}"'.format(
+                date=date,constellation=constellation)
+        return self.queryOneValue(sql)
+
 class DatabaseDao(DefaultDao):
     def checkTableExisted(self,tableName):
         sql = 'SELECT count(*) FROM information_schema.tables '\
@@ -267,6 +425,7 @@ class DatabaseDao(DefaultDao):
                 +'AND table_name ="{tableName}"'.format(tableName=tableName)
         existed = self.queryOneValue(sql)
         return True if existed else False
+
 class NewsQRCodeDao(DefaultDao):
     def getNews(self,preferStr):
         sql = 'SELECT * FROM ' \
@@ -279,3 +438,10 @@ class NewsQRCodeDao(DefaultDao):
         else:
             #TODO check need to raise exception or not
             return None
+
+    def insertNews(self,dataType,serialNumber,title):
+        sql = "INSERT INTO news_QR_code " \
+            +" (`data_type`, `serial_number`, `title`)" \
+            +" VALUES ({news_data_type},'{news_serial_number}','{news_title}')".format(
+            news_data_type=dataType,news_serial_number=serialNumber,news_title=title)
+        self.db.cmd(sql)
