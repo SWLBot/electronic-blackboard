@@ -687,9 +687,9 @@ def set_schedule_log(json_obj):
             
             #delete schedule
             for num1 in range(len(pure_result)):
-                sql = "DELETE FROM schedule WHERE sche_sn=" + str(pure_result[num1][0])
                 try:
-                    db.cmd(sql)
+                    with ScheduleDao() as scheduleDao:
+                        scheduleDao.cleanSchedule(scheSn=pure_result[num1][0])
                 except DB_Exception as e:
                     return_msg["error"] = e.args[1]
             if "error" in return_msg:
