@@ -119,8 +119,10 @@ class ImageDao(DefaultDao):
         Ids = self.db.query(sql)
         return Ids
 
-    def markExpired(self,imgId):
+    def markExpired(self,imgId, markOldImg=None):
         sql = 'UPDATE image_data SET img_is_expire=1 WHERE img_id="{imgId}"'.format(imgId=imgId)
+        if markOldImg:
+            sql += ' and img_is_expire=0 and img_is_delete=0'
         self.db.cmd(sql)
 
     def checkExpired(self,imgId):
@@ -130,10 +132,6 @@ class ImageDao(DefaultDao):
                 +' and (TIME_TO_SEC(DATE_FORMAT(NOW(), "%H:%i:%s")) between TIME_TO_SEC(img_start_time) and TIME_TO_SEC(img_end_time)) '
         ret = self.db.query(sql)
         return True if ret[0][0] == 0 else False
-
-    def markOldImg(self, imgId):
-        sql = 'UPDATE image_data SET img_is_expire=1 WHERE img_is_expire=0 and img_is_delete=0 and img_id="{imgId}"'.format(imgId=imgId)
-        self.db.cmd(sql)
 
     def getImgData(self,imgId):
         sql = 'select * from image_data where img_is_delete = 0 and img_id = "{imgId}"'.format(imgId=imgId)
