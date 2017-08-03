@@ -911,16 +911,8 @@ def upload_text_insert_db(json_obj):
             return_msg['result'] = receive_msg['error']
 
         #generate new id
-        sql = ("SELECT text_id FROM text_data ORDER BY text_upload_time DESC LIMIT 1")
-        pure_result = db.query(sql)
-        try:
-            text_id =  int(pure_result[0][0][4:]) + 1
-            text_id = "text" + "{0:010d}".format(text_id)
-        except:
-            text_id = "text0000000001"
-            #db.close()
-            #return_msg["error"] = "no basic image"
-            #return return_msg
+        with TextDao() as textDao:
+            text_id = textDao.generateNewId()
 
         if "invisible_title" in json_obj:
             invisible_title = json_obj["invisible_title"]
