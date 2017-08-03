@@ -10,7 +10,6 @@ from server_api import upload_text_insert_db
 from server_api import delete_image_or_text_data
 from server_api import get_credentials
 from server_api import get_upcoming_events
-from pprint import pprint
 from apiclient.http import MediaIoBaseDownload
 from apiclient import discovery
 from news_crawler.news_crawler import *
@@ -826,7 +825,6 @@ def crawler_cwb_img(json_obj):
             send_obj["display_time"] = 5
             send_obj["user_id"] = user_id
             receive_obj = upload_image_insert_db(send_obj)
-            #pprint(receive_obj)
             try:
                 if receive_obj["result"] == "success":
                     filepath = receive_obj["img_system_dir"]
