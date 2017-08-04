@@ -920,11 +920,11 @@ def upload_text_insert_db(json_obj):
             invisible_title = text_id
         
         #get file place
-        sql = ("SELECT type_dir FROM data_type WHERE type_id=" + str(type_id))
-        pure_result = db.query(sql)
+        with DataTypeDao() as dataTypeDao:
+            type_dir = dataTypeDao.getTypeDir(typeId=str(type_id))
         try:
             text_system_name = text_id + ".txt"
-            system_file_dir = os.path.join(server_dir, "static/"+str(pure_result[0][0]))
+            system_file_dir = os.path.join(server_dir, "static", str(type_dir))
             system_file_dir = os.path.join(system_file_dir, text_system_name)
         except:
             db.close()
