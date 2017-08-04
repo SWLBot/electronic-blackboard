@@ -467,10 +467,6 @@ def edit_schedule(json_obj):
             return_msg["error"] = "input parameter missing"
             return return_msg
 
-        #connect to mysql
-        db = mysql()
-        db.connect()
-
         for num0 in range(len(display_time_list)):
             target_id = target_id_list[num0]
             display_time = int(display_time_list[num0])
@@ -480,11 +476,11 @@ def edit_schedule(json_obj):
                 target_sn = scheduleDao.getDisplayingSchedule()
             if target_sn:
                 #check use update or insert
-                sql = ("SELECT sche_sn FROM schedule WHERE sche_sn="+str(target_sn+next_sn) +" and sche_id != 'sche0undecided'")
-                pure_result = db.query(sql)
-                if len(pure_result)>0:
+                with ScheduleDao() as scheduleDao:
+                    sche_sn = scheduleDao.getEditScheSn(scheSn)
+                if sche_sn:
                     with ScheduleDao() as scheduleDao:
-                        scheduleDao.updateEditSchedule(target_id,display_time,arrange_mode_sn,pure_result[0][0])
+                        scheduleDao.updateEditSchedule(target_id,display_time,arrange_mode_sn,sche_sn)
                 else:
                     with ScheduleDao() as scheduleDao:
                         scheduleDao.insertUndecidedSchedule(target_id,display_time,arrange_mode_sn)
@@ -494,7 +490,6 @@ def edit_schedule(json_obj):
                         with ScheduleDao() as scheduleDao:
                             scheduleDao.updateNewIdSchedule(new_id,sche_sn)
                     else :
-                        db.close()
                         return_msg["error"] = "may be another arrange.exe is working"
                         return return_msg
             else :
@@ -506,16 +501,13 @@ def edit_schedule(json_obj):
                     with ScheduleDao() as scheduleDao:
                         scheduleDao.updateNewIdSchedule(new_id,sche_sn)
                 else :
-                    db.close()
                     return_msg["error"] = "may be another arrange.exe is working"
                     return return_msg
             next_sn += 1
 
-        db.close()
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg
 
