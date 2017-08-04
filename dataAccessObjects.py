@@ -268,7 +268,7 @@ class ImageDao(DataManipulateDao):
 
     def addLikeCount(self,targetId):
         sql = 'UPDATE image_data SET img_like_count=img_like_count+1 WHERE img_id="{targetId}"'.format(targetId=str(targetId))
-        ret = self.db.cmd(sql)
+        self.db.cmd(sql)
 
     def generateNewId(self):
         return super().generateNewId()
