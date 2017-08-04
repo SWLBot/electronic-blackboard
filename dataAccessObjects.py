@@ -187,6 +187,10 @@ class ScheduleDao(DefaultDao):
             targetId=targetId,displayTime=displayTime,arrangeModeSn=arrangeModeSn)
         self.db.cmd(sql)
 
+    def updateNewIdSchedule(self,scheNewId,scheSn):
+        sql = "UPDATE schedule SET sche_id='{scheId}' WHERE sche_sn={scheSn}".format(scheId=scheNewId,scheSn=scheSn)
+        self.db.cmd(sql)
+
     def findTextActivitySchedule(self,conditionAssigned,orderById,arrangeMode,arrangeCondition=None):
         if conditionAssigned:
             type_condition = ''

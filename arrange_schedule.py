@@ -542,8 +542,8 @@ def edit_schedule(json_obj):
                         sche_sn = scheduleDao.getUndecidedScheduleSn()
                     if sche_sn:
                         new_id = "sche" + "{0:010d}".format(int(sche_sn))
-                        sql = ("UPDATE schedule SET sche_id='" + new_id + "' WHERE sche_sn="+str(sche_sn))
-                        db.cmd(sql)
+                        with ScheduleDao() as scheduleDao:
+                            scheduleDao.updateNewIdSchedule(new_id,sche_sn)
                     else :
                         db.close()
                         return_msg["error"] = "may be another arrange.exe is working"
@@ -552,11 +552,10 @@ def edit_schedule(json_obj):
                 with ScheduleDao() as scheduleDao:
                     scheduleDao.insertUndecidedSchedule(target_id,display_time,arrange_mode_sn)
                     sche_sn = scheduleDao.getUndecidedScheduleSn()
-                
                 if sche_sn:
                     new_id = "sche" + "{0:010d}".format(int(sche_sn))
-                    sql = ("UPDATE schedule SET sche_id='" + new_id + "' WHERE sche_sn="+str(sche_sn))
-                    db.cmd(sql)
+                    with ScheduleDao() as scheduleDao:
+                        scheduleDao.updateNewIdSchedule(new_id,sche_sn)
                 else :
                     db.close()
                     return_msg["error"] = "may be another arrange.exe is working"
@@ -603,8 +602,8 @@ def add_schedule(json_obj):
                 sche_sn = scheduleDao.getUndecidedScheduleSn()
             if sche_sn:
                 new_id = "sche" + "{0:010d}".format(int(sche_sn))
-                sql = ("UPDATE schedule SET sche_id='" + new_id + "' WHERE sche_sn="+str(sche_sn))
-                db.cmd(sql)
+                with ScheduleDao() as scheduleDao:
+                    scheduleDao.updateNewIdSchedule(new_id,sche_sn)
             else :
                 db.close()
                 return_msg["error"] = "may be another arrange.exe is working"
