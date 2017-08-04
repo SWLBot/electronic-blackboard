@@ -200,13 +200,13 @@ def find_text_acticity(json_obj):
             return_msg["error"] = "input parameter missing"
             return return_msg
 
-        #find images that may be schedule
+        #find texts that may be schedule
         orderById = ModeUtil.checkOrderById(arrange_mode)
 
         conditionAssigned = ModeUtil.checkConditionAssigned(arrange_mode)
 
-        with ScheduleDao() as scheduleDao:
-            pure_result=scheduleDao.findTextActivitySchedule(conditionAssigned,orderById,arrange_mode,arrangeCondition=arrange_condition)
+        with TextDao() as textDao:
+            pure_result= textDao.findActivities(conditionAssigned,orderById,arrange_mode,arrangeCondition=arrange_condition)
         #restruct results of query
         for result_row in pure_result:
             if len(result_row)==2:
@@ -260,62 +260,14 @@ def find_image_acticity(json_obj):
         except:
             return_msg["error"] = "input parameter missing"
             return return_msg
-
-        #connect to mysql
-        db = mysql()
-        db.connect()
         
         #find images that may be schedule
-        if arrange_mode in range(6):
-            orderById = ModeUtil.checkOrderById(arrange_mode)
+        orderById = ModeUtil.checkOrderById(arrange_mode)
 
-            conditionAssigned = ModeUtil.checkConditionAssigned(arrange_mode)
+        conditionAssigned = ModeUtil.checkConditionAssigned(arrange_mode)
 
-            sql = "SELECT img_id, img_display_time FROM image_data" \
-                +" WHERE img_is_delete=0 and img_is_expire=0 "\
-                +" and (TO_DAYS(NOW()) between TO_DAYS(img_start_date) and TO_DAYS(img_end_date)) " \
-                +" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(img_start_time) and TIME_TO_SEC(img_end_time)) "
-
-            # condtionAssigned select type_id in arrange_condition
-            if conditionAssigned:
-                type_condition = ''
-                for idx,type_id in enumerate(arrange_condition):
-                    if idx == 0:
-                        type_condition += " type_id={type_id} ".format(type_id=type_id)
-                    else:
-                        type_condition += " or type_id={type_id} ".format(type_id=type_id)
-                sql += " and ({type_condition}) ".format(type_condition=type_condition)
-
-            if orderById:
-                sql += " ORDER BY img_id ASC"
-        elif arrange_mode == 6:
-            sql = "SELECT a0.img_id, a0.img_display_time, a1.type_weight FROM " \
-                +" (SELECT img_id, type_id, img_display_time FROM image_data WHERE " \
-                +" img_is_delete=0 and img_is_expire=0 "\
-                +" and (TO_DAYS(NOW()) between TO_DAYS(img_start_date) and TO_DAYS(img_end_date)) " \
-                +" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(img_start_time) and TIME_TO_SEC(img_end_time))) AS a0 "\
-                +" LEFT JOIN (SELECT type_id, type_weight FROM data_type ) AS a1 "\
-                + " ON a0.type_id=a1.type_id ORDER BY a1.type_weight ASC"
-        elif arrange_mode == 7:
-            sql = "SELECT a0.img_id, a0.img_display_time, a1.type_weight FROM " \
-                +" (SELECT img_id, type_id, img_display_time FROM image_data WHERE ( "
-            for num1 in range(len(arrange_condition)):
-                if num1 == 0:
-                    sql = sql + " type_id=" + str(arrange_condition[num1]) + " "
-                else :
-                    sql = sql + " or type_id=" + str(arrange_condition[num1]) + " "
-            sql = sql + " ) and img_is_delete=0 and img_is_expire=0 "\
-                +" and (TO_DAYS(NOW()) between TO_DAYS(img_start_date) and TO_DAYS(img_end_date)) " \
-                +" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(img_start_time) and TIME_TO_SEC(img_end_time))) AS a0 "\
-                +" LEFT JOIN (SELECT type_id, type_weight FROM data_type WHERE ("
-            for num1 in range(len(arrange_condition)):
-                if num1 == 0:
-                    sql = sql + " type_id=" + str(arrange_condition[num1]) + " "
-                else :
-                    sql = sql + " or type_id=" + str(arrange_condition[num1]) + " "
-            sql = sql + ")) AS a1 ON a0.type_id=a1.type_id ORDER BY a1.type_weight ASC"
-        
-        pure_result = db.query(sql)
+        with ImageDao() as imageDao:
+            pure_result= imageDao.findActivities(conditionAssigned,orderById,arrange_mode,arrangeCondition=arrange_condition)
         #restruct results of query
         for result_row in pure_result:
             if len(result_row)==2:
@@ -348,12 +300,9 @@ def find_image_acticity(json_obj):
         #reshape deal result
         return_msg["ans_list"] = deal_result
         
-        
-        db.close()  
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg
 
