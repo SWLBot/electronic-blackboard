@@ -320,7 +320,7 @@ class TextDao(DataManipulateDao):
         ret = self.db.query(sql)
         return ret[0]
 
-    def generateNewId():
+    def generateNewId(self):
         return super().generateNewId()
 
 class UserPreferDao(DefaultDao):
