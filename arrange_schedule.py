@@ -711,8 +711,8 @@ def delete_old_cwb_img(db,server_dir,user_id):
 
 def mark_old_cwb_img(db,error_list_id):
     for num2 in range(len(error_list_id)):
-        sql = "UPDATE image_data SET img_is_expire=1 WHERE img_is_expire=0 and img_is_delete=0 and img_id='" + str(error_list_id[num2]) + "'" 
-        db.cmd(sql)
+        with ImageDao() as imageDao:
+            imageDao.markExpired(imgId = str(error_list_id[num2]),markOldData = True)
 
 #
 def crawler_cwb_img(json_obj):
