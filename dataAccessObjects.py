@@ -315,6 +315,11 @@ class TextDao(DataManipulateDao):
             #TODO raise exception
             return None
 
+    def checkExisted(self,enevtId):
+        sql = 'SELECT COUNT(*) from text_data where text_invisible_title="{eventId}"}'.format(
+            eventId=eventId)
+        return self.queryOneValue(sql)
+
     def markExpired(self,textId):
         super().markExpired(targetId=textId)
 
