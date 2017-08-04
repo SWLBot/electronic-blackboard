@@ -161,6 +161,11 @@ class ScheduleDao(DefaultDao):
             +" WHERE sche_sn={scheSn}".format(scheSn=scheSn)
         self.db.cmd(sql)
 
+    def getUsedSchedule(self,limitCount):
+        sql = "SELECT * FROM schedule WHERE sche_is_used=1 ORDER BY sche_sn ASC LIMIT {limitCount}".format(
+            limitCount=limitCount)
+        return self.db.query(sql)
+
     def cleanSchedule(self,scheSn=None):
         if scheSn:
             sql = "DELETE FROM schedule WHERE sche_sn={scheSn}".format(scheSn=scheSn)
