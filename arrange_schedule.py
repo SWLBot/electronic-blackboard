@@ -588,10 +588,6 @@ def set_schedule_log(json_obj):
         except:
             return_msg["error"] = "input parameter missing"
             return return_msg
-
-        #connect to mysql
-        db = mysql()
-        db.connect()
         
         with ScheduleDao() as scheduleDao:
             is_used_count = scheduleDao.countUsedSchedule()
@@ -599,8 +595,8 @@ def set_schedule_log(json_obj):
         #if log > max_is_used then clean up
         if is_used_count > max_is_used:
             #get schedule
-            sql = ("SELECT * FROM schedule WHERE sche_is_used=1 ORDER BY sche_sn ASC LIMIT " + str(is_used_count - max_is_used))
-            pure_result = db.query(sql)
+            with ScheduleDao() as scheduleDao:
+                pure_result = scheduleDao.getToCleanSchedule(limitCount=str(is_used_count - max_is_used))
 
             #generate log
             date_now = date.today()
@@ -621,7 +617,6 @@ def set_schedule_log(json_obj):
                     file_pointer.write(write_str)
                 file_pointer.close()
             except:
-                db.close()
                 return_msg["error"] = "generate log error"
                 return return_msg
             
@@ -633,14 +628,11 @@ def set_schedule_log(json_obj):
                 except DB_Exception as e:
                     return_msg["error"] = e.args[1]
             if "error" in return_msg:
-                db.close()
                 return return_msg
         
-        db.close()
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg
 
@@ -711,8 +703,8 @@ def delete_old_cwb_img(db,server_dir,user_id):
 
 def mark_old_cwb_img(db,error_list_id):
     for num2 in range(len(error_list_id)):
-        sql = "UPDATE image_data SET img_is_expire=1 WHERE img_is_expire=0 and img_is_delete=0 and img_id='" + str(error_list_id[num2]) + "'" 
-        db.cmd(sql)
+        with ImageDao() as imageDao:
+            imageDao.markExpired(imgId = str(error_list_id[num2]),markOldData = True)
 
 #
 def crawler_cwb_img(json_obj):

@@ -24,9 +24,12 @@ class DefaultDao():
 
 class DataManipulateDao(DefaultDao):
     #TODO handle if derived class not assign dataName
-    def markExpired(self,targetId):
+    def markExpired(self,targetId,markOldData=None):
         sql = 'UPDATE {tableName} SET {dataName}_is_expire=1 WHERE {dataName}_id="{targetId}"'.format(
                 dataName=self.dataName,targetId=targetId,tableName=self.tableName)
+        if markOldData:
+            sql += ' and {dataName}_is_expire=0 and {dataName}_is_delete=0'.format(
+                dataName=self.dataName)
         self.db.cmd(sql)
         
     def markDeleted(self,targetId,userId):
@@ -200,6 +203,11 @@ class ScheduleDao(DefaultDao):
             +"sche_is_used=0, sche_is_artificial_edit=0 "\
             +" WHERE sche_sn={scheSn}".format(scheSn=scheSn)
         self.db.cmd(sql)
+
+    def getToCleanSchedule(self,limitCount):
+        sql = "SELECT * FROM schedule WHERE sche_is_used=1 ORDER BY sche_sn ASC LIMIT {limitCount}".format(
+            limitCount=limitCount)
+        return self.db.query(sql)
 
     def cleanSchedule(self,scheSn=None):
         if scheSn:
