@@ -181,6 +181,10 @@ class ScheduleDao(DefaultDao):
         sql = "SELECT sche_sn FROM schedule WHERE sche_id='sche0undecided' ORDER BY sche_sn ASC LIMIT 1"
         return self.queryOneValue(sql)
 
+    def getEditScheSn(self,scheSn):
+        sql = 'SELECT sche_sn FROM schedule WHERE sche_sn={scheSn} and sche_id != "sche0undecided"'.format(scheSn=scheSn)
+        return self.queryOneValue(sql)
+
     def insertUndecidedSchedule(self,targetId,displayTime,arrangeModeSn):
         sql = "INSERT INTO schedule (sche_id, sche_target_id, sche_display_time, sche_arrange_mode)"\
             +" VALUES ('sche0undecided','{targetId}',{displayTime},{arrangeModeSn})".format(
