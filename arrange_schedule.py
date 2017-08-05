@@ -694,12 +694,12 @@ def find_cwb_type_id(db):
 def delete_old_cwb_img(db,server_dir,user_id):
     send_obj = {}
     error_list_id = []
-    sql = "SELECT img_id FROM image_data WHERE img_is_delete=0 and img_file_name like 'CV1_TW_3600_%'" 
-    pure_result = db.query(sql)
-    for num2 in range(len(pure_result)):
+    with ImageDao() as imageDao:
+        Ids=imageDao.getCwbImgIds()
+    for num2 in range(len(Ids)):
         try:
             send_obj["server_dir"] = server_dir
-            send_obj["target_id"] = str(pure_result[num2][0])
+            send_obj["target_id"] = str(Ids[num2][0])
             send_obj["user_id"] = user_id
             receive_obj = delete_image_or_text_data(send_obj)
             if receive_obj["result"] == "fail":

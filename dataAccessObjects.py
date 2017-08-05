@@ -293,6 +293,11 @@ class ImageDao(DataManipulateDao):
         sql = 'SELECT img_system_name FROM image_data WHERE img_id="{imgId}"'.format(imgId=imgId)
         return self.queryOneValue(sql)
 
+    def getCwbImgIds(self):
+        sql = "SELECT img_id FROM image_data WHERE img_is_delete=0 and img_file_name like 'CV1_TW_3600_%'"
+        Ids = self.db.query(sql)
+        return Ids
+
 class TextDao(DataManipulateDao):
     dataName = 'text'
     tableName = 'text_data'
