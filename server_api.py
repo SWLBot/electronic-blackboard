@@ -787,7 +787,7 @@ def edit_image_data(json_obj):
         else :
             #get img_system_name
             with ImageDao() as imageDao:
-                img_sys_name = imageDao.getImgSystemName(imgId=str(img_id))
+                img_sys_name = imageDao.getSystemName(Id=str(img_id))
             if img_sys_name: 
                 old_dir = img_sys_name
                 new_dir = img_sys_name
@@ -1016,14 +1016,14 @@ def edit_text_data(json_obj):
         old_dir = ""
         new_dir = ""
         #get text_system_name
-        sql = ("SELECT text_system_name FROM text_data WHERE text_id='" + text_id + "'")
-        pure_result = db.query(sql)
+        with TextDao() as textDao:
+            text_sys_name = textDao.getSystemName(Id=str(text_id))
         try: 
-            old_dir = pure_result[0][0]
-            new_dir = pure_result[0][0]
+            old_dir = text_sys_name
+            new_dir = text_sys_name
         except:
             db.close()
-            return_msg["error"] = "no such text id : " + text_id
+            return_msg["error"] = "no such text id : {text_id}".format(text_id=text_id)
             return return_msg
         
         #get old text type dir
