@@ -450,3 +450,7 @@ class NewsQRCodeDao(DefaultDao):
             +" VALUES ({news_data_type},'{news_serial_number}','{news_title}')".format(
             news_data_type=dataType,news_serial_number=serialNumber,news_title=title)
         self.db.cmd(sql)
+
+    def checkNewsExisted(self,serialNumber):
+        sql = "SELECT COUNT(*) FROM news_QR_code WHERE serial_number = '{serialNumber}'".format(serialNumber=serialNumber)
+        return self.queryOneValue(sql)

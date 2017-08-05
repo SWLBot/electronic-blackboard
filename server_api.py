@@ -1389,21 +1389,16 @@ def news_insert_db(json_obj):
             return_msg["error"] = "input parameter missing"
             return return_msg
 
-        #insert news data
-        db = mysql()
-        db.connect()
-        #check 
-        sql = "SELECT COUNT(*) FROM news_QR_code WHERE serial_number = \""+ news_serial_number+"\""
-        check = db.query(sql)
+        with NewsQRCodeDao() as newsQRCodeDao:
+            exist = newsQRCodeDao.checkNewsExisted(news_serial_number)
 
-        if check[0][0] == 0:
+        if not exist:
             with NewsQRCodeDao() as newsQRCodeDao:
                 newsQRCodeDao.insertNews(news_data_type,news_serial_number,news_title)
-        db.close()
+
         return_msg["result"] = "success"
 
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg
 
