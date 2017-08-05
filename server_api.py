@@ -769,7 +769,7 @@ def edit_image_data(json_obj):
                 return return_msg
             #check self image
             with ImageDao() as imageDao:
-                imgInfo = imageDao.getImgCheck(imgId=str(img_id))
+                imgInfo = imageDao.getIdData(Id=str(img_id))
             try:
                 if imgInfo["userId"] != user_id and user_level < user_level_high_bound:
                     return_msg["error"] = "can not modify other user image "
@@ -1000,17 +1000,17 @@ def edit_text_data(json_obj):
                 return_msg["error"] = "user right is too low"
                 return return_msg
             #check self text
-            sql = ("SELECT user_id, type_id FROM text_data WHERE text_id='" + text_id + "'")
-            pure_result = db.query(sql)
+            with TextDao() as textDao:
+                textInfo = textDao.getIdData(Id=str(text_id))
             try:
-                if pure_result[0][0] != user_id and user_level < user_level_high_bound:
+                if textInfo["userId"] != user_id and user_level < user_level_high_bound:
                     db.close()
                     return_msg["error"] = "can not modify other user text"
                     return return_msg
-                text_type_id = int(pure_result[0][1])
+                text_type_id = int(textInfo["typeId"])
             except:
                 db.close()
-                return_msg["error"] = "no such text id : " + text_id
+                return_msg["error"] = "no such text id : {text_id}".format(text_id=text_id)
                 return return_msg
         
         old_dir = ""

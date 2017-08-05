@@ -91,6 +91,17 @@ class DataManipulateDao(DefaultDao):
         else:
             return "{prefix}0000000001".format(prefix=self.prefix)
 
+    def getIdData(self,Id):
+        sql = 'SELECT user_id, type_id FROM {tableName} WHERE {dataName}_id="{Id}"'.format(
+                tableName=self.tableName,dataName=self.dataName,Id=Id)
+        ret = db.query(sql)
+        if len(ret) and len(ret[0]) == 2:
+            info = dict(userId=ret[0][0],typeId=ret[0][1])
+            return info
+        else:
+            #TODO raise exception
+            return None
+
 class UserDao(DefaultDao):
     def getUserId(self,userName=None,bluetoothId=None):
         sql = 'SELECT user_id FROM user WHERE '
@@ -279,15 +290,8 @@ class ImageDao(DataManipulateDao):
     def generateNewId(self):
         return super().generateNewId()
 
-    def getImgIdData(self,imgId):
-        sql = 'SELECT user_id, type_id FROM image_data WHERE img_id="{imgId}"'.format(imgId=imgId)
-        ret = db.query(sql)
-        if len(ret) and len(ret[0]) == 2:
-            imgInfo = dict(userId=ret[0][0],typeId=ret[0][1])
-            return imgInfo
-        else:
-            #TODO raise exception
-            return None
+    def getIdData(self,Id):
+        super().getIdData(Id=Id)
 
     def getImgSystemName(self,imgId):
         sql = 'SELECT img_system_name FROM image_data WHERE img_id="{imgId}"'.format(imgId=imgId)
@@ -332,6 +336,9 @@ class TextDao(DataManipulateDao):
 
     def generateNewId(self):
         return super().generateNewId()
+
+    def getIdData(self,Id):
+        super().getIdData(Id=Id)
 
 class UserPreferDao(DefaultDao):
     def generateNewId(self):
