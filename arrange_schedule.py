@@ -529,10 +529,6 @@ def add_schedule(json_obj):
             return_msg["error"] = "input parameter missing"
             return return_msg
 
-        #connect to mysql
-        db = mysql()
-        db.connect()
-
         for num0 in range(len(display_time_list)):
             target_id = target_id_list[num0]
             display_time = int(display_time_list[num0])
@@ -546,15 +542,12 @@ def add_schedule(json_obj):
                 with ScheduleDao() as scheduleDao:
                     scheduleDao.updateNewIdSchedule(new_id,sche_sn)
             else :
-                db.close()
                 return_msg["error"] = "may be another arrange.exe is working"
                 return return_msg
 
-        db.close()
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg
 
