@@ -245,6 +245,11 @@ class ImageDao(DataManipulateDao):
     def markDeleted(self,imgId,userId):
         super().markDeleted(targetId=imgId,userId=userId)
 
+    def checkExisted(self,typeId,fileName):
+        sql = 'SELECT COUNT(*) FROM image_data WHERE img_is_expire=0 and img_is_delete=0 '\
+                +'and type_id={typeId} and img_file_name="{fileName}"'.format(typeId=typeId,fileName=fileName)
+        return self.queryOneValue(sql)
+
     def checkExpired(self,imgId):
         sql = 'SELECT count(*) FROM image_data WHERE img_id="{imgId}"'.format(imgId=imgId)\
                 +' and img_is_delete=0 and img_is_expire=0 '\

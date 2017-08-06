@@ -904,16 +904,12 @@ def merge_files_and_days(days_limit, drive_file):
                 break
     return drive_file
 
-def check_drive_img_exist(db, data_type, file_name):
-    sql = "SELECT COUNT(*) FROM image_data WHERE img_is_expire=0 and img_is_delete=0 "
-    sql = sql + "and type_id={data_type} and img_file_name='{file_name}'".format(data_type=data_type, file_name=file_name)
-    pure_result = db.query(sql)
-    return pure_result[0][0]
+def check_drive_img_exist(data_type, file_name):
+    with ImageDao as imageDao:
+        return imageDao.checkExisted(typeId=data_type,fileName=file_name)
 
 def save_google_drive_file(service, json_obj):
     try:
-        db = mysql()
-        db.connect()
         return_msg={}
         return_msg['result'] = 'fail'
         for item in json_obj['files']:
@@ -921,7 +917,7 @@ def save_google_drive_file(service, json_obj):
             download_file_place = os.path.join(json_obj['server_dir'],'static','img',file_name)
             
             #check if file is existed
-            if check_drive_img_exist(db, json_obj['data_type'], file_name):
+            if check_drive_img_exist(json_obj['data_type'], file_name):
                 continue
             
             #download files
@@ -955,18 +951,14 @@ def save_google_drive_file(service, json_obj):
                     im.thumbnail((100,100))
                     im.save(thumbnail_path)
                 else:
-                    db.close()
                     return_msg = receive_obj
                     return return_msg
             except:
-                db.close()
                 return_msg["error"] = "save thumbnail image fail"
                 return return_msg
-        db.close()
         return_msg['result'] = 'success'
         return return_msg
     except Exception as e:
-        db.close()
         return_msg["error"] = str(e)
         return return_msg
 
