@@ -1238,19 +1238,13 @@ def change_password(json_obj):
         except:
             return_msg["error"] = "input parameter missing"
             return return_msg
-
-        #connect to mysql
-        db = mysql()
-        db.connect()
         
         #get user_id 
         user_name = user_name.decode('utf-8')
         user_id  = get_user_id(user_name)
         if type(user_id) == type(dict()):
-            db.close()
             return_msg["error"] = "no such user name"
             return return_msg
-            
 
         #check user
         with UserDao() as userDao:
@@ -1261,26 +1255,20 @@ def change_password(json_obj):
             if bcrypt.checkpw(old_password.encode('utf-8'),hashed_key):
                 # old password correct
                 hashed_key = bcrypt.hashpw(new_password.encode('utf-8'),bcrypt.gensalt())
-                sql = "UPDATE user SET user_password=" + str(hashed_key)[1:] + " WHERE user_id=" + str(user_id)
-                db.cmd(sql)
+                with UserDao() as userDao:
+                    userDao.updatePassword(hashed_key=str(hashed_key)[1:],userId=str(user_id))
             else:
-                db.close()
                 return_msg["error"] = "old password incorrect"
                 return return_msg
         except:
-            db.close()
             return_msg["error"] = "no such user id : " + str(user_id)
             return return_msg
-        
-        db.close()
 
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg
-
 
 def read_text_data(text_id):
     try:

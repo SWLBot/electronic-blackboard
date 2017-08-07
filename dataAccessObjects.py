@@ -159,6 +159,11 @@ class UserDao(DefaultDao):
         sql = sql + 'user_level=50 WHERE user_name="{userName}"'.format(userName=str(userInfo["bluetooth_id"]))
         self.db.cmd(sql)
 
+    def updatePassword(self,hashedKey,userId):
+        sql = 'UPDATE user SET user_password="{hashedKey}" WHERE user_id={userId}'.format(
+                hashedKey=hashedKey,userId=userId)
+        self.db.cmd(sql)
+
 class ScheduleDao(DefaultDao):
     def getDisplayingSchedule(self):
         sql = 'SELECT sche_sn FROM schedule WHERE sche_is_used=0 ORDER BY sche_sn ASC LIMIT 1'
