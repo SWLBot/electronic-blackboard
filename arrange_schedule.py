@@ -200,13 +200,13 @@ def find_text_acticity(json_obj):
             return_msg["error"] = "input parameter missing"
             return return_msg
 
-        #find images that may be schedule
+        #find texts that may be schedule
         orderById = ModeUtil.checkOrderById(arrange_mode)
 
         conditionAssigned = ModeUtil.checkConditionAssigned(arrange_mode)
 
-        with ScheduleDao() as scheduleDao:
-            pure_result=scheduleDao.findTextActivitySchedule(conditionAssigned,orderById,arrange_mode,arrangeCondition=arrange_condition)
+        with TextDao() as textDao:
+            pure_result= textDao.findActivities(conditionAssigned,orderById,arrange_mode,arrangeCondition=arrange_condition)
         #restruct results of query
         for result_row in pure_result:
             if len(result_row)==2:
@@ -260,62 +260,14 @@ def find_image_acticity(json_obj):
         except:
             return_msg["error"] = "input parameter missing"
             return return_msg
-
-        #connect to mysql
-        db = mysql()
-        db.connect()
         
         #find images that may be schedule
-        if arrange_mode in range(6):
-            orderById = ModeUtil.checkOrderById(arrange_mode)
+        orderById = ModeUtil.checkOrderById(arrange_mode)
 
-            conditionAssigned = ModeUtil.checkConditionAssigned(arrange_mode)
+        conditionAssigned = ModeUtil.checkConditionAssigned(arrange_mode)
 
-            sql = "SELECT img_id, img_display_time FROM image_data" \
-                +" WHERE img_is_delete=0 and img_is_expire=0 "\
-                +" and (TO_DAYS(NOW()) between TO_DAYS(img_start_date) and TO_DAYS(img_end_date)) " \
-                +" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(img_start_time) and TIME_TO_SEC(img_end_time)) "
-
-            # condtionAssigned select type_id in arrange_condition
-            if conditionAssigned:
-                type_condition = ''
-                for idx,type_id in enumerate(arrange_condition):
-                    if idx == 0:
-                        type_condition += " type_id={type_id} ".format(type_id=type_id)
-                    else:
-                        type_condition += " or type_id={type_id} ".format(type_id=type_id)
-                sql += " and ({type_condition}) ".format(type_condition=type_condition)
-
-            if orderById:
-                sql += " ORDER BY img_id ASC"
-        elif arrange_mode == 6:
-            sql = "SELECT a0.img_id, a0.img_display_time, a1.type_weight FROM " \
-                +" (SELECT img_id, type_id, img_display_time FROM image_data WHERE " \
-                +" img_is_delete=0 and img_is_expire=0 "\
-                +" and (TO_DAYS(NOW()) between TO_DAYS(img_start_date) and TO_DAYS(img_end_date)) " \
-                +" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(img_start_time) and TIME_TO_SEC(img_end_time))) AS a0 "\
-                +" LEFT JOIN (SELECT type_id, type_weight FROM data_type ) AS a1 "\
-                + " ON a0.type_id=a1.type_id ORDER BY a1.type_weight ASC"
-        elif arrange_mode == 7:
-            sql = "SELECT a0.img_id, a0.img_display_time, a1.type_weight FROM " \
-                +" (SELECT img_id, type_id, img_display_time FROM image_data WHERE ( "
-            for num1 in range(len(arrange_condition)):
-                if num1 == 0:
-                    sql = sql + " type_id=" + str(arrange_condition[num1]) + " "
-                else :
-                    sql = sql + " or type_id=" + str(arrange_condition[num1]) + " "
-            sql = sql + " ) and img_is_delete=0 and img_is_expire=0 "\
-                +" and (TO_DAYS(NOW()) between TO_DAYS(img_start_date) and TO_DAYS(img_end_date)) " \
-                +" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC(img_start_time) and TIME_TO_SEC(img_end_time))) AS a0 "\
-                +" LEFT JOIN (SELECT type_id, type_weight FROM data_type WHERE ("
-            for num1 in range(len(arrange_condition)):
-                if num1 == 0:
-                    sql = sql + " type_id=" + str(arrange_condition[num1]) + " "
-                else :
-                    sql = sql + " or type_id=" + str(arrange_condition[num1]) + " "
-            sql = sql + ")) AS a1 ON a0.type_id=a1.type_id ORDER BY a1.type_weight ASC"
-        
-        pure_result = db.query(sql)
+        with ImageDao() as imageDao:
+            pure_result= imageDao.findActivities(conditionAssigned,orderById,arrange_mode,arrangeCondition=arrange_condition)
         #restruct results of query
         for result_row in pure_result:
             if len(result_row)==2:
@@ -348,12 +300,9 @@ def find_image_acticity(json_obj):
         #reshape deal result
         return_msg["ans_list"] = deal_result
         
-        
-        db.close()  
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg
 
@@ -518,10 +467,6 @@ def edit_schedule(json_obj):
             return_msg["error"] = "input parameter missing"
             return return_msg
 
-        #connect to mysql
-        db = mysql()
-        db.connect()
-
         for num0 in range(len(display_time_list)):
             target_id = target_id_list[num0]
             display_time = int(display_time_list[num0])
@@ -531,43 +476,38 @@ def edit_schedule(json_obj):
                 target_sn = scheduleDao.getDisplayingSchedule()
             if target_sn:
                 #check use update or insert
-                sql = ("SELECT sche_sn FROM schedule WHERE sche_sn="+str(target_sn+next_sn) +" and sche_id != 'sche0undecided'")
-                pure_result = db.query(sql)
-                if len(pure_result)>0:
+                with ScheduleDao() as scheduleDao:
+                    sche_sn = scheduleDao.getEditScheSn(scheSn)
+                if sche_sn:
                     with ScheduleDao() as scheduleDao:
-                        scheduleDao.updateEditSchedule(target_id,display_time,arrange_mode_sn,pure_result[0][0])
+                        scheduleDao.updateEditSchedule(target_id,display_time,arrange_mode_sn,sche_sn)
                 else:
                     with ScheduleDao() as scheduleDao:
                         scheduleDao.insertUndecidedSchedule(target_id,display_time,arrange_mode_sn)
                         sche_sn = scheduleDao.getUndecidedScheduleSn()
                     if sche_sn:
                         new_id = "sche" + "{0:010d}".format(int(sche_sn))
-                        sql = ("UPDATE schedule SET sche_id='" + new_id + "' WHERE sche_sn="+str(sche_sn))
-                        db.cmd(sql)
+                        with ScheduleDao() as scheduleDao:
+                            scheduleDao.updateNewIdSchedule(new_id,sche_sn)
                     else :
-                        db.close()
                         return_msg["error"] = "may be another arrange.exe is working"
                         return return_msg
             else :
                 with ScheduleDao() as scheduleDao:
                     scheduleDao.insertUndecidedSchedule(target_id,display_time,arrange_mode_sn)
                     sche_sn = scheduleDao.getUndecidedScheduleSn()
-                
                 if sche_sn:
                     new_id = "sche" + "{0:010d}".format(int(sche_sn))
-                    sql = ("UPDATE schedule SET sche_id='" + new_id + "' WHERE sche_sn="+str(sche_sn))
-                    db.cmd(sql)
+                    with ScheduleDao() as scheduleDao:
+                        scheduleDao.updateNewIdSchedule(new_id,sche_sn)
                 else :
-                    db.close()
                     return_msg["error"] = "may be another arrange.exe is working"
                     return return_msg
             next_sn += 1
 
-        db.close()
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg
 
@@ -589,10 +529,6 @@ def add_schedule(json_obj):
             return_msg["error"] = "input parameter missing"
             return return_msg
 
-        #connect to mysql
-        db = mysql()
-        db.connect()
-
         for num0 in range(len(display_time_list)):
             target_id = target_id_list[num0]
             display_time = int(display_time_list[num0])
@@ -603,18 +539,15 @@ def add_schedule(json_obj):
                 sche_sn = scheduleDao.getUndecidedScheduleSn()
             if sche_sn:
                 new_id = "sche" + "{0:010d}".format(int(sche_sn))
-                sql = ("UPDATE schedule SET sche_id='" + new_id + "' WHERE sche_sn="+str(sche_sn))
-                db.cmd(sql)
+                with ScheduleDao() as scheduleDao:
+                    scheduleDao.updateNewIdSchedule(new_id,sche_sn)
             else :
-                db.close()
                 return_msg["error"] = "may be another arrange.exe is working"
                 return return_msg
 
-        db.close()
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg
 
@@ -754,12 +687,12 @@ def find_cwb_type_id(db):
 def delete_old_cwb_img(db,server_dir,user_id):
     send_obj = {}
     error_list_id = []
-    sql = "SELECT img_id FROM image_data WHERE img_is_delete=0 and img_file_name like 'CV1_TW_3600_%'" 
-    pure_result = db.query(sql)
-    for num2 in range(len(pure_result)):
+    with ImageDao() as imageDao:
+        Ids=imageDao.getCwbImgIds()
+    for num2 in range(len(Ids)):
         try:
             send_obj["server_dir"] = server_dir
-            send_obj["target_id"] = str(pure_result[num2][0])
+            send_obj["target_id"] = str(Ids[num2][0])
             send_obj["user_id"] = user_id
             receive_obj = delete_image_or_text_data(send_obj)
             if receive_obj["result"] == "fail":
@@ -971,16 +904,12 @@ def merge_files_and_days(days_limit, drive_file):
                 break
     return drive_file
 
-def check_drive_img_exist(db, data_type, file_name):
-    sql = "SELECT COUNT(*) FROM image_data WHERE img_is_expire=0 and img_is_delete=0 "
-    sql = sql + "and type_id={data_type} and img_file_name='{file_name}'".format(data_type=data_type, file_name=file_name)
-    pure_result = db.query(sql)
-    return pure_result[0][0]
+def check_drive_img_exist(data_type, file_name):
+    with ImageDao as imageDao:
+        return imageDao.checkExisted(typeId=data_type,fileName=file_name)
 
 def save_google_drive_file(service, json_obj):
     try:
-        db = mysql()
-        db.connect()
         return_msg={}
         return_msg['result'] = 'fail'
         for item in json_obj['files']:
@@ -988,7 +917,7 @@ def save_google_drive_file(service, json_obj):
             download_file_place = os.path.join(json_obj['server_dir'],'static','img',file_name)
             
             #check if file is existed
-            if check_drive_img_exist(db, json_obj['data_type'], file_name):
+            if check_drive_img_exist(json_obj['data_type'], file_name):
                 continue
             
             #download files
@@ -1022,18 +951,14 @@ def save_google_drive_file(service, json_obj):
                     im.thumbnail((100,100))
                     im.save(thumbnail_path)
                 else:
-                    db.close()
                     return_msg = receive_obj
                     return return_msg
             except:
-                db.close()
                 return_msg["error"] = "save thumbnail image fail"
                 return return_msg
-        db.close()
         return_msg['result'] = 'success'
         return return_msg
     except Exception as e:
-        db.close()
         return_msg["error"] = str(e)
         return return_msg
 

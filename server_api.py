@@ -653,7 +653,7 @@ def upload_image_insert_db(json_obj):
         with DataTypeDao() as dataTypeDao:
             type_dir = dataTypeDao.getTypeDir(typeId=str(type_id))
         try:
-            img_new_file_dir = os.path.join(server_dir, "static/{type_dir}".format(type_dir=type_dir))
+            img_new_file_dir = os.path.join(server_dir, "static",type_dir)
         except:
             return_msg["error"] = "no such type id : " + str(type_id)
             return return_msg
@@ -803,8 +803,8 @@ def edit_image_data(json_obj):
                 "DO NOTHING"
             else :
                 try:
-                    old_dir = os.path.join(server_dir,"static/"+old_dir)
-                    new_dir = os.path.join(server_dir,"static/"+new_dir)
+                    old_dir = os.path.join(server_dir,"static",old_dir)
+                    new_dir = os.path.join(server_dir,"static",new_dir)
                     copyfile(old_dir, new_dir)
                     if os.path.isfile(old_dir) and os.path.isfile(new_dir):
                         os.remove(old_dir)
@@ -904,11 +904,11 @@ def upload_text_insert_db(json_obj):
             invisible_title = text_id
         
         #get file place
-        sql = ("SELECT type_dir FROM data_type WHERE type_id=" + str(type_id))
-        pure_result = db.query(sql)
+        with DataTypeDao() as dataTypeDao:
+            type_dir = dataTypeDao.getTypeDir(typeId=str(type_id))
         try:
             text_system_name = text_id + ".txt"
-            system_file_dir = os.path.join(server_dir, "static/"+str(pure_result[0][0]))
+            system_file_dir = os.path.join(server_dir, "static",type_dir)
             system_file_dir = os.path.join(system_file_dir, text_system_name)
         except:
             db.close()
@@ -1011,10 +1011,10 @@ def edit_text_data(json_obj):
             return return_msg
         
         #get old text type dir
-        sql = ("SELECT type_dir FROM data_type WHERE type_id=" + str(text_type_id))
-        pure_result = db.query(sql)
+        with DataTypeDao() as dataTypeDao:
+            type_dir = dataTypeDao.getTypeDir(typeId=str(text_type_id))
         try: 
-            old_dir = pure_result[0][0] + old_dir
+            old_dir = type_dir + old_dir
         except:
             db.close()
             return_msg["error"] = "no such text type : " + str(text_type_id)
@@ -1022,14 +1022,14 @@ def edit_text_data(json_obj):
 
         #check if we need to move the file
         if text_type_id == type_id:
-            old_dir = os.path.join(server_dir,"static/"+old_dir)
+            old_dir = os.path.join(server_dir,"static",old_dir)
             new_dir = old_dir
         else :  
-            #get new text type dir      
-            sql = ("SELECT type_dir FROM data_type WHERE type_id=" + str(type_id))
-            pure_result = db.query(sql)
+            #get new text type dir
+            with DataTypeDao() as dataTypeDao:
+                type_dir = dataTypeDao.getTypeDir(typeId=str(type_id))
             try: 
-                new_dir = pure_result[0][0] + new_dir
+                new_dir = type_dir + new_dir
             except:
                 db.close()
                 return_msg["error"] = "no such text type : " + str(type_id)
@@ -1040,8 +1040,8 @@ def edit_text_data(json_obj):
                 new_dir = 'static/'+new_dir
             else :
                 try:
-                    old_dir = os.path.join(server_dir,"static/"+old_dir)
-                    new_dir = os.path.join(server_dir,"static/"+new_dir)
+                    old_dir = os.path.join(server_dir,"static",old_dir)
+                    new_dir = os.path.join(server_dir,"static",new_dir)
                     copyfile(old_dir, new_dir)
                     if os.path.isfile(old_dir) and os.path.isfile(new_dir):
                         os.remove(old_dir)
@@ -1156,11 +1156,11 @@ def delete_image_or_text_data(json_obj):
                 return return_msg
         
         #get file place
-        sql = "SELECT type_dir FROM data_type WHERE type_id=" + str(target_type_id)
-        pure_result = db.query(sql)
+        with DataTypeDao() as dataTypeDao:
+            type_dir = dataTypeDao.getTypeDir(typeId=str(target_type_id))
         try:
-            trash_dir = os.path.join(server_dir, "static/trash_data/"+target_dir)
-            system_file_dir = os.path.join(server_dir, "static/"+str(pure_result[0][0]))
+            trash_dir = os.path.join(server_dir, "static","trash_data",target_dir)
+            system_file_dir = os.path.join(server_dir, "static",type_dir)
             target_dir = os.path.join(system_file_dir, target_dir)
         except:
             db.close()
@@ -1293,9 +1293,8 @@ def read_text_data(text_id):
         text_file_name = pure_result[0][0]
         type_id = pure_result[0][1]
 
-        sql = 'SELECT type_dir FROM data_type WHERE type_id = %d' % type_id
-        pure_result = db.query(sql)
-        type_dir = pure_result[0][0]
+        with DataTypeDao() as dataTypeDao:
+            type_dir = dataTypeDao.getTypeDir(typeId=str(type_id))
         
         filename = 'static/' + type_dir + text_file_name
         with open(filename,'r') as fp:
@@ -1373,21 +1372,16 @@ def news_insert_db(json_obj):
             return_msg["error"] = "input parameter missing"
             return return_msg
 
-        #insert news data
-        db = mysql()
-        db.connect()
-        #check 
-        sql = "SELECT COUNT(*) FROM news_QR_code WHERE serial_number = \""+ news_serial_number+"\""
-        check = db.query(sql)
+        with NewsQRCodeDao() as newsQRCodeDao:
+            exist = newsQRCodeDao.checkNewsExisted(news_serial_number)
 
-        if check[0][0] == 0:
+        if not exist:
             with NewsQRCodeDao() as newsQRCodeDao:
                 newsQRCodeDao.insertNews(news_data_type,news_serial_number,news_title)
-        db.close()
+
         return_msg["result"] = "success"
 
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg
 
