@@ -645,10 +645,6 @@ def upload_image_insert_db(json_obj):
         if len(img_end_time)==0:
             img_end_time = "23:59:59"
 
-        #connect to mysql
-        db = mysql()
-        db.connect()
-        
         receive_msg = check_user_level(str(user_id))
         if 'fail' in receive_msg:
             return_msg['result'] = receive_msg['error']
@@ -659,16 +655,13 @@ def upload_image_insert_db(json_obj):
         try:
             img_new_file_dir = os.path.join(server_dir, "static",type_dir)
         except:
-            db.close()
             return_msg["error"] = "no such type id : " + str(type_id)
             return return_msg
-        
-        
+
         #generate new id
         with ImageDao() as imageDao:
             img_id = imageDao.generateNewId()
         
-
         img_system_name = img_id + os.path.splitext(img_file_name)[1]
         img_thumbnail_name = "thumbnail_" + img_system_name
         img_system_dir = os.path.join(img_new_file_dir, img_system_name)
@@ -682,28 +675,25 @@ def upload_image_insert_db(json_obj):
                     os.remove(img_system_dir)
             except:
                 "DO NOTHING"
-            db.close()
             return_msg["error"] = "copy or remove file error"
             return return_msg
-        
-        
+
         #insert images data to mysql
-        sql = "INSERT image_data " \
-                +" (`img_id`, `type_id`, `img_system_name`, `img_thumbnail_name`, `img_file_name`, `img_start_date`, `img_end_date`, `img_start_time`, `img_end_time`, `img_display_time`, `user_id`) " \
-                +" VALUE " \
-                +" ( \"" + img_id + "\", " \
-                + str(type_id) + ", " \
-                + "\"" + img_system_name + "\", " \
-                + "\"" + img_thumbnail_name + "\", " \
-                + "\"" + img_file_name + "\", " \
-                + "\"" + img_start_date + "\", " \
-                + "\"" + img_end_date + "\", " \
-                + "\"" + img_start_time + "\", " \
-                + "\"" + img_end_time + "\", " \
-                + str(img_display_time) + ", " \
-                + str(user_id) + " ) " 
+        img_data = {}
+        img_data["id"] = img_id
+        img_data["typeId"] = str(type_id)
+        img_data["systemName"] = img_thumbnail_name
+        img_data["thumbnailName"] = img_thumbnail_name
+        img_data["fileName"] = img_file_name
+        img_data["startDate"] = img_start_date
+        img_data["endDate"] = img_end_date
+        img_data["startTime"] = img_start_time
+        img_data["endTime"] = img_end_time
+        img_data["displayTime"] = str(img_display_time)
+        img_data["userId"] = str(user_id)
         try:
-            db.cmd(sql)
+            with ImageDao() as imageDao:
+                imageDao.insertImgData(imgData=img_data)
         except DB_Exception as e:
             return_msg["error"] = "insert mysql error please check file system " + img_system_dir
             try:
@@ -713,10 +703,7 @@ def upload_image_insert_db(json_obj):
                 return_msg["error"] = "insert mysql error please check file system " + img_file_dir
             except:
                 "DO NOTHING"
-            db.close()
             return return_msg
-        
-        db.close()
 
         return_msg["img_id"] = img_id
         return_msg["img_system_dir"] = img_system_dir
@@ -724,11 +711,9 @@ def upload_image_insert_db(json_obj):
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
-        return return_msg
-    
-    
+        return return_msg 
+
 #
 def edit_image_data(json_obj):
     try:
@@ -769,7 +754,7 @@ def edit_image_data(json_obj):
                 return return_msg
             #check self image
             with ImageDao() as imageDao:
-                imgInfo = imageDao.getImgCheck(imgId=str(img_id))
+                imgInfo = imageDao.getIdData(Id=str(img_id))
             try:
                 if imgInfo["userId"] != user_id and user_level < user_level_high_bound:
                     return_msg["error"] = "can not modify other user image "
@@ -872,7 +857,6 @@ def edit_image_data(json_obj):
         db.close()
         return_msg["error"] = e.args[1]
         return return_msg
-
 
 #never debug this function
 def upload_text_insert_db(json_obj):
@@ -1000,17 +984,17 @@ def edit_text_data(json_obj):
                 return_msg["error"] = "user right is too low"
                 return return_msg
             #check self text
-            sql = ("SELECT user_id, type_id FROM text_data WHERE text_id='" + text_id + "'")
-            pure_result = db.query(sql)
+            with TextDao() as textDao:
+                textInfo = textDao.getIdData(Id=str(text_id))
             try:
-                if pure_result[0][0] != user_id and user_level < user_level_high_bound:
+                if textInfo["userId"] != user_id and user_level < user_level_high_bound:
                     db.close()
                     return_msg["error"] = "can not modify other user text"
                     return return_msg
-                text_type_id = int(pure_result[0][1])
+                text_type_id = int(textInfo["typeId"])
             except:
                 db.close()
-                return_msg["error"] = "no such text id : " + text_id
+                return_msg["error"] = "no such text id : {text_id}".format(text_id=text_id)
                 return return_msg
         
         old_dir = ""

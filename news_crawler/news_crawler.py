@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup as bs
 from mysql import mysql,DB_Exception
 from env_init import create_data_type
 from server_api import *
+from dataAccessObjects import *
 import os
 import datetime
 
@@ -94,22 +95,16 @@ def grab_medium_articles():
         send_obj = save_db_data(serial_number, title, "medium")
         news_insert_db(send_obj)
 
-def save_db_data(serial_number, title, datatype):
+def save_db_data(serial_number, title, type_name):
     send_obj={}
-    db = mysql()
-    db.connect()
-    #get data type
-    sql = "SELECT type_id FROM data_type WHERE type_name='" + datatype + "'"
-    pure_result = db.query(sql)
-    data_type = int(pure_result[0][0])
+    with DataTypeDao() as dataTypeDao:
+        data_type = dataTypeDao.getTypeId(typeName=type_name)
 
     send_obj["data_type"] = data_type
     send_obj["serial_number"] = serial_number
     send_obj["title"] = title
 
-    db.close()   
     return send_obj
-
 
 def create_news_table():
     try:
@@ -152,24 +147,6 @@ def grab_constellation_fortune():
         send_obj["wealth"] = soup.find('span', {'class': 'txt_orange'}).text[4:9]
         send_obj["constellation"]=constellation_list[i]
         fortune_insert_db(send_obj)
-
-def create_news_table():
-    try:
-        client = mysql()
-        client.connect()
-        sql =   'create table news_QR_code ( \
-                id int NOT NULL unique key auto_increment, \
-                data_type int NOT NULL, \
-                serial_number varchar(40) not NULL, \
-                title varchar(255) not NULL, \
-                upload_time datetime default now(), \
-                is_delete bit(1) default 0 \
-                )'
-        print(sql)
-        client.cmd(sql)
-        return dict(result='success')
-    except DB_Exception as e:
-        return dict(error=e.args[1])
 
 def create_fortune_table():
     try:

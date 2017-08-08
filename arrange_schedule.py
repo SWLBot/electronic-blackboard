@@ -529,10 +529,6 @@ def add_schedule(json_obj):
             return_msg["error"] = "input parameter missing"
             return return_msg
 
-        #connect to mysql
-        db = mysql()
-        db.connect()
-
         for num0 in range(len(display_time_list)):
             target_id = target_id_list[num0]
             display_time = int(display_time_list[num0])
@@ -546,15 +542,12 @@ def add_schedule(json_obj):
                 with ScheduleDao() as scheduleDao:
                     scheduleDao.updateNewIdSchedule(new_id,sche_sn)
             else :
-                db.close()
                 return_msg["error"] = "may be another arrange.exe is working"
                 return return_msg
 
-        db.close()
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg
 
@@ -694,12 +687,12 @@ def find_cwb_type_id(db):
 def delete_old_cwb_img(db,server_dir,user_id):
     send_obj = {}
     error_list_id = []
-    sql = "SELECT img_id FROM image_data WHERE img_is_delete=0 and img_file_name like 'CV1_TW_3600_%'" 
-    pure_result = db.query(sql)
-    for num2 in range(len(pure_result)):
+    with ImageDao() as imageDao:
+        Ids=imageDao.getCwbImgIds()
+    for num2 in range(len(Ids)):
         try:
             send_obj["server_dir"] = server_dir
-            send_obj["target_id"] = str(pure_result[num2][0])
+            send_obj["target_id"] = str(Ids[num2][0])
             send_obj["user_id"] = user_id
             receive_obj = delete_image_or_text_data(send_obj)
             if receive_obj["result"] == "fail":
@@ -911,16 +904,12 @@ def merge_files_and_days(days_limit, drive_file):
                 break
     return drive_file
 
-def check_drive_img_exist(db, data_type, file_name):
-    sql = "SELECT COUNT(*) FROM image_data WHERE img_is_expire=0 and img_is_delete=0 "
-    sql = sql + "and type_id={data_type} and img_file_name='{file_name}'".format(data_type=data_type, file_name=file_name)
-    pure_result = db.query(sql)
-    return pure_result[0][0]
+def check_drive_img_exist(data_type, file_name):
+    with ImageDao as imageDao:
+        return imageDao.checkExisted(typeId=data_type,fileName=file_name)
 
 def save_google_drive_file(service, json_obj):
     try:
-        db = mysql()
-        db.connect()
         return_msg={}
         return_msg['result'] = 'fail'
         for item in json_obj['files']:
@@ -928,7 +917,7 @@ def save_google_drive_file(service, json_obj):
             download_file_place = os.path.join(json_obj['server_dir'],'static','img',file_name)
             
             #check if file is existed
-            if check_drive_img_exist(db, json_obj['data_type'], file_name):
+            if check_drive_img_exist(json_obj['data_type'], file_name):
                 continue
             
             #download files
@@ -962,18 +951,14 @@ def save_google_drive_file(service, json_obj):
                     im.thumbnail((100,100))
                     im.save(thumbnail_path)
                 else:
-                    db.close()
                     return_msg = receive_obj
                     return return_msg
             except:
-                db.close()
                 return_msg["error"] = "save thumbnail image fail"
                 return return_msg
-        db.close()
         return_msg['result'] = 'success'
         return return_msg
     except Exception as e:
-        db.close()
         return_msg["error"] = str(e)
         return return_msg
 

@@ -96,6 +96,17 @@ class DataManipulateDao(DefaultDao):
             dataName=self.dataName,tableName=self.tableName,Id=Id)
         return self.queryOneValue(sql)
 
+    def getIdData(self,Id):
+        sql = 'SELECT user_id, type_id FROM {tableName} WHERE {dataName}_id="{Id}"'.format(
+                tableName=self.tableName,dataName=self.dataName,Id=Id)
+        ret = db.query(sql)
+        if len(ret) and len(ret[0]) == 2:
+            info = dict(userId=ret[0][0],typeId=ret[0][1])
+            return info
+        else:
+            #TODO raise exception
+            return None
+
 class UserDao(DefaultDao):
     def getUserId(self,userName=None,bluetoothId=None):
         sql = 'SELECT user_id FROM user WHERE '
@@ -250,6 +261,11 @@ class ImageDao(DataManipulateDao):
     def markDeleted(self,imgId,userId):
         super().markDeleted(targetId=imgId,userId=userId)
 
+    def checkExisted(self,typeId,fileName):
+        sql = 'SELECT COUNT(*) FROM image_data WHERE img_is_expire=0 and img_is_delete=0 '\
+                +'and type_id={typeId} and img_file_name="{fileName}"'.format(typeId=typeId,fileName=fileName)
+        return self.queryOneValue(sql)
+
     def checkExpired(self,imgId):
         sql = 'SELECT count(*) FROM image_data WHERE img_id="{imgId}"'.format(imgId=imgId)\
                 +' and img_is_delete=0 and img_is_expire=0 '\
@@ -284,18 +300,26 @@ class ImageDao(DataManipulateDao):
     def generateNewId(self):
         return super().generateNewId()
 
-    def getImgIdData(self,imgId):
-        sql = 'SELECT user_id, type_id FROM image_data WHERE img_id="{imgId}"'.format(imgId=imgId)
-        ret = db.query(sql)
-        if len(ret) and len(ret[0]) == 2:
-            imgInfo = dict(userId=ret[0][0],typeId=ret[0][1])
-            return imgInfo
-        else:
-            #TODO raise exception
-            return None
+    def getIdData(self,Id):
+        super().getIdData(Id=Id)
 
     def getSystemName(self,Id):
         return super().getSystemName(Id=Id)
+
+    def insertImgData(self,imgData):
+        sql = 'INSERT INTO image_data ' \
+            + '(img_id, type_id, img_system_name, img_thumbnail_name, img_file_name, img_start_date, ' \
+            + 'img_end_date, img_start_time, img_end_time, img_display_time, user_id)' \
+            + ' VALUES ' \
+            + '("{data[id]}", {data[typeId]}, "{data[systemName]}", "{data[thumbnailName]}", "{data[fileName]}", "{data[startDate]}",' \
+            + ' "{data[endDate]}", "{data[startTime]}", "{data[endTime]}", {data[displayTime]}, {data[userId]})'
+        sql = sql.format(data=imgData)
+        self.db.cmd(sql)
+
+    def getCwbImgIds(self):
+        sql = "SELECT img_id FROM image_data WHERE img_is_delete=0 and img_file_name like 'CV1_TW_3600_%'"
+        Ids = self.db.query(sql)
+        return Ids
 
 class TextDao(DataManipulateDao):
     dataName = 'text'
@@ -339,6 +363,9 @@ class TextDao(DataManipulateDao):
 
     def getSystemName(self,Id):
         return super().getSystemName(Id=Id)
+
+    def getIdData(self,Id):
+        super().getIdData(Id=Id)
 
 class UserPreferDao(DefaultDao):
     def generateNewId(self):
