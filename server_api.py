@@ -754,7 +754,7 @@ def edit_image_data(json_obj):
                 return return_msg
             #check self image
             with ImageDao() as imageDao:
-                imgInfo = imageDao.getIdData(Id=str(img_id))
+                imgInfo = imageDao.getIdSysName(Id=str(img_id))
             try:
                 if imgInfo["userId"] != user_id and user_level < user_level_high_bound:
                     return_msg["error"] = "can not modify other user image "
@@ -772,7 +772,8 @@ def edit_image_data(json_obj):
         else :
             #get img_system_name
             with ImageDao() as imageDao:
-                img_sys_name = imageDao.getSystemName(Id=str(img_id))
+                img_info = imageDao.getIdSysName(Id=str(img_id))
+                img_sys_name = img_info["systemName"]
             if img_sys_name: 
                 old_dir = img_sys_name
                 new_dir = img_sys_name
@@ -985,7 +986,7 @@ def edit_text_data(json_obj):
                 return return_msg
             #check self text
             with TextDao() as textDao:
-                textInfo = textDao.getIdData(Id=str(text_id))
+                textInfo = textDao.getIdSysName(Id=str(text_id))
             try:
                 if textInfo["userId"] != user_id and user_level < user_level_high_bound:
                     db.close()
@@ -1001,7 +1002,8 @@ def edit_text_data(json_obj):
         new_dir = ""
         #get text_system_name
         with TextDao() as textDao:
-            text_sys_name = textDao.getSystemName(Id=str(text_id))
+            text_info = textDao.getIdSysName(Id=str(text_id))
+            text_sys_name = text_info["systemName"]
         try: 
             old_dir = text_sys_name
             new_dir = text_sys_name
@@ -1117,10 +1119,6 @@ def delete_image_or_text_data(json_obj):
         except:
             return_msg["error"] = "input parameter missing"
             return return_msg
-
-        #connect to mysql
-        db = mysql()
-        db.connect()
         
         #check user level
         with UserDao() as userDao:
@@ -1130,28 +1128,25 @@ def delete_image_or_text_data(json_obj):
             return return_msg
         else:
             if user_level < user_level_low_bound:
-                db.close()
                 return_msg["error"] = "user right is too low"
                 return return_msg
             #check self data and get type_id
             if target_id[0:4] == "imge":
-                sql = "SELECT type_id, img_system_name, user_id FROM image_data WHERE img_id='" + target_id + "'"
+                with ImageDao() as imageDao:
+                    info = imageDao.getIdSysName(Id=target_id)
             elif target_id[0:4] == "text":
-                sql = "SELECT type_id, text_system_name, user_id FROM text_data WHERE text_id='" + target_id + "'"
+                with TextDao() as textDao:
+                    info = textDao.getIdSysName(Id=target_id)
             else :
-                db.close()
                 return_msg["error"] = "target id type error"
                 return return_msg
-            pure_result = db.query(sql)
             try:
-                if pure_result[0][2] != user_id and user_level < user_level_high_bound:
-                    db.close()
+                if info["userId"] != user_id and user_level < user_level_high_bound:
                     return_msg["error"] = "can not modify other user image or text"
                     return return_msg
-                target_type_id =  int(pure_result[0][0])
-                target_dir = pure_result[0][1]
+                target_type_id =  int(info["typeId"])
+                target_dir = info["systemName"]
             except:
-                db.close()
                 return_msg["error"] = "no such target id : " + str(target_id)
                 return return_msg
         
@@ -1159,11 +1154,10 @@ def delete_image_or_text_data(json_obj):
         with DataTypeDao() as dataTypeDao:
             type_dir = dataTypeDao.getTypeDir(typeId=str(target_type_id))
         try:
-            trash_dir = os.path.join(server_dir, "static","trash_data",target_dir)
-            system_file_dir = os.path.join(server_dir, "static",type_dir)
+            trash_dir = os.path.join(server_dir, "static", "trash_data", target_dir)
+            system_file_dir = os.path.join(server_dir, "static", type_dir)
             target_dir = os.path.join(system_file_dir, target_dir)
         except:
-            db.close()
             return_msg["error"] = "no such type id : " + str(type_id)
             return return_msg
 
@@ -1172,7 +1166,6 @@ def delete_image_or_text_data(json_obj):
             try:
                 os.makedirs(os.path.split(trash_dir)[0])
             except:
-                db.close()
                 return_msg["error"] = "no trash_data folder"
                 return return_msg
 
@@ -1181,7 +1174,6 @@ def delete_image_or_text_data(json_obj):
             try:
                 shutil.move(target_dir, trash_dir)
             except:
-                db.close()
                 return_msg["error"] = "move fail"
                 return return_msg
 
@@ -1191,15 +1183,12 @@ def delete_image_or_text_data(json_obj):
         elif target_id[0:4] == "text":
             with TextDao() as textDao:
                 textDao.markDeleted(target_id,user_id)
-        
-        db.close()
+
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg  
-    
 
 def add_new_data_type(json_obj):
     try:
@@ -1273,13 +1262,11 @@ def change_password(json_obj):
 def read_text_data(text_id):
     try:
         return_msg = {}
-        db = mysql()
-        db.connect()
                 
-        sql = 'SELECT text_system_name,type_id FROM text_data WHERE text_id = "%s"' % text_id
-        pure_result = db.query(sql)
-        text_file_name = pure_result[0][0]
-        type_id = pure_result[0][1]
+        with TextDao() as textDao:
+            info = textDao.getIdSysName(Id=text_id)
+        text_file_name = info["systemName"]
+        type_id = info["typeId"]
 
         with DataTypeDao() as dataTypeDao:
             type_dir = dataTypeDao.getTypeDir(typeId=str(type_id))
@@ -1293,7 +1280,6 @@ def read_text_data(text_id):
 
         return text_content
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg
 

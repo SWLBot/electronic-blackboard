@@ -91,17 +91,12 @@ class DataManipulateDao(DefaultDao):
         else:
             return "{prefix}0000000001".format(prefix=self.prefix)
 
-    def getSystemName(self,Id):
-        sql = 'SELECT {dataName}_system_name FROM {tableName} WHERE {dataName}_id="{Id}"'.format(
-            dataName=self.dataName,tableName=self.tableName,Id=Id)
-        return self.queryOneValue(sql)
-
-    def getIdData(self,Id):
-        sql = 'SELECT user_id, type_id FROM {tableName} WHERE {dataName}_id="{Id}"'.format(
+    def getIdSysName(self,Id):
+        sql = 'SELECT user_id, type_id, {dataName}_system_name FROM {tableName} WHERE {dataName}_id="{Id}"'.format(
                 tableName=self.tableName,dataName=self.dataName,Id=Id)
-        ret = db.query(sql)
-        if len(ret) and len(ret[0]) == 2:
-            info = dict(userId=ret[0][0],typeId=ret[0][1])
+        ret = self.db.query(sql)
+        if len(ret) and len(ret[0]) == 3:
+            info = dict(userId=ret[0][0],typeId=ret[0][1],systemName=ret[0][2])
             return info
         else:
             #TODO raise exception
@@ -305,12 +300,6 @@ class ImageDao(DataManipulateDao):
     def generateNewId(self):
         return super().generateNewId()
 
-    def getIdData(self,Id):
-        super().getIdData(Id=Id)
-
-    def getSystemName(self,Id):
-        return super().getSystemName(Id=Id)
-
     def insertImgData(self,imgData):
         sql = 'INSERT INTO image_data ' \
             + '(img_id, type_id, img_system_name, img_thumbnail_name, img_file_name, img_start_date, ' \
@@ -365,12 +354,6 @@ class TextDao(DataManipulateDao):
 
     def generateNewId(self):
         return super().generateNewId()
-
-    def getSystemName(self,Id):
-        return super().getSystemName(Id=Id)
-
-    def getIdData(self,Id):
-        super().getIdData(Id=Id)
 
 class UserPreferDao(DefaultDao):
     def generateNewId(self):
