@@ -91,6 +91,11 @@ class DataManipulateDao(DefaultDao):
         else:
             return "{prefix}0000000001".format(prefix=self.prefix)
 
+    def getSystemName(self,Id):
+        sql = 'SELECT {dataName}_system_name FROM {tableName} WHERE {dataName}_id="{Id}"'.format(
+            dataName=self.dataName,tableName=self.tableName,Id=Id)
+        return self.queryOneValue(sql)
+
     def getIdData(self,Id):
         sql = 'SELECT user_id, type_id FROM {tableName} WHERE {dataName}_id="{Id}"'.format(
                 tableName=self.tableName,dataName=self.dataName,Id=Id)
@@ -298,9 +303,8 @@ class ImageDao(DataManipulateDao):
     def getIdData(self,Id):
         super().getIdData(Id=Id)
 
-    def getImgSystemName(self,imgId):
-        sql = 'SELECT img_system_name FROM image_data WHERE img_id="{imgId}"'.format(imgId=imgId)
-        return self.queryOneValue(sql)
+    def getSystemName(self,Id):
+        return super().getSystemName(Id=Id)
 
     def insertImgData(self,imgData):
         sql = 'INSERT INTO image_data ' \
@@ -356,6 +360,9 @@ class TextDao(DataManipulateDao):
 
     def generateNewId(self):
         return super().generateNewId()
+
+    def getSystemName(self,Id):
+        return super().getSystemName(Id=Id)
 
     def getIdData(self,Id):
         super().getIdData(Id=Id)
