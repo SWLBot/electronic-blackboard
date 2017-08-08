@@ -887,9 +887,6 @@ def upload_text_insert_db(json_obj):
         if len(text_end_time)==0:
             text_end_time = "23:59:59"
 
-        #connect to mysql
-        db = mysql()
-        db.connect()
         
         receive_msg = check_user_level(user_id)
         if 'fail' in receive_msg:
@@ -909,38 +906,32 @@ def upload_text_insert_db(json_obj):
             type_dir = dataTypeDao.getTypeDir(typeId=str(type_id))
         try:
             text_system_name = text_id + ".txt"
-            system_file_dir = os.path.join(server_dir, "static",type_dir)
+            system_file_dir = os.path.join(server_dir, "static", type_dir)
             system_file_dir = os.path.join(system_file_dir, text_system_name)
         except:
-            db.close()
             return_msg["error"] = "no such type id : " + str(type_id)
             return return_msg
         
-        #insert images data to mysql
-        sql = "INSERT text_data " \
-                +" (`text_id`, `type_id`, `text_system_name`, `text_invisible_title`, `text_start_date`, `text_end_date`, `text_start_time`, `text_end_time`, `text_display_time`, `user_id`) " \
-                +" VALUE " \
-                +" ( \"" + text_id + "\", " \
-                + str(type_id) + ", " \
-                + "\"" + text_system_name + "\", " \
-                + "\"" + invisible_title + "\", " \
-                + "\"" + text_start_date + "\", " \
-                + "\"" + text_end_date + "\", " \
-                + "\"" + text_start_time + "\", " \
-                + "\"" + text_end_time + "\", " \
-                + str(text_display_time) + ", " \
-                + str(user_id) + " ) " 
-
-        db.cmd(sql)
-        
-        db.close()
+        #insert text data to mysql
+        text_data = {}
+        text_data["id"] = text_id
+        text_data["typeId"] = str(type_id)
+        text_data["systemName"] = text_system_name
+        text_data["invisibleTitle"] = invisible_title
+        text_data["startDate"] = text_start_date
+        text_data["endDate"] = text_end_date
+        text_data["startTime"] = text_start_time
+        text_data["endTime"] = text_end_time
+        text_data["displayTime"] = str(text_display_time)
+        text_data["userId"] = str(user_id)
+        with TextDao() as textDao:
+            textDao.insertData(data=text_data)
 
         return_msg["text_id"] = text_id
         return_msg["text_system_dir"] = system_file_dir
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg    
 
