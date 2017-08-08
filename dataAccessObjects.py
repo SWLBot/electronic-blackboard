@@ -107,6 +107,25 @@ class DataManipulateDao(DefaultDao):
             #TODO raise exception
             return None
 
+    def insertData(self,data):
+        sql = 'INSERT INTO {tableName} ' \
+            + '({dataName}_id, type_id, {dataName}_system_name, ' \
+            + '{column}, {dataName}_start_date, ' \
+            + '{dataName}_end_date, {dataName}_start_time, {dataName}_end_time, ' \
+            + '{dataName}_display_time, user_id)' \
+            + ' VALUES ' \
+            + '("{data[id]}", {data[typeId]}, "{data[systemName]}", {value}, "{data[startDate]}",' \
+            + ' "{data[endDate]}", "{data[startTime]}", "{data[endTime]}", {data[displayTime]}, {data[userId]})'
+        if self.tableName == "image_data":
+            column = "img_thumbnail_name, img_file_name"
+            value = '"{data[thumbnailName]}", "{data[fileName]}"'.format(data=data)
+        elif self.tableName == "text_data":
+            column = "text_invisible_title"
+            value = '"{data[invisibleTitle]}"'.format(data=data)
+        
+        sql = sql.format(column=column, value=value, dataName=self.dataName, tableName=self.tableName, data=data)
+        self.db.cmd(sql)
+
 class UserDao(DefaultDao):
     def getUserId(self,userName=None,bluetoothId=None):
         sql = 'SELECT user_id FROM user WHERE '
