@@ -6,6 +6,7 @@ from mysql import mysql,DB_Exception
 from env_init import create_data_type
 from server_api import *
 from dataAccessObjects import *
+from collections import OrderedDict
 import os
 import datetime
 
@@ -108,18 +109,15 @@ def save_db_data(serial_number, title, type_name):
 
 def create_news_table():
     try:
-        client = mysql()
-        client.connect()
-        sql =   'create table news_QR_code ( \
-                id int NOT NULL unique key auto_increment, \
-                data_type int NOT NULL, \
-                serial_number varchar(40) not NULL, \
-                title varchar(255) not NULL, \
-                upload_time datetime default now(), \
-                is_delete bit(1) default 0 \
-                )'
-        print(sql)
-        client.cmd(sql)
+        fields = OrderedDict()
+        fields['id'] = 'int NOT NULL unique key auto_increment'
+        fields['data_type'] = 'int NOT NULL'
+        fields['serial_number'] = 'varchar(40) not NULL'
+        fields['title'] = 'varchar(255) not NULL'
+        fields['upload_time'] = 'datetime default now()'
+        fields['is_delete'] = 'bit(1) default 0'
+        with DatabaseDao() as databaseDao:
+            databaseDao.createTable(tableName='news_QR_code',fields=fields)
         return dict(result='success')
     except DB_Exception as e:
         return dict(error=e.args[1],result='fail')
@@ -150,18 +148,15 @@ def grab_constellation_fortune():
 
 def create_fortune_table():
     try:
-        client = mysql()
-        client.connect()
-        sql =   'create table fortune ( \
-                fortune_date datetime, \
-                constellation varchar(20) not NULL, \
-                overall varchar(20) not NULL, \
-                love varchar(20) not NULL, \
-                career varchar(20) not NULL, \
-                wealth varchar(20) not NULL \
-                )'
-        print(sql)
-        client.cmd(sql)
+        fields = OrderedDict()
+        fields['fortune_date'] = 'datetime'
+        fields['constellation'] = 'varchar(20) not NULL'
+        fields['overall'] = 'varchar(20) not NULL'
+        fields['love'] = 'varchar(20) not NULL'
+        fields['career'] = 'varchar(20) not NULL'
+        fields['wealth'] = 'varchar(20) not NULL'
+        with DatabaseDao() as databaseDao:
+            databaseDao.createTable(tableName='fortune',fields=fields)
         return dict(result='success')
     except DB_Exception as e:
         return dict(error=e.args[1],result='fail')

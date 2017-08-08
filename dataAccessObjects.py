@@ -465,6 +465,17 @@ class DatabaseDao(DefaultDao):
         existed = self.queryOneValue(sql)
         return True if existed else False
 
+    def createTable(self,tableName,fields):
+        fieldSql = ''
+        for idx,(name,attr) in enumerate(fields.items()):
+            if idx == 0:
+                fieldSql += '{name} {attr}'
+            else:
+                fieldSql += ',{name} {attr}'
+            fieldSql = fieldSql.format(name=name,attr=attr)
+        sql = 'CREATE TABLE {tableName} ({fieldSql})'.format(tableName=tableName,fieldSql=fieldSql)
+        self.db.cmd(sql)
+
 class NewsQRCodeDao(DefaultDao):
     def getNews(self,preferStr):
         sql = 'SELECT * FROM ' \
