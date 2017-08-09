@@ -737,10 +737,6 @@ def edit_image_data(json_obj):
         user_level_high_bound = 10000
         img_type_id = 0
         
-        #connect to mysql
-        db = mysql()
-        db.connect()
-        
         #check user level
         with UserDao() as userDao:
             user_level = userDao.getUserLevel(user_id)
@@ -749,7 +745,6 @@ def edit_image_data(json_obj):
             return return_msg
         else:
             if user_level < user_level_low_bound:
-                db.close()
                 return_msg["error"] = "user right is too low"
                 return return_msg
             #check self image
@@ -815,22 +810,22 @@ def edit_image_data(json_obj):
                             os.remove(new_dir)
                     except:
                         "DO NOTHING"
-                    db.close()
                     return_msg["error"] = "move file error : " + old_dir
                     return return_msg
         
         #start to modify mysql
-        sql = ("UPDATE image_data " \
-                +" SET type_id=" + str(type_id) + ", " \
-                +" img_start_date=\"" + img_start_date + "\", " \
-                +" img_end_date=\"" + img_end_date + "\", " \
-                +" img_start_time=\"" + img_start_time + "\", " \
-                +" img_end_time=\"" + img_end_time + "\", " \
-                +" img_display_time=" + str(img_display_time) + ", " \
-                +" img_last_edit_user_id=\"" + str(user_id) + "\" " \
-                +" WHERE img_id=\"" + img_id + "\"")
+        img_data = {}
+        img_data["typeId"] = str(type_id)
+        img_data["startDate"] = img_start_date
+        img_data["endDate"] = img_end_date
+        img_data["startTime"] = img_start_time
+        img_data["endTime"] = img_end_time
+        img_data["displayTime"] = str(img_display_time)
+        img_data["editUserId"] = str(img_last_edit_user_id)
+        img_data["Id"] = img_id
         try:
-            db.cmd(sql)
+            with ImageDao() as imageDao:
+                imageDao.updateEditedData(data=img_data)
         except DB_Exception as e:
             try:
                 copyfile(new_dir, old_dir)
@@ -841,17 +836,13 @@ def edit_image_data(json_obj):
                     if os.path.isfile(old_dir) and os.path.isfile(new_dir):
                         os.remove(old_dir)
                 except:
-                    db.close()
                     return_msg["error"] = "move file error : duplicate files : " + old_dir
                     return return_msg
-                db.close()
                 return_msg["error"] = "move file error : " + new_dir
                 return return_msg
-            db.close()
             return_msg["error"] = "update mysql error"
             return return_msg
 
-        db.close()
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
@@ -1051,18 +1042,19 @@ def edit_text_data(json_obj):
                 print(json.dumps(text_file),file=fp)
         
         #start to modify mysql
-        sql = ("UPDATE text_data " \
-                +" SET type_id=" + str(type_id) + ", " \
-                +" text_invisible_title='" + invisible_title + "', "\
-                +" text_start_date=\"" + text_start_date + "\", " \
-                +" text_end_date=\"" + text_end_date + "\", " \
-                +" text_start_time=\"" + text_start_time + "\", " \
-                +" text_end_time=\"" + text_end_time + "\", " \
-                +" text_display_time=" + str(text_display_time) + ", " \
-                +" text_last_edit_user_id=\"" + str(user_id) + "\" " \
-                +" WHERE text_id=\"" + text_id + "\"")
+        text_data = {}
+        text_data["typeId"] = str(type_id)
+        text_data["invisibleTitle"] = invisible_title
+        text_data["startDate"] = text_start_date
+        text_data["endDate"] = text_end_date
+        text_data["startTime"] = text_start_time
+        text_data["endTime"] = text_end_time
+        text_data["displayTime"] = str(text_display_time)
+        text_data["editUserId"] = str(user_id)
+        text_data["Id"] = text_id
         try:
-            db.cmd(sql)
+            with TextDao() as textDao:
+                textDao.updateEditedData(data=text_data)
         except DB_Exception as e:
             try:
                 copyfile(new_dir, old_dir)

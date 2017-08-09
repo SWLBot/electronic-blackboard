@@ -90,6 +90,19 @@ class DataManipulateDao(DefaultDao):
             return "{prefix}{num:010d}".format(prefix=self.prefix,num=(int(Id[0][0][4:]) + 1))
         else:
             return "{prefix}0000000001".format(prefix=self.prefix)
+    
+    def updateEditedData(self,data):
+        sql = 'UPDATE {tableName} '
+        update = 'SET type_id={data[typeId]}, {dataName}_start_date="{data[startDate]}", ' \
+            + '{dataName}_end_date="{data[endDate]}", {dataName}_start_time="{data[startTime]}", ' \
+            + '{dataName}_end_time="{data[endTime]}", {dataName}_display_time={data[displayTime]}, ' \
+            + '{dataName}_last_edit_user_id="{data[editUserId]}"'
+        if self.tableName == "text_data":
+            update += ', text_invisible_title="{data[invisibleTitle]}"'
+        sql += update
+        sql += ' WHERE {dataName}_id="{data[Id]}"'
+        sql = sql.format(tableName=self.tableName,dataName=self.dataName,data=data)
+        self.db.cmd(sql)
 
     def getIdSysName(self,Id):
         sql = 'SELECT user_id, type_id, {dataName}_system_name FROM {tableName} WHERE {dataName}_id="{Id}"'.format(
