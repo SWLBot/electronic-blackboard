@@ -54,14 +54,13 @@ def load_schedule():
             return return_msg
 
         #find type dir
-        sql = ("SELECT type_dir, type_name FROM data_type WHERE type_id=" + str(type_id))
-        pure_result = db.query(sql)
+        with DataTypeDao() as dataTypeDao:
+            type_dir = dataTypeDao.getTypeDir(typeId=type_id)
+            type_name = dataTypeDao.getTypeName(typeId=type_id)
         try:
-            schedule_dir = os.path.join(schedule_dir, "static/")
-            schedule_dir = os.path.join(schedule_dir, pure_result[0][0])
-            schedule_dir = os.path.join(schedule_dir, system_file_name)
-            return_msg["file"] = os.path.join(pure_result[0][0], system_file_name)
-            return_msg["type_name"] = str(pure_result[0][1])
+            schedule_dir = os.path.join(schedule_dir, "static", type_dir, system_file_name)
+            return_msg["file"] = os.path.join(type_dir, system_file_name)
+            return_msg["type_name"] = str(type_name)
         except:
             db.close()
             return_msg["error"] = "no type record"

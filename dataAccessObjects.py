@@ -416,6 +416,10 @@ class DataTypeDao(DefaultDao):
         sql = 'SELECT type_dir FROM data_type WHERE type_id={typeId}'.format(typeId=typeId)
         return self.queryOneValue(sql)
 
+    def getTypeName(self,typeId):
+        sql = 'SELECT type_name FROM data_type WHERE type_id={typeId}'.format(typeId=typeId)
+        return self.queryOneValue(sql)
+
     def getTypeId(self,typeName):
         sql = 'SELECT type_id FROM data_type WHERE type_name="{typeName}"'.format(typeName=typeName)
         return self.queryOneValue(sql)
