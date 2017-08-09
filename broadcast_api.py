@@ -3,6 +3,7 @@ from mysql import DB_Exception
 from datetime import date
 from datetime import datetime
 from datetime import timedelta
+from dataAccessObjects import *
 import os.path
 import json
 
@@ -34,20 +35,21 @@ def load_schedule():
 
         #find the file
         if sche_target_id[0:4]=="imge":
-            sql = ("SELECT type_id, img_system_name, img_like_count FROM image_data WHERE img_id=\"" + sche_target_id + "\" ")
+            with ImageDao() as imageDao:
+                file_info = imageDao.getIdSysName(Id=sche_target_id)
             return_msg["file_type"] = "image" 
         elif sche_target_id[0:4]=="text":
-            sql = ("SELECT type_id, text_system_name, text_like_count FROM text_data WHERE text_id=\"" + sche_target_id + "\" ")
+            with TextDao() as textDao:
+                file_info = textDao.getIdSysName(Id=sche_target_id)
             return_msg["file_type"] = "text"
         else :
             db.close()
             return_msg["error"] = "target id type error"
             return return_msg
-        pure_result = db.query(sql)
         try:
-            type_id = int(pure_result[0][0])
-            system_file_name = pure_result[0][1]
-            return_msg["like_count"] = int(pure_result[0][2])
+            type_id = int(file_info['typeId'])
+            system_file_name = file_info['systemName']
+            return_msg["like_count"] = int(file_info['likeCount'])
         except:
             db.close()
             return_msg["error"] = "no file record"
@@ -90,11 +92,4 @@ def load_schedule():
         db.close()
         return_msg["error"] = e.args[1]
         return return_msg
-
-
-
-
-
-
-
 
