@@ -216,29 +216,9 @@ def find_text_acticity(json_obj):
             else:
                 "DO NOTHING"
         
-        #display in loop or random display
-        if arrange_mode == 0:
-            "DO NOTHING"
-        elif arrange_mode == 1:
-            deal_result = sample(deal_result, len(deal_result))
-        elif arrange_mode == 2:
-            if len(deal_result)>20:
-                deal_result = sample(deal_result, 20)
-        elif arrange_mode == 3:
-            "DO NOTHING"
-        elif arrange_mode == 4:
-            deal_result = sample(deal_result, len(deal_result))
-        elif arrange_mode == 5:
-            if len(deal_result)>20:
-                deal_result = sample(deal_result, 20)
-        elif arrange_mode == 6:
-            "DO NOTHING"
-        elif arrange_mode == 7:
-            "DO NOTHING"
+        candidates = ModeUtil.selectDisplayCandidates(arrange_mode,deal_result)
 
-        #reshape deal result
-        return_msg["ans_list"] = deal_result
-        
+        return_msg["ans_list"] = candidates
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
@@ -277,29 +257,9 @@ def find_image_acticity(json_obj):
             else:
                 "DO NOTHING"
          
-        #display in loop or random display
-        if arrange_mode == 0:
-            "DO NOTHING"
-        elif arrange_mode == 1:
-            deal_result = sample(deal_result, len(deal_result))
-        elif arrange_mode == 2:
-            if len(deal_result)>20:
-                deal_result = sample(deal_result, 20)
-        elif arrange_mode == 3:
-            "DO NOTHING"
-        elif arrange_mode == 4:
-            deal_result = sample(deal_result, len(deal_result))
-        elif arrange_mode == 5:
-            if len(deal_result)>20:
-                deal_result = sample(deal_result, 20)
-        elif arrange_mode == 6:
-            "DO NOTHING"
-        elif arrange_mode == 7:
-            "DO NOTHING"
+        candidates = ModeUtil.selectDisplayCandidates(arrange_mode,deal_result)
 
-        #reshape deal result
-        return_msg["ans_list"] = deal_result
-        
+        return_msg["ans_list"] = candidates
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
