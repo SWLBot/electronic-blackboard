@@ -65,7 +65,7 @@ class UploadArgumentsUtil(ArgumentUtil):
         uploadData['display_time'] = self.getArgument('display_time')
         return uploadData
 #
-def add_like_count(db, target_id):
+def add_like_count(target_id):
     try:
         if target_id[0:4]=="imge":
             with ImageDao() as imageDao:
@@ -81,7 +81,7 @@ def add_like_count(db, target_id):
         return 0
         
 #find the current displaying schedule
-def find_now_schedule(db):
+def find_now_schedule():
     try:
         with ScheduleDao() as scheduleDao:
             next_schedule = scheduleDao.getNextSchedule()
@@ -97,19 +97,15 @@ def add_now_like_count():
     try:
         return_msg = {}
         return_msg["result"] = "fail"
-        db = mysql()
-        db.connect()
 
         #find image or text id from current schedule
-        target_id = find_now_schedule(db)
+        target_id = find_now_schedule()
         if target_id==0:
-            db.close()
             return_msg["error"] = "can not find current schedule"
             return return_msg
             
         #add like count
-        if add_like_count(db, target_id)==0:
-            db.close()
+        if add_like_count(target_id)==0:
             return_msg["error"] = "can not add like count"
             return return_msg
 
@@ -117,11 +113,9 @@ def add_now_like_count():
         return return_msg
                 
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg 
     except Exception as e:
-        db.close()
         return_msg["error"] = e
         return return_msg
 def register_preference(data):
@@ -210,7 +204,7 @@ def check_bluetooth_mode_available():
         print(str(e))
         return -1
 #
-def load_now_user_prefer(db, user_id):
+def load_now_user_prefer(user_id):
     try:
         now_hour = time.localtime(time.time())[3]
         #use now time to choose preference rule
@@ -294,7 +288,7 @@ def random_constellation(user_id):
         return_msg["error"] = "Can't get fortune data."
         return return_msg
 #
-def get_prefer_news(db, prefer_data_type):
+def get_prefer_news(prefer_data_type):
     try:
         return_msg = []
         if len(prefer_data_type)<1:
@@ -326,8 +320,6 @@ def get_prefer_news(db, prefer_data_type):
 def collect_user_prefer_data(user_id, prefer_data_type):
     try:
         return_msg = {}
-        db = mysql()
-        db.connect()
         return_msg["preference"] = 1
         #date
         return_msg["date"] = time.strftime("%a. %Y.%m.%d", time.localtime(time.time()))
@@ -337,11 +329,9 @@ def collect_user_prefer_data(user_id, prefer_data_type):
         #constellation
         return_msg["constellation"] = random_constellation(user_id)
         #news
-        return_msg["news"] = get_prefer_news(db, prefer_data_type)
-        db.close()
+        return_msg["news"] = get_prefer_news(prefer_data_type)
         return return_msg
     except:
-        db.close()
         return return_msg
 #
 def insert_customized_schedule(user_id, prefer_data_type):
@@ -383,34 +373,28 @@ def deal_with_bluetooth_id(bluetooth_id):
     try:
         return_msg = {}
         return_msg["result"] = "fail"
-        db = mysql()
-        db.connect()
         user_id=0
 
         #check bluetooth mode available
         if check_bluetooth_mode_available()==0:
-            db.close()
             return_msg["error"] = "the bluetooth function is closed"
             return return_msg
 
         with UserDao() as userDao:
             user_id = userDao.getUserId(bluetoothId=bluetooth_id)
         if user_id == None:
-            db.close()
             return_msg["error"] = "no such bluetooth id"
             return return_msg
 
         #load now user prefer
-        prefer_data_type = load_now_user_prefer(db, user_id)
+        prefer_data_type = load_now_user_prefer(user_id)
         if prefer_data_type == -1:
-            db.close()
             return_msg["error"] = "no prefer data type"
             return return_msg
 
         #insert customized schedule to next schedule
         receive_result = insert_customized_schedule(user_id, prefer_data_type)
         if receive_result == -1:
-            db.close()
             return_msg["error"] = "insert fail"
             return return_msg
     
@@ -418,11 +402,9 @@ def deal_with_bluetooth_id(bluetooth_id):
         return return_msg
         
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg 
     except Exception as e:
-        db.close()
         return_msg["error"] = e
         return return_msg
 
@@ -458,7 +440,6 @@ def register_no_right_user(data):
         with UserDao() as userDao:
             existed = userDao.checkUserExisted(userName=data["bluetooth_id"])
         if not existed:
-            db.close()
             return 0
 
         with UserDao() as userDao:
@@ -471,24 +452,19 @@ def add_account_and_prefer(data):
     try:
         return_msg = {}
         return_msg["result"] = "fail"
-        db = mysql()
-        db.connect()
 
         #check bluetooth id exist or not
         if check_bluetooth_id_exist(data["bluetooth_id"])!=0:
-            db.close()
             return_msg["error"] = "bluetooth id exist"
             return return_msg
 
         #register new user level 50 == lower than normal user
         if register_no_right_user(data)==0:
-            db.close()
             return_msg["error"] = "register user fail"
             return return_msg
 
         #register preference
         if register_preference(data)==0:
-            db.close()
             return_msg["error"] = "register preference fail"
             return return_msg
 
@@ -496,11 +472,9 @@ def add_account_and_prefer(data):
         return return_msg
 
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg
     except Exception as e:
-        db.close()
         return_msg["error"] = str(e)
         return return_msg
 #
@@ -591,10 +565,6 @@ def check_user_level(user_id):
         return_msg["result"] = "fail"
         user_level_low_bound = 100
 
-        #connect to mysql
-        db = mysql()
-        db.connect()
-        
         #check user level
         with UserDao() as userDao:
             user_level = userDao.getUserLevel(user_id)
@@ -603,16 +573,12 @@ def check_user_level(user_id):
             return return_msg
 
         if user_level < user_level_low_bound:
-            db.close()
             return_msg['error'] = 'User has permission to do this job'
             return return_msg
-
-        db.close()
 
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg
 
@@ -846,7 +812,6 @@ def edit_image_data(json_obj):
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg
 
@@ -951,10 +916,6 @@ def edit_text_data(json_obj):
         user_level_high_bound = 10000
         text_type_id = 0
         
-        #connect to mysql
-        db = mysql()
-        db.connect()
-        
         #check user level
         with UserDao() as userDao:
             user_level = userDao.getUserLevel(user_id)
@@ -963,7 +924,6 @@ def edit_text_data(json_obj):
             return return_msg
         else:
             if user_level < user_level_low_bound:
-                db.close()
                 return_msg["error"] = "user right is too low"
                 return return_msg
             #check self text
@@ -971,12 +931,10 @@ def edit_text_data(json_obj):
                 textInfo = textDao.getIdSysName(Id=str(text_id))
             try:
                 if textInfo["userId"] != user_id and user_level < user_level_high_bound:
-                    db.close()
                     return_msg["error"] = "can not modify other user text"
                     return return_msg
                 text_type_id = int(textInfo["typeId"])
             except:
-                db.close()
                 return_msg["error"] = "no such text id : {text_id}".format(text_id=text_id)
                 return return_msg
         
@@ -990,7 +948,6 @@ def edit_text_data(json_obj):
             old_dir = text_sys_name
             new_dir = text_sys_name
         except:
-            db.close()
             return_msg["error"] = "no such text id : {text_id}".format(text_id=text_id)
             return return_msg
         
@@ -1000,7 +957,6 @@ def edit_text_data(json_obj):
         try: 
             old_dir = type_dir + old_dir
         except:
-            db.close()
             return_msg["error"] = "no such text type : " + str(text_type_id)
             return return_msg
 
@@ -1015,7 +971,6 @@ def edit_text_data(json_obj):
             try: 
                 new_dir = type_dir + new_dir
             except:
-                db.close()
                 return_msg["error"] = "no such text type : " + str(type_id)
                 return return_msg
 
@@ -1035,7 +990,6 @@ def edit_text_data(json_obj):
                             os.remove(new_dir)
                     except:
                         "DO NOTHING"
-                    db.close()
                     return_msg["error"] = "move file error : " + old_dir
                     return return_msg
             with open(new_dir,'w') as fp:
@@ -1065,25 +1019,19 @@ def edit_text_data(json_obj):
                     if os.path.isfile(old_dir) and os.path.isfile(new_dir):
                         os.remove(old_dir)
                 except:
-                    db.close()
                     return_msg["error"] = "move file error : duplicate files : " + old_dir
                     return return_msg
-                db.close()
                 return_msg["error"] = "move file error : " + new_dir
                 return return_msg
-            db.close()
             return_msg["error"] = "update mysql error"
             return return_msg
 
-        db.close()
         return_msg["result"] = "success"
         return_msg["text_system_dir"] = new_dir
         return return_msg
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg  
-
 
 #
 def delete_image_or_text_data(json_obj):
