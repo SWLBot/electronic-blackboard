@@ -105,11 +105,11 @@ class DataManipulateDao(DefaultDao):
         self.db.cmd(sql)
 
     def getIdSysName(self,Id):
-        sql = 'SELECT user_id, type_id, {dataName}_system_name FROM {tableName} WHERE {dataName}_id="{Id}"'.format(
+        sql = 'SELECT user_id, type_id, {dataName}_system_name, {dataName}_like_count FROM {tableName} WHERE {dataName}_id="{Id}"'.format(
                 tableName=self.tableName,dataName=self.dataName,Id=Id)
         ret = self.db.query(sql)
-        if len(ret) and len(ret[0]) == 3:
-            info = dict(userId=ret[0][0],typeId=ret[0][1],systemName=ret[0][2])
+        if len(ret) and len(ret[0]) == 4:
+            info = dict(userId=ret[0][0],typeId=ret[0][1],systemName=ret[0][2],likeCount=ret[0][3])
             return info
         else:
             #TODO raise exception
