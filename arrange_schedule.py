@@ -785,11 +785,9 @@ def rule_base_agent(event):
 
 def check_event_exist_or_insert(event):
     event_id = event['id']
-    db = mysql()
-    db.connect()
-    sql = 'SELECT COUNT(*) from text_data where text_invisible_title ="%s"' % event_id
-    pure_result = db.query(sql)
-    if pure_result[0][0]:
+    with TextDao() as textDao:
+        existed = textDao.checkExisted(event_id)
+    if existed:
         # event existed
         # do nothing
         return
