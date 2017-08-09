@@ -623,7 +623,7 @@ def read_arrange_mode():
         return_msg["error"] = e.args[1]
         return return_msg
 
-def find_cwb_type_id(db):
+def find_cwb_type_id():
     return_msg = {}
     with DataTypeDao() as dataTypeDao:
         typeId = dataTypeDao.getTypeId('氣像雲圖')
@@ -632,7 +632,7 @@ def find_cwb_type_id(db):
     else:
         return -1
 
-def delete_old_cwb_img(db,server_dir,user_id):
+def delete_old_cwb_img(server_dir,user_id):
     send_obj = {}
     error_list_id = []
     with ImageDao() as imageDao:
@@ -650,7 +650,7 @@ def delete_old_cwb_img(db,server_dir,user_id):
             continue
     return error_list_id
 
-def mark_old_cwb_img(db,error_list_id):
+def mark_old_cwb_img(error_list_id):
     for error_id in error_list_id:
         with ImageDao() as imageDao:
             imageDao.markExpired(targetId=error_id,markOldData=True)
@@ -673,11 +673,7 @@ def crawler_cwb_img(json_obj):
         send_obj = {}
         receive_obj = {}
 
-        #connect to mysql
-        db = mysql()
-        db.connect()
-
-        data_type = find_cwb_type_id(db)
+        data_type = find_cwb_type_id()
         if data_type == -1:
             return_msg["error"] = "no cwb img data type"
             return return_msg
@@ -691,9 +687,9 @@ def crawler_cwb_img(json_obj):
                 now_time -= 60
                 continue
 
-            error_list_id = delete_old_cwb_img(db,server_dir,user_id)
+            error_list_id = delete_old_cwb_img(server_dir,user_id)
 
-            mark_old_cwb_img(db,error_list_id)
+            mark_old_cwb_img(error_list_id)
 
             #upload new file
             send_obj["server_dir"] = server_dir
@@ -717,19 +713,15 @@ def crawler_cwb_img(json_obj):
                     #print(target_img)
                     break
                 else:
-                    db.close()
                     return_msg = receive_obj
                     return return_msg
             except:
-                db.close()
                 return_msg["error"] = "save thumbnail image fail"
                 return return_msg
                 
-        db.close()
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg
 

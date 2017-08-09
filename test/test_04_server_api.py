@@ -8,9 +8,7 @@ from mysql import *
 
 class Server_api(unittest.TestCase):
     def test_find_now_schedule(self):
-        with mysql() as db:
-            db.connect()
-            self.assertNotEqual(find_now_schedule(db),-1)
+        self.assertNotEqual(find_now_schedule(),-1)
 
     def test_check_bluetooth_mode_available(self):
         ret = check_bluetooth_mode_available()
@@ -30,9 +28,7 @@ class Server_api(unittest.TestCase):
 
     def test_get_prefer_news(self):
         prefer = [9,10]
-        with mysql() as db:
-            db.connect()
-            self.assertNotEqual(len(get_prefer_news(db,prefer)),0)
+        self.assertNotEqual(len(get_prefer_news(prefer)),0)
 
     def test_check_bluetooth_id_exist(self):
         self.assertNotEqual(check_bluetooth_id_exist('test'),-1)

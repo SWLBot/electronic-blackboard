@@ -21,11 +21,9 @@ class Arrange_Schedule(unittest.TestCase):
             self.assertTrue(key in receive_msg)
 
     def test_delete_old_cwb_img(self):
-        with mysql() as db:
-            db.connect()
-            server_dir = self.system_setting['board_py_dir']
-            user_id = 1
-            self.assertEqual(len(delete_old_cwb_img(db,server_dir,user_id)),0)
+        server_dir = self.system_setting['board_py_dir']
+        user_id = 1
+        self.assertEqual(len(delete_old_cwb_img(server_dir,user_id)),0)
 
     def test_crawler_cwb_img(self):
         send_msg = {}
@@ -75,9 +73,7 @@ class Arrange_Schedule(unittest.TestCase):
         self.assertEqual(receive_msg['result'],'success')
 
     def test_find_cwb_type_id(self):
-        with mysql() as db:
-            db.connect()
-            self.assertNotEqual(find_cwb_type_id(db),-1)
+        self.assertNotEqual(find_cwb_type_id(),-1)
 
     def test_mark_now_activity(self):
         receive_msg = mark_now_activity()
