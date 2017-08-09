@@ -566,7 +566,6 @@ def clean_schedule():
         return_msg["error"] = e.args[1]
         return return_msg   
 
-
 #The API connect mysql and clean up schedule and write it to the schedule.txt
 def set_schedule_log(json_obj):
     try:
@@ -581,10 +580,6 @@ def set_schedule_log(json_obj):
         except:
             return_msg["error"] = "input parameter missing"
             return return_msg
-
-        #connect to mysql
-        db = mysql()
-        db.connect()
         
         with ScheduleDao() as scheduleDao:
             is_used_count = scheduleDao.countUsedSchedule()
@@ -592,8 +587,8 @@ def set_schedule_log(json_obj):
         #if log > max_is_used then clean up
         if is_used_count > max_is_used:
             #get schedule
-            sql = ("SELECT * FROM schedule WHERE sche_is_used=1 ORDER BY sche_sn ASC LIMIT " + str(is_used_count - max_is_used))
-            pure_result = db.query(sql)
+            with ScheduleDao() as scheduleDao:
+                schedules = scheduleDao.getUsedSchedule(limitCount=str(is_used_count - max_is_used))
 
             #generate log
             date_now = date.today()
@@ -606,34 +601,30 @@ def set_schedule_log(json_obj):
                 else :
                     file_pointer = open(schedule_file, "a")
 
-                for num1 in range(len(pure_result)):
+                for num1 in range(len(schedules)):
                     write_str = ""
-                    for num2 in range(len(pure_result[num1])):
-                        write_str = write_str + str(pure_result[num1][num2]) + " "
+                    for num2 in range(len(schedules[num1])):
+                        write_str = write_str + str(schedules[num1][num2]) + " "
                     write_str = write_str + "\n"
                     file_pointer.write(write_str)
                 file_pointer.close()
             except:
-                db.close()
                 return_msg["error"] = "generate log error"
                 return return_msg
             
             #delete schedule
-            for num1 in range(len(pure_result)):
+            for num1 in range(len(schedules)):
                 try:
                     with ScheduleDao() as scheduleDao:
-                        scheduleDao.cleanSchedule(scheSn=pure_result[num1][0])
+                        scheduleDao.cleanSchedule(scheSn=schedules[num1][0])
                 except DB_Exception as e:
                     return_msg["error"] = e.args[1]
             if "error" in return_msg:
-                db.close()
                 return return_msg
         
-        db.close()
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg
 
