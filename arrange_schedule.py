@@ -315,12 +315,9 @@ def find_activity(json_obj):
         return_msg["error"] = "input parameter missing"
         return return_msg
 
-    #check condition
-    if arrange_mode==3 or arrange_mode==4 or arrange_mode==5 or arrange_mode==7:
-        if len(arrange_condition) == 0:
-            return_msg["error"] = "input parameter missing"
-            return return_msg
-    
+    if arrange_mode in [3,4,5,7] and len(arrange_condition) == 0:
+        return_msg["error"] = 'Then arrange mode {mode} need to assgin condition'.format(mode=arrange_mode)
+        return return_msg
     
     #get text activity
     receive_obj = find_text_acticity(json_obj)
