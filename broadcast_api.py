@@ -22,18 +22,15 @@ def load_schedule():
         db = mysql()
         db.connect()
 
-        #find schedule
-        sql = ("SELECT sche_id, sche_target_id, sche_display_time FROM schedule WHERE sche_is_used=0 ORDER BY sche_sn ASC LIMIT 1")
-        pure_result = db.query(sql)
-        try:
-            return_msg["schedule_id"] = pure_result[0][0]
-            sche_target_id = pure_result[0][1]
-            return_msg["display_time"] = int(pure_result[0][2])
-        except:
-            db.close()
+        #find next schedule
+        with ScheduleDao() as scheduleDao:
+            next_schedule = scheduleDao.getNextSchedule()
+        if next_schedule is None:
             return_msg["error"] = "no schedule"
             return return_msg
-
+        return_msg["schedule_id"] = next_schedule['schedule_id']
+        sche_target_id = next_schedule['sche_target_id']
+        return_msg["display_time"] = int(next_schedule['display_time'])
 
         #find the file
         if sche_target_id[0:4]=="imge":
