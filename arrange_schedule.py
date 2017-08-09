@@ -365,14 +365,14 @@ def find_activity(json_obj):
     #get text activity
     receive_obj = find_text_acticity(json_obj)
     if receive_obj["result"] == "success":
-        for num1 in range(len(receive_obj["ans_list"])):
-            deal_obj.append(receive_obj["ans_list"][num1])
+        for text_data in receive_obj['ans_list']:
+            deal_obj.append(text_data)
     
     #get image activity
     receive_obj = find_image_acticity(json_obj)
     if receive_obj["result"] == "success":
-        for num1 in range(len(receive_obj["ans_list"])):
-            deal_obj.append(receive_obj["ans_list"][num1])
+        for image_data in receive_obj['ans_list']:
+            deal_obj.append(image_data)
     
     deal_obj = mix_image_and_text(arrange_mode,deal_obj)
 
@@ -381,10 +381,10 @@ def find_activity(json_obj):
     content_time = 5
     return_msg["target_id"] = []
     return_msg["display_time"] = []
-    for num1 in range(len(deal_obj)):
+    for display_data in deal_obj:
         try:
-            content_id = str(deal_obj[num1][0])
-            content_time = int(deal_obj[num1][1])
+            content_id = str(display_data[0])
+            content_time = int(display_data[1])
         except:
             continue
         return_msg["target_id"].append(content_id)
