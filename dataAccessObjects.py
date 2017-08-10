@@ -24,6 +24,11 @@ class DefaultDao():
 
 class DataManipulateDao(DefaultDao):
     #TODO handle if derived class not assign dataName
+    def addDisplayCount(self,targetId):
+        sql = 'UPDATE {tableName} SET {dataName}_display_count={dataName}_display_count+1 WHERE {dataName}_id="{targetId}"'.format(
+                dataName=self.dataName,targetId=targetId,tableName=self.tableName)
+        self.db.cmd(sql)
+
     def markExpired(self,targetId,markOldData=None):
         sql = 'UPDATE {tableName} SET {dataName}_is_expire=1 WHERE {dataName}_id="{targetId}"'.format(
                 dataName=self.dataName,targetId=targetId,tableName=self.tableName)

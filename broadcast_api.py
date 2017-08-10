@@ -7,8 +7,6 @@ from dataAccessObjects import *
 import os.path
 import json
 
-
-
 #The API load schedule.txt and find out the first image which has not print and the time limit still allow
 def load_schedule():
     try:
@@ -18,10 +16,6 @@ def load_schedule():
         sche_target_id = ""
         type_id = ""
         system_file_name = ""
-
-        #connect to mysql
-        db = mysql()
-        db.connect()
 
         #find next schedule
         with ScheduleDao() as scheduleDao:
@@ -43,7 +37,6 @@ def load_schedule():
                 file_info = textDao.getIdSysName(Id=sche_target_id)
             return_msg["file_type"] = "text"
         else :
-            db.close()
             return_msg["error"] = "target id type error"
             return return_msg
         try:
@@ -51,7 +44,6 @@ def load_schedule():
             system_file_name = file_info['systemName']
             return_msg["like_count"] = int(file_info['likeCount'])
         except:
-            db.close()
             return_msg["error"] = "no file record"
             return return_msg
 
@@ -64,14 +56,12 @@ def load_schedule():
             return_msg["file"] = os.path.join(type_dir, system_file_name)
             return_msg["type_name"] = str(type_name)
         except:
-            db.close()
             return_msg["error"] = "no type record"
             return return_msg
 
         #if text read file
         if return_msg["file_type"] == "text":
             if not os.path.isfile(schedule_dir) :
-                db.close()
                 return_msg["error"] = "no file"
                 return return_msg
             else :
@@ -81,15 +71,15 @@ def load_schedule():
 
         #update display count
         if return_msg["file_type"] == "image":
-            sql = "UPDATE image_data SET img_display_count=img_display_count+1 WHERE img_id='"+sche_target_id+"'"
+            with ImageDao() as imageDao:
+                imageDao.addDisplayCount(sche_target_id)
         elif return_msg["file_type"] == "text":
-            sql = "UPDATE text_data SET text_display_count=text_display_count+1 WHERE text_id='"+sche_target_id+"'"
-        db.cmd(sql)
+            with TextDao() as textDao:
+                textDao.addDisplayCount(sche_target_id)
 
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg
 
