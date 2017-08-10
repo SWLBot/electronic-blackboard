@@ -523,6 +523,18 @@ def clean_schedule():
         return_msg["error"] = e.args[1]
         return return_msg   
 
+def write_logs_to_file(log_dir,schedules):
+    date_now = date.today()
+    file_name = 'schedule_{year}_{month}_{day}.txt'.format(year=date_now.year,month=date_now.month,day=date_now.day)
+    schedule_file = os.path.join(log_dir,'static','log',file_name)
+    with open(schedule_file,'a+') as file_pointer:
+        for schedule in schedules:
+            write_str = ""
+            for attr in schedule:
+                write_str = write_str + str(attr) + " "
+            write_str = write_str + "\n"
+            file_pointer.write(write_str)
+
 #The API connect mysql and clean up schedule and write it to the schedule.txt
 def set_schedule_log(json_obj):
     try:
@@ -547,23 +559,8 @@ def set_schedule_log(json_obj):
             with ScheduleDao() as scheduleDao:
                 schedules = scheduleDao.getUsedSchedule(limitCount=str(is_used_count - max_is_used))
 
-            #generate log
-            date_now = date.today()
-            schedule_file = 'schedule_{year}_{month}_{day}.txt'.format(year=date_now.year,month=date_now.month,day=date_now.day)
-            schedule_file = os.path.join(log_dir,'static','log',schedule_file)
             try:
-                if not os.path.isfile(schedule_file) :
-                    file_pointer = open(schedule_file, "w")
-                else :
-                    file_pointer = open(schedule_file, "a")
-
-                for schedule in schedules:
-                    write_str = ""
-                    for attr in schedule:
-                        write_str = write_str + str(attr) + " "
-                    write_str = write_str + "\n"
-                    file_pointer.write(write_str)
-                file_pointer.close()
+                write_logs_to_file(log_dir,schedules)
             except:
                 return_msg["error"] = "Error occurred when writing to log file"
                 return return_msg
