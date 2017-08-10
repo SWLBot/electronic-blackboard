@@ -115,45 +115,31 @@ def display_text(argu_user):
 
 def display_data_type(type_id=None, type_name=None, type_dir=None, type_weight=None):
     try:
-        current_type_id = type_id
-        current_type_name = type_name
-        current_type_dir = type_dir
-        current_type_weight = type_weight
+        info = {}
+        info["current_type_id"] = type_id
+        info["current_type_name"] = type_name
+        info["current_type_dir"] = type_dir
+        info["current_type_weight"] = type_weight
 
         return_msg = {}
         return_msg_list = []
 
-        deal_result = []
-
-        #connect to mysql
-        db = mysql()
-        db.connect()
-
-        if current_type_id :
-            sql = "SELECT * FROM data_type WHERE type_id = \""+str(current_type_id)+"\""
-        elif current_type_name :
-            sql = "SELECT * FROM data_type WHERE type_name = \""+current_type_name+"\""
-        elif current_type_dir :
-            sql = "SELECT * FROM data_type WHERE type_dir = \""+current_type_dir+"\""
-        elif current_type_weight :
-            sql = "SELECT * FROM data_type WHERE type_weight = \""+str(current_type_weight)+"\""
-        else:
+        with DataTypeDao() as dataTypeDao:
+            data_type = dataTypeDao.getDisplayDataType(info=info)
+        if data_type == None:
             return_msg["error"] = "Error type select"
             return return_msg
 
-        pure_result = db.query(sql)
-        if current_type_weight:
-            for result_row in pure_result:
+        if info["current_type_weight"]:
+            for result_row in data_type:
                 return_msg_list.append([result_row[0],result_row[1],result_row[2],result_row[3]])
         else:
-            for result_row in pure_result:
+            for result_row in data_type:
                 return_msg_list.extend([result_row[0],result_row[1],result_row[2],result_row[3]])
                 #                       id           ,name         ,dir          ,weight
 
-        db.close()
         return return_msg_list
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg
 
