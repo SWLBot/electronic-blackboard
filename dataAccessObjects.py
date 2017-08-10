@@ -453,6 +453,15 @@ class DataTypeDao(DefaultDao):
         sql = 'INSERT INTO data_type (type_name,type_dir) VALUES ("{typeName}","{typeName}/")'.format(typeName=typeName)
         self.db.cmd(sql)
 
+    def getTypeData(self):
+        sql = 'select type_id,type_name from data_type'
+        ret = self.db.query(sql)
+        if len(ret):
+            return ret
+        else:
+            #TODO check need to raise exception or not
+            return None
+
 class ArrangeModeDao(DefaultDao):
     def getArrangeMode(self):
         sql = 'SELECT armd_sn, armd_mode, armd_condition FROM arrange_mode WHERE armd_is_delete=0 and armd_is_expire=0 and '\

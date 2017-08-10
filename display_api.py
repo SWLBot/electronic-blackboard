@@ -3,7 +3,7 @@ from mysql import DB_Exception
 from datetime import date
 from datetime import datetime
 from datetime import timedelta
-from dataAccessObjects import UserDao
+from dataAccessObjects import *
 import os.path
 #
 def get_user_id(user_name):
@@ -159,13 +159,10 @@ def display_data_type(type_id=None, type_name=None, type_dir=None, type_weight=N
 
 def display_data_types():
     try:
-        db = mysql()
-        db.connect()
-        sql = "select type_id,type_name from data_type"
-        data_types = db.query(sql)
+        with DataTypeDao() as dataTypeDao:
+            data_types = dataTypeDao.getTypeData()
         return data_types
     except DB_Exception as e:
-        db.close()
         return_msg={}
         return_msg["error"] = e.args[1]
         return return_msg
