@@ -3,7 +3,7 @@ from mysql import DB_Exception
 from datetime import date
 from datetime import datetime
 from datetime import timedelta
-from dataAccessObjects import UserDao
+from dataAccessObjects import *
 import os.path
 #
 def get_user_id(user_name):
@@ -32,10 +32,6 @@ def display_image(argu_user):
         return_msg = {}
         return_msg_list = []
         
-        #connect to mysql
-        db = mysql()
-        db.connect()
-
         user_id = get_user_id(user_name)
 
         #check whether level is 10000
@@ -46,25 +42,20 @@ def display_image(argu_user):
             return return_msg
 
         #display image data from the same user
-        if current_user_level == 10000:
-            sql = "SELECT img_id, img_upload_time, img_file_name, img_start_time, img_end_time, img_start_date, img_end_date, type_id, img_thumbnail_name, img_display_time, img_display_count " \
-                    + "FROM image_data WHERE img_is_delete=0"
+        if current_user_level >= 10000:
+            with ImageDao() as imageDao:
+                imgs = imageDao.getDisplayImgs()
         else:
-            sql = "SELECT img_id, img_upload_time, img_file_name, img_start_time, img_end_time, img_start_date, img_end_date, type_id, img_thumbnail_name, img_display_time, img_display_count " \
-                    + "FROM image_data WHERE user_id  = %d AND img_is_delete=0" % (user_id)
+            with ImageDao() as imageDao:
+                imgs = imageDao.getDisplayImgs(userId=user_id)
 
-
-        pure_result = db.query(sql)
         #restruct results of query
-        for result_row in pure_result:
+        for result_row in imgs:
             return_msg_list.append([result_row[0],result_row[1],result_row[2],result_row[3],result_row[4],result_row[5],result_row[6],result_row[7],result_row[8],result_row[9],result_row[10]])
             #                   img_id, img_upload_time, img_file_name, img_start_time, img_end_time, img_start_date, img_end_date, type_id, img_thumbnail_name, img_display_time, img_display_count
-        
-        db.close()
 
         return return_msg_list
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg
 
