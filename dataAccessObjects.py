@@ -462,6 +462,25 @@ class DataTypeDao(DefaultDao):
             #TODO check need to raise exception or not
             return None
 
+    def getDisplayDataType(self,info):
+        if info["current_type_id"] :
+            sql = 'SELECT * FROM data_type WHERE type_id ="{typeId}"'.format(typeId=str(info["current_type_id"]))
+        elif info["current_type_name"] :
+            sql = 'SELECT * FROM data_type WHERE type_name ="{typeName}"'.format(typeName=info["current_type_name"])
+        elif info["current_type_dir"] :
+            sql = 'SELECT * FROM data_type WHERE type_dir ="{typeDir}"'.format(typeDir=info["current_type_dir"])
+        elif info["current_type_weight"] :
+            sql = 'SELECT * FROM data_type WHERE type_weight ="{typeWeight}"'.format(typeWeight=str(info["current_type_weight"]))
+        else:
+            #TODO check need to raise exception or not
+            return None
+        ret = self.db.query(sql)
+        if len(ret):
+            return ret
+        else:
+            #TODO check need to raise exception or not
+            return None
+
 class ArrangeModeDao(DefaultDao):
     def getArrangeMode(self):
         sql = 'SELECT armd_sn, armd_mode, armd_condition FROM arrange_mode WHERE armd_is_delete=0 and armd_is_expire=0 and '\
