@@ -549,35 +549,29 @@ def set_schedule_log(json_obj):
 
             #generate log
             date_now = date.today()
-            schedule_file = ("schedule_" + str(date_now.year) + "_" + str(date_now.month) + "_" + str(date_now.day) + ".txt")
+            schedule_file = 'schedule_{year}_{month}_{day}.txt'.format(date_now.year,date_now.month,date_now.day)
             schedule_file = os.path.join(log_dir,'static','log',schedule_file)
-            file_pointer = ''
             try:
                 if not os.path.isfile(schedule_file) :
                     file_pointer = open(schedule_file, "w")
                 else :
                     file_pointer = open(schedule_file, "a")
 
-                for num1 in range(len(schedules)):
+                for schedule in schedules:
                     write_str = ""
-                    for num2 in range(len(schedules[num1])):
-                        write_str = write_str + str(schedules[num1][num2]) + " "
+                    for attr in schedule:
+                        write_str = write_str + str(attr) + " "
                     write_str = write_str + "\n"
                     file_pointer.write(write_str)
                 file_pointer.close()
             except:
-                return_msg["error"] = "generate log error"
+                return_msg["error"] = "Error occurred when writing to log file"
                 return return_msg
             
             #delete schedule
-            for num1 in range(len(schedules)):
-                try:
-                    with ScheduleDao() as scheduleDao:
-                        scheduleDao.cleanSchedule(scheSn=schedules[num1][0])
-                except DB_Exception as e:
-                    return_msg["error"] = e.args[1]
-            if "error" in return_msg:
-                return return_msg
+            for schedule in schedules:
+                with ScheduleDao() as scheduleDao:
+                    scheduleDao.cleanSchedule(scheSn=schedule[0])
         
         return_msg["result"] = "success"
         return return_msg
