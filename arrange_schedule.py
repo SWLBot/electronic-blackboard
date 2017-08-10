@@ -549,7 +549,7 @@ def set_schedule_log(json_obj):
 
             #generate log
             date_now = date.today()
-            schedule_file = 'schedule_{year}_{month}_{day}.txt'.format(date_now.year,date_now.month,date_now.day)
+            schedule_file = 'schedule_{year}_{month}_{day}.txt'.format(year=date_now.year,month=date_now.month,day=date_now.day)
             schedule_file = os.path.join(log_dir,'static','log',schedule_file)
             try:
                 if not os.path.isfile(schedule_file) :
