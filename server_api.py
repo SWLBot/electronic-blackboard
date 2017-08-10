@@ -648,7 +648,7 @@ def upload_image_insert_db(json_obj):
         img_data = {}
         img_data["id"] = img_id
         img_data["typeId"] = str(type_id)
-        img_data["systemName"] = img_thumbnail_name
+        img_data["systemName"] = img_system_name
         img_data["thumbnailName"] = img_thumbnail_name
         img_data["fileName"] = img_file_name
         img_data["startDate"] = img_start_date
