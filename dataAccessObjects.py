@@ -405,6 +405,14 @@ class TextDao(DataManipulateDao):
     def generateNewId(self):
         return super().generateNewId()
 
+    def getDisplayTexts(self,userId=None):
+        sql = "SELECT text_id, type_id, text_upload_time, text_start_date, text_end_date, text_start_time, text_end_time, text_display_time, text_display_count " \
+                + "FROM text_data WHERE text_is_delete=0"
+        if userId:
+            sql += " AND user_id={userId}".format(userId=userId)
+        ret = self.db.query(sql)
+        return ret
+
 class UserPreferDao(DefaultDao):
     def generateNewId(self):
         sql ='SELECT pref_id FROM user_prefer ORDER BY pref_set_time DESC LIMIT 1'

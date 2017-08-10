@@ -3,7 +3,7 @@ from mysql import DB_Exception
 from datetime import date
 from datetime import datetime
 from datetime import timedelta
-from dataAccessObjects import UserDao
+from dataAccessObjects import *
 import os.path
 #
 def get_user_id(user_name):
@@ -77,10 +77,6 @@ def display_text(argu_user):
         return_msg = {}
         return_msg_list = []
 
-        #connect to mysql
-        db = mysql()
-        db.connect()
-
         user_id = get_user_id(user_name)
 
         #check whether level is 10000
@@ -91,27 +87,22 @@ def display_text(argu_user):
             return return_msg
 
         #display text data from the same user
-        if current_user_level == 10000:
-            sql = "SELECT text_id, type_id, text_upload_time, text_start_date, text_end_date, text_start_time, text_end_time, text_display_time, text_display_count " \
-                    + "FROM text_data WHERE text_is_delete=0"
+        if current_user_level >= 10000:
+            with TextDao() as textDao:
+                texts = textDao.getDisplayTexts()
         else:
-            sql = "SELECT text_id, type_id, text_upload_time, text_start_date, text_end_date, text_start_time, text_end_time, text_display_time, text_display_count " \
-                    + "FROM text_data WHERE user_id = %d AND text_is_delete=0" % (user_id)
+            with TextDao() as textDao:
+                texts = textDao.getDisplayTexts(userId=user_id)
 
-        pure_result = db.query(sql)
         #restruct results of query
-        for result_row in pure_result:
+        for result_row in texts:
             return_msg_list.append([result_row[0],result_row[1],result_row[2],result_row[3],result_row[4],result_row[5],result_row[6],result_row[7],result_row[8]])
             #text_id, type_id, text_upload_time, text_start_date, text_end_date, text_start_time, text_end_time, text_display_time, text_display_count
         
-        db.close()
         return return_msg_list
     except DB_Exception as e:
-        db.close()
         return_msg["error"] = e.args[1]
         return return_msg
-
-
 
 def display_data_type(type_id=None, type_name=None, type_dir=None, type_weight=None):
     try:
