@@ -787,7 +787,7 @@ def edit_image_data(json_obj):
         img_data["startTime"] = img_start_time
         img_data["endTime"] = img_end_time
         img_data["displayTime"] = str(img_display_time)
-        img_data["editUserId"] = str(img_last_edit_user_id)
+        img_data["editUserId"] = str(user_id)
         img_data["Id"] = img_id
         try:
             with ImageDao() as imageDao:
