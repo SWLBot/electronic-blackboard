@@ -837,7 +837,7 @@ def merge_files_and_days(days_limit, drive_file):
     return drive_file
 
 def check_drive_img_exist(data_type, file_name):
-    with ImageDao as imageDao:
+    with ImageDao() as imageDao:
         return imageDao.checkExisted(typeId=data_type,fileName=file_name)
 
 def save_google_drive_file(service, json_obj):
