@@ -543,7 +543,7 @@ def store_thumbnail_image(file_path,thumbnail_path):
 def get_img_meta(img_id):
     try:
         with ImageDao() as imageDao:
-            img_data = ImageDao.getImgData(imgId=img_id)
+            img_data = imageDao.getImgData(imgId=img_id)
         #TODO Caller should check return value is not None
         return img_data
     except DB_Exception as e:
