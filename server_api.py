@@ -1217,7 +1217,6 @@ def read_text_data(text_id):
 # for google api
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly','https://www.googleapis.com/auth/drive']
 CLIENT_SECRET_FILE = 'client_secret.json'
-APPLICATION_NAME = 'Google Calendar API Python Quickstart'
 redirect_url = 'http://localhost:3000/googleapi'
 
 def get_credentials(handler=None):
