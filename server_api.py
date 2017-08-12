@@ -1176,12 +1176,12 @@ def change_password(json_obj):
                 # old password correct
                 hashed_key = bcrypt.hashpw(new_password.encode('utf-8'),bcrypt.gensalt())
                 with UserDao() as userDao:
-                    userDao.updatePassword(hashed_key=str(hashed_key)[1:],userId=str(user_id))
+                    userDao.updatePassword(hashed_key.decode('utf-8'),userId=str(user_id))
             else:
                 return_msg["error"] = "old password incorrect"
                 return return_msg
-        except:
-            return_msg["error"] = "no such user id : " + str(user_id)
+        except Exception as e:
+            return_msg["error"] = str(e)
             return return_msg
 
         return_msg["result"] = "success"
