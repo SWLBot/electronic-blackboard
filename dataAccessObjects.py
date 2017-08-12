@@ -391,7 +391,7 @@ class TextDao(DataManipulateDao):
             return None
 
     def checkExisted(self,eventId):
-        sql = 'SELECT COUNT(*) from text_data where text_invisible_title="{eventId}"}'.format(
+        sql = 'SELECT COUNT(*) from text_data where text_invisible_title="{eventId}"'.format(
             eventId=eventId)
         return self.queryOneValue(sql)
 
