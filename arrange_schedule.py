@@ -434,7 +434,7 @@ def edit_schedule(json_obj):
             if target_sn:
                 #check use update or insert
                 with ScheduleDao() as scheduleDao:
-                    sche_sn = scheduleDao.getEditScheSn(scheSn)
+                    sche_sn = scheduleDao.getEditScheSn(scheSn=target_sn)
                 if sche_sn:
                     with ScheduleDao() as scheduleDao:
                         scheduleDao.updateEditSchedule(target_id,display_time,arrange_mode_sn,sche_sn)
