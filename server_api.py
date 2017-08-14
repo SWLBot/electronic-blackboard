@@ -262,7 +262,7 @@ def Zodiac(month, day):
 #
 def random_constellation(user_id):
     with UserDao() as userDao:
-        date = userDao.getUserBirthday()
+        date = userDao.getUserBirthday(user_id)
     if date == None:
         constellation = ['摩羯座','水瓶座','雙鱼座','白羊座','金牛座','雙子座','巨蟹座','獅子座','處女座','天秤座','天蝎座','射手座']
         constellation = random.choice(constellation)
