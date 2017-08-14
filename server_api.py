@@ -69,10 +69,10 @@ def add_like_count(target_id):
     try:
         if target_id[0:4]=="imge":
             with ImageDao() as imageDao:
-                imageDao.addLikeAcount(targetId=target_id)
+                imageDao.addLikeCount(targetId=target_id)
         elif target_id[0:4]=="text":
             with TextDao() as textDao:
-                textDao.addLikeAcount(targetId=target_id)
+                textDao.addLikeCount(targetId=target_id)
         else :
             return 0
         
