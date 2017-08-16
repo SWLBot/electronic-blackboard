@@ -444,7 +444,7 @@ class UserPreferDao(DefaultDao):
     def insertUserPrefer(self,prefId,userId,prefStr):
         sql = 'INSERT INTO user_prefer' \
             +'(pref_id,user_id,pref_data_type_01,pref_data_type_02,pref_data_type_03,pref_data_type_04,pref_data_type_05) VALUES (' \
-            +'"{prefId}",{userId},{prefStr},{prefStr},{prefStr},{prefStr},{prefStr})'\
+            +'"{prefId}",{userId},"{prefStr}","{prefStr}","{prefStr}","{prefStr}","{prefStr}")'\
             .format(prefId=prefId,userId=str(userId),prefStr=prefStr)
         self.db.cmd(sql)
 
