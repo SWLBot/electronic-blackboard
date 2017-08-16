@@ -1120,6 +1120,16 @@ def expire_data_check():
         receive_obj["error"] = "expire_data_check : {errorMsg}".format(errorMsg=receive_obj["error"])
         set_system_log(receive_obj)
 
+def do_google_drive():
+    global board_py_dir
+    send_obj = dict(server_dir=board_py_dir,user_id=1)
+    receive_obj = crawler_google_drive_img(send_obj)
+    if receive_obj["result"] == "success":
+        "DO NOTHING"
+    else :
+        receive_obj["error"] = "crawler_google_drive_img : " + receive_obj["error"]
+        set_system_log(receive_obj)
+
 def do_crawler_schedule():
     receive_obj = crawler_schedule()
     if receive_obj["result"] == "success":
@@ -1128,12 +1138,13 @@ def do_crawler_schedule():
         receive_obj["error"] = "crawler_news : " + receive_obj["error"]
         set_system_log(receive_obj)
 
+board_py_dir = ""
+shutdown = 0
+max_db_log = 100
+min_db_activity = 10
+
 def main():
     just_startup = 1
-    board_py_dir = ""
-    shutdown = 0
-    max_db_log = 100
-    min_db_activity = 10
     arrange_mode_change = 0
     arrange_sn = 0
     arrange_mode = 0
@@ -1141,6 +1152,10 @@ def main():
     condition = []
     send_obj = {}
     receive_obj = {}
+    global board_py_dir
+    global shutdown
+    global max_db_log
+    global min_db_activity
 
     #for non blocking fork
     signal.signal(signal.SIGCHLD, CHLD_handler)
@@ -1172,6 +1187,7 @@ def main():
     alarm_crawler_functions = raw_time + 15.0
 
     check_expire_data_worker = Worker(job=expire_data_check,name='Check expired data')
+    google_drive_worker = Worker(job=do_google_drive,name='Grab Google drive image')
     crawler_schedule_worker = Worker(job=do_crawler_schedule,name='Crawler for news')
 
     #start scheduling
@@ -1361,27 +1377,11 @@ def main():
         
         #google drive add to text data
         if raw_time >= alarm_crawler_google_drive_img:
-            print("#8 "+ time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
-            try:
-                newpid = os.fork()
-                if newpid == 0: #child
-                    shutdown = 1
-                    send_obj["server_dir"] = board_py_dir
-                    send_obj["user_id"] = 1
-                    receive_obj = crawler_google_drive_img(send_obj)
-                    if receive_obj["result"] == "success":
-                        "DO NOTHING"
-                    else :
-                        receive_obj["error"] = "crawler_google_drive_img : " + receive_obj["error"]
-                        set_system_log(receive_obj)
-                    os._exit(0)
-                else: #Parent
-                    alarm_crawler_google_drive_img = raw_time + 3600.0
-            except:
-                receive_obj["result"] = "fail"
-                receive_obj["error"] = "fork6 error"
-                set_system_log(receive_obj)
-                alarm_crawler_google_drive_img = raw_time + 600.0
+            fork_failed = google_drive_worker.do(time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
+            if fork_failed:
+                alarm_crawler_google_drive_img += 600.0
+            else:
+                alarm_crawler_google_drive_img += 3600.0
 
         #crawler
         if raw_time >= alarm_crawler_functions:
