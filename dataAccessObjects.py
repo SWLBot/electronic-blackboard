@@ -91,7 +91,7 @@ class DataManipulateDao(DefaultDao):
         return Ids
 
     def generateNewId(self):
-        sql = 'SELECT {dataName}_id FROM {tableName} ORDER BY {dataName}_upload_time DESC LIMIT 1'.format(
+        sql = 'SELECT {dataName}_id FROM {tableName} ORDER BY {dataName}_upload_time DESC, {dataName}_id DESC LIMIT 1'.format(
                 dataName=self.dataName,tableName=self.tableName)
         Id = self.db.query(sql)
         if len(Id):
@@ -423,7 +423,7 @@ class TextDao(DataManipulateDao):
 
 class UserPreferDao(DefaultDao):
     def generateNewId(self):
-        sql ='SELECT pref_id FROM user_prefer ORDER BY pref_set_time DESC LIMIT 1'
+        sql ='SELECT pref_id FROM user_prefer ORDER BY pref_set_time DESC, pref_id DESC LIMIT 1'
         res = self.db.query(sql)
         if len(res):
             return "pref{0:010d}".format(int(res[0][0][4:]) + 1)
