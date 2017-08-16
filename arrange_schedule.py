@@ -720,24 +720,28 @@ def crawler_cwb_img(json_obj):
         return return_msg
 
 def google_calendar_text():
-    return_msg = {}
-    return_msg["result"] = "fail"
-    credentials = get_credentials()
-    if not credentials:
-        return_msg["error"] = "No credential file"
+    try:
+        return_msg = {}
+        return_msg["result"] = "fail"
+        credentials = get_credentials()
+        if not credentials:
+            return_msg["error"] = "No credential file"
+            return return_msg
+        else:
+            try:
+                eventsResult = get_upcoming_events(credentials)
+                events = eventsResult['items']
+                for e in events:
+                    check_event_exist_or_insert(e)
+                    sleep(1.5)
+                return_msg["result"] = "success"
+                return return_msg
+            except DB_Exception as e:
+                return_msg["error"] = e.arg[1]
+                return return_msg
+    except Exception as e:
+        return_msg["error"] = str(e)
         return return_msg
-    else:
-        try:
-            eventsResult = get_upcoming_events(credentials)
-            events = eventsResult['items']
-            for e in events:
-                check_event_exist_or_insert(e)
-                sleep(1.5)
-            return_msg["result"] = "success"
-            return return_msg
-        except DB_Exception as e:
-            return_msg["error"] = e.arg[1]
-            return return_msg
 
 def rule_base_agent(event):
     addition_msg = {}
@@ -1120,6 +1124,14 @@ def expire_data_check():
         receive_obj["error"] = "expire_data_check : {errorMsg}".format(errorMsg=receive_obj["error"])
         set_system_log(receive_obj)
 
+def do_google_calendar():
+    receive_obj = google_calendar_text()
+    if receive_obj["result"] == "success":
+        "DO NOTHING"
+    else:
+        receive_obj["error"] = "google_calendar_text" + receive_obj["error"]
+        set_system_log(receive_obj)
+
 def do_google_drive():
     global board_py_dir
     send_obj = dict(server_dir=board_py_dir,user_id=1)
@@ -1187,6 +1199,7 @@ def main():
     alarm_crawler_functions = raw_time + 15.0
 
     check_expire_data_worker = Worker(job=expire_data_check,name='Check expired data')
+    google_calendar_worker = Worker(job=do_google_calendar,name='Grab Google calendar event')
     google_drive_worker = Worker(job=do_google_drive,name='Grab Google drive image')
     crawler_schedule_worker = Worker(job=do_crawler_schedule,name='Crawler for news')
 
@@ -1355,25 +1368,11 @@ def main():
 
         #google calendar add to text data
         if raw_time >= alarm_google_calendar_text:
-            print("#7 "+ time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
-            try:
-                newpid = os.fork()
-                if newpid == 0: #child
-                    shutdown = 1
-                    receive_obj = google_calendar_text()
-                    if receive_obj["result"] == "success":
-                        "DO NOTHING"
-                    else:
-                        receive_obj["error"] = "google_calendar_text" + receive_obj["error"]
-                        set_system_log(receive_obj)
-                    os._exit(0)
-                else: #Parent
-                    alarm_google_calendar_text = raw_time + 43200.0
-            except:
-                receive_obj["result"] = "fail"
-                receive_obj["error"] = "fork5 error"
-                set_system_log(receive_obj)
-                alarm_google_calendar_text = raw_time + 10.0
+            fork_failed = google_calendar_worker.do(time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
+            if fork_failed:
+                alarm_google_calendar_text += 10.0
+            else:
+                alarm_google_calendar_text += 43200.0
         
         #google drive add to text data
         if raw_time >= alarm_crawler_google_drive_img:
