@@ -1124,6 +1124,16 @@ def expire_data_check():
         receive_obj["error"] = "expire_data_check : {errorMsg}".format(errorMsg=receive_obj["error"])
         set_system_log(receive_obj)
 
+def do_cwb_crawler():
+    global board_py_dir
+    send_obj = dict(server_dir=board_py_dir,user_id=1)
+    receive_obj = crawler_cwb_img(send_obj)
+    if receive_obj["result"] == "success":
+        "DO NOTHING"
+    else :
+        receive_obj["error"] = "crawler_cwb_img : " + receive_obj["error"]
+        set_system_log(receive_obj)
+
 def do_google_calendar():
     receive_obj = google_calendar_text()
     if receive_obj["result"] == "success":
@@ -1199,6 +1209,7 @@ def main():
     alarm_crawler_functions = raw_time + 15.0
 
     check_expire_data_worker = Worker(job=expire_data_check,name='Check expired data')
+    cwb_crawler_worker = Worker(job=do_cwb_crawler,name='Crawler for cwb image')
     google_calendar_worker = Worker(job=do_google_calendar,name='Grab Google calendar event')
     google_drive_worker = Worker(job=do_google_drive,name='Grab Google drive image')
     crawler_schedule_worker = Worker(job=do_crawler_schedule,name='Crawler for news')
@@ -1344,27 +1355,11 @@ def main():
         
         #crawl cwb radar image
         if raw_time >= alarm_crawler_cwb_img:
-            print("#6 "+ time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
-            try:
-                newpid = os.fork()
-                if newpid == 0: #child
-                    shutdown = 1
-                    send_obj["server_dir"] = board_py_dir
-                    send_obj["user_id"] = 1
-                    receive_obj = crawler_cwb_img(send_obj)
-                    if receive_obj["result"] == "success":
-                        "DO NOTHING"
-                    else :
-                        receive_obj["error"] = "crawler_cwb_img : " + receive_obj["error"]
-                        set_system_log(receive_obj)
-                    os._exit(0)
-                else: #Parent
-                    alarm_crawler_cwb_img = raw_time + 3600.0
-            except:
-                receive_obj["result"] = "fail"
-                receive_obj["error"] = "fork4 error"
-                set_system_log(receive_obj)
-                alarm_crawler_cwb_img = raw_time + 600.0
+            fork_failed = cwb_crawler_worker.do(time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
+            if fork_failed:
+                alarm_crawler_google_drive_img += 600.0
+            else:
+                alarm_crawler_google_drive_img += 3600.0
 
         #google calendar add to text data
         if raw_time >= alarm_google_calendar_text:
