@@ -409,14 +409,14 @@ def edit_schedule(json_obj):
     try:
         return_msg = {}
         return_msg["result"] = "fail"
-        next_sn = 0
+        sn_offset = 0
         target_id_list = []
         display_time_list = []
         target_id = ""
         display_time = 5
         arrange_mode_sn = 1
         try:
-            next_sn = json_obj["next_sn"]
+            sn_offset = json_obj["sn_offset"]
             target_id_list = json_obj["target_id"]
             display_time_list = json_obj["display_time"]
             arrange_mode_sn = json_obj["arrange_sn"]
@@ -434,7 +434,7 @@ def edit_schedule(json_obj):
             if target_sn:
                 #check use update or insert
                 with ScheduleDao() as scheduleDao:
-                    sche_sn = scheduleDao.getEditScheSn(scheSn=target_sn)
+                    sche_sn = scheduleDao.getEditScheSn(scheSn=target_sn+sn_offset)
                 if sche_sn:
                     with ScheduleDao() as scheduleDao:
                         scheduleDao.updateEditSchedule(target_id,display_time,arrange_mode_sn,sche_sn)
@@ -460,7 +460,7 @@ def edit_schedule(json_obj):
                 else :
                     return_msg["error"] = "may be another arrange.exe is working"
                     return return_msg
-            next_sn += 1
+            sn_offset += 1
 
         return_msg["result"] = "success"
         return return_msg
@@ -1288,7 +1288,7 @@ def main():
                         os._exit(0)
 
                     #use add or edit schedule
-                    send_obj["next_sn"] = 3
+                    send_obj["sn_offset"] = 3
                     send_obj["target_id"] = receive_obj["target_id"]
                     send_obj["display_time"] = receive_obj["display_time"]
                     send_obj["arrange_sn"] = arrange_sn

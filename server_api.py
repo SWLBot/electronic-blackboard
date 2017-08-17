@@ -244,9 +244,9 @@ def set_insert_customer_text_msg():
         send_msg["server_dir"] = ""
         send_msg["file_type"] = display_data_type(type_name='customized_text')[0]
         send_msg["start_date"] = time.strftime("%Y-%m-%d", time.localtime(now_time))
-        send_msg["end_date"] = time.strftime("%Y-%m-%d", time.localtime(now_time+3))
+        send_msg["end_date"] = time.strftime("%Y-%m-%d", time.localtime(now_time+9))
         send_msg["start_time"] = time.strftime("%H:%M:%S", time.localtime(now_time))
-        send_msg["end_time"] = time.strftime("%H:%M:%S", time.localtime(now_time+3))
+        send_msg["end_time"] = time.strftime("%H:%M:%S", time.localtime(now_time+9))
         send_msg["display_time"] = 10
         send_msg["user_id"] = 1
         send_msg["result"] = "success"
@@ -357,7 +357,7 @@ def insert_customized_schedule(user_id, prefer_data_type):
         display_time = 10
 
         #insert infromation to schedule
-        send_msg["next_sn"] = 1
+        send_msg["sn_offset"] = 1
         send_msg["target_id"] = [target_id]
         send_msg["display_time"] = [display_time]
         send_msg["arrange_sn"] = 0
