@@ -1124,6 +1124,17 @@ def expire_data_check():
         receive_obj["error"] = "expire_data_check : {errorMsg}".format(errorMsg=receive_obj["error"])
         set_system_log(receive_obj)
 
+def do_set_schedule_log():
+    global board_py_dir
+    global max_db_log
+    send_obj = dict(board_py_dir=board_py_dir,max_db_log=max_db_log)
+    receive_obj = set_schedule_log(send_obj)
+    if receive_obj["result"] == "success":
+        "DO NOTHING"
+    else :
+        receive_obj["error"] = "set_schedule_log : " + receive_obj["error"]
+        set_system_log(receive_obj)
+
 def do_cwb_crawler():
     global board_py_dir
     send_obj = dict(server_dir=board_py_dir,user_id=1)
@@ -1209,6 +1220,7 @@ def main():
     alarm_crawler_functions = raw_time + 15.0
 
     check_expire_data_worker = Worker(job=expire_data_check,name='Check expired data')
+    set_schedule_log_worker = Worker(job=do_set_schedule_log,name='Set schedule log')
     cwb_crawler_worker = Worker(job=do_cwb_crawler,name='Crawler for cwb image')
     google_calendar_worker = Worker(job=do_google_calendar,name='Grab Google calendar event')
     google_drive_worker = Worker(job=do_google_drive,name='Grab Google drive image')
@@ -1243,28 +1255,11 @@ def main():
         
         #set_schedule_log
         if raw_time >= alarm_set_schedule_log:
-            print("#3 "+ time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
-            try:
-                newpid = os.fork()
-                if newpid == 0: #child
-                    shutdown = 1
-                    send_obj["board_py_dir"] = board_py_dir
-                    send_obj["max_db_log"] = max_db_log
-                    receive_obj = set_schedule_log(send_obj)
-                    if receive_obj["result"] == "success":
-                        "DO NOTHING"
-                    else :
-                        receive_obj["error"] = "set_schedule_log : " + receive_obj["error"]
-                        set_system_log(receive_obj)
-                    os._exit(0)
-                else: #Parent
-                    alarm_set_schedule_log = raw_time + 1800.0
-            except:
-                receive_obj["result"] = "fail"
-                receive_obj["error"] = "fork2 error"
-                set_system_log(receive_obj)
-                alarm_set_schedule_log = raw_time + 3.0
-            
+            fork_failed = set_schedule_log_worker.do(timestamp=time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
+            if fork_failed:
+                alarm_expire_data_check += 3.0
+            else:
+                alarm_expire_data_check += 1800.0
 
         #load next schedule
         if not os.path.isfile(check_file_dir) or raw_time >= alarm_load_next_schedule:
