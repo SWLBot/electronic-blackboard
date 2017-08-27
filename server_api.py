@@ -1253,11 +1253,21 @@ def exchange_code_and_store_credentials(code):
     return credentials
 
 def get_upcoming_events(credentials):
+    target_calendars = ['nctupac@gmail.com']
+    events = []
     http = credentials.authorize(httplib2.Http())
     service = discovery.build('calendar', 'v3', http=http)
-    now = datetime.datetime.utcnow().isoformat() + 'Z' # 'Z' indicates UTC time
-    eventsResult = service.events().list(calendarId='nctupac@gmail.com',maxResults=10,timeMin=now).execute()
-    return eventsResult
+    try:
+        calendars = service.calendarList().list().execute()['items']
+        for calendar in calendars:
+            target_calendars.append(calendar['id'])
+    except Exception as e:
+        print(str(e))
+    for calendarId in target_calendars:
+        now = datetime.datetime.utcnow().isoformat() + 'Z' # 'Z' indicates UTC time
+        eventsResult = service.events().list(calendarId=calendarId,maxResults=10,timeMin=now).execute()
+        events.extend(eventsResult['items'])
+    return events
 
 #crawler handle
 def news_insert_db(json_obj):
