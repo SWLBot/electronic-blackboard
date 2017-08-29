@@ -362,7 +362,7 @@ class ImageDao(DataManipulateDao):
 
     def getDisplayImgs(self,userId=None):
         sql = "SELECT img_id, img_upload_time, img_file_name, img_start_time, img_end_time, img_start_date, img_end_date, type_id, img_thumbnail_name, img_display_time, img_display_count " \
-                + "FROM image_data WHERE img_is_delete=0 "
+                + "FROM image_data WHERE img_is_delete=0 AND img_is_expire=0"
         if userId:
             sql += " AND user_id={userId}".format(userId=userId)
         ret = self.db.query(sql)
@@ -415,7 +415,7 @@ class TextDao(DataManipulateDao):
 
     def getDisplayTexts(self,userId=None):
         sql = "SELECT text_id, type_id, text_upload_time, text_start_date, text_end_date, text_start_time, text_end_time, text_display_time, text_display_count " \
-                + "FROM text_data WHERE text_is_delete=0"
+                + "FROM text_data WHERE text_is_delete=0 AND text_is_expire=0"
         if userId:
             sql += " AND user_id={userId}".format(userId=userId)
         ret = self.db.query(sql)
