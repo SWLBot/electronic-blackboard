@@ -365,6 +365,7 @@ class ImageDao(DataManipulateDao):
                 + "FROM image_data WHERE img_is_delete=0 "
         if userId:
             sql += " AND user_id={userId}".format(userId=userId)
+        sql += " ORDER BY img_id DESC"
         ret = self.db.query(sql)
         return ret
 
@@ -418,6 +419,7 @@ class TextDao(DataManipulateDao):
                 + "FROM text_data WHERE text_is_delete=0"
         if userId:
             sql += " AND user_id={userId}".format(userId=userId)
+        sql += " ORDER BY text_id DESC"
         ret = self.db.query(sql)
         return ret
 
