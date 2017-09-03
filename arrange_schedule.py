@@ -1351,9 +1351,9 @@ def main():
         if raw_time >= alarm_crawler_cwb_img:
             fork_failed = cwb_crawler_worker.do(time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
             if fork_failed:
-                alarm_crawler_google_drive_img += 600.0
+                alarm_crawler_cwb_img += 600.0
             else:
-                alarm_crawler_google_drive_img += 3600.0
+                alarm_crawler_cwb_img += 3600.0
 
         #google calendar add to text data
         if raw_time >= alarm_google_calendar_text:
