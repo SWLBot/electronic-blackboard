@@ -789,7 +789,7 @@ def check_event_exist_or_insert(event):
         send_msg["invisible_title"] = event_id
         receive_msg = upload_text_insert_db(send_msg)
         addition_msg = rule_base_agent(event)
-        event_file_path = '/static/calendar_event/{name}.png'.format(name=event_id)
+        event_file_path = os.path.join('static','calendar_event','{name}.png'.format(name=event_id))
         text_file = {   "con" : send_msg["end_date"],
                         "title1" : addition_msg['title1'],
                         "title2" : addition_msg['title2'],

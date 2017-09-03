@@ -74,7 +74,6 @@ function load_schedule()
                     }
                 }else{
                     last_schedule_id = jsonRes.schedule_id;
-                    //$('img').css('display','none');
                     $('div#user_pref').css('display','none');
                     $('footer').css('display','inline');
                     $('div.title2').css('display','inline');
