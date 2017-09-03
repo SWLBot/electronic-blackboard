@@ -789,11 +789,13 @@ def check_event_exist_or_insert(event):
         send_msg["invisible_title"] = event_id
         receive_msg = upload_text_insert_db(send_msg)
         addition_msg = rule_base_agent(event)
+        event_file_path = '/static/calendar_event/{name}.png'.format(name=event_id)
         text_file = {   "con" : send_msg["end_date"],
                         "title1" : addition_msg['title1'],
                         "title2" : addition_msg['title2'],
                         "description": addition_msg['description'],
-                        "background_color" : "#984B4B"
+                        "background_color" : "#984B4B",
+                        "event_id" : event_file_path
         }
         with open(receive_msg["text_system_dir"],"w") as fp:
             print(json.dumps(text_file),file=fp)

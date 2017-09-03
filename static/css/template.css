@@ -60,6 +60,13 @@ img#like {
     width: 100px;
     height: 100px;
 }
+img#event_qrcode {
+    position: absolute;
+    bottom: 30px;
+    right: 30px;
+    width: 220px;
+    height: 220px;
+}
 p#like_count {
     position: relative;
     bottom: 20px;

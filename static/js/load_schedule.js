@@ -32,6 +32,7 @@ function load_schedule()
                 $('div#user_pref').css('display','inline');
                 $('img#qrcode1').css('display','inline');
                 $('img#qrcode2').css('display','inline');
+                $('img#event_qrcode').css('display','none');
                 
                 console.log("text");
                 if ('preference' in jsonRes.file_text){
@@ -73,7 +74,7 @@ function load_schedule()
                     }
                 }else{
                     last_schedule_id = jsonRes.schedule_id;
-                    $('img').css('display','none');
+                    //$('img').css('display','none');
                     $('div#user_pref').css('display','none');
                     $('footer').css('display','inline');
                     $('div.title2').css('display','inline');
@@ -108,6 +109,10 @@ function load_schedule()
                         }
                         $('div#footer').css('display','none');
                     }
+                }
+                if ('event_id' in jsonRes.file_text){
+                    $('img#event_qrcode').attr('src',String(jsonRes.file_text.event_id));
+                    $('img#event_qrcode').css('display','inline');
                 }
             }else{
                 console.log("image");
