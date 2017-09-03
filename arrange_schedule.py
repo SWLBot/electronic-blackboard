@@ -729,8 +729,7 @@ def google_calendar_text():
             return return_msg
         else:
             try:
-                eventsResult = get_upcoming_events(credentials)
-                events = eventsResult['items']
+                events = get_upcoming_events(credentials)
                 for e in events:
                     check_event_exist_or_insert(e)
                     sleep(1.5)
