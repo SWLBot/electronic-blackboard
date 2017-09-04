@@ -1280,9 +1280,9 @@ def main():
         if raw_time >= alarm_set_schedule_log:
             fork_failed = set_schedule_log_worker.do(timestamp=time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
             if fork_failed:
-                alarm_expire_data_check += 3.0
+                alarm_set_schedule_log += 3.0
             else:
-                alarm_expire_data_check += 1800.0
+                alarm_set_schedule_log += 1800.0
 
         #load next schedule
         if not os.path.isfile(check_file_dir) or raw_time >= alarm_load_next_schedule:
