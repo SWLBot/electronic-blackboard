@@ -13,6 +13,7 @@ from server_api import get_upcoming_events
 from apiclient.http import MediaIoBaseDownload
 from apiclient import discovery
 from news_crawler.news_crawler import *
+import urllib
 import httplib2
 import io
 import datetime
@@ -25,6 +26,7 @@ import config.settings as setting
 from dataAccessObjects import *
 from modeUtil import ModeUtil
 from worker import *
+from news_crawler import qrcode
 
 #make now activity to is used
 def mark_now_activity():
@@ -790,14 +792,36 @@ def check_event_exist_or_insert(event):
         send_msg["invisible_title"] = event_id
         receive_msg = upload_text_insert_db(send_msg)
         addition_msg = rule_base_agent(event)
+        event_file_path = os.path.join('static','calendar_event','{name}.png'.format(name=event_id))
         text_file = {   "con" : send_msg["end_date"],
                         "title1" : addition_msg['title1'],
                         "title2" : addition_msg['title2'],
                         "description": addition_msg['description'],
-                        "background_color" : "#984B4B"
+                        "background_color" : "#984B4B",
+                        "event_id" : event_file_path
         }
         with open(receive_msg["text_system_dir"],"w") as fp:
             print(json.dumps(text_file),file=fp)
+        add_event_by_qrcode(event)
+
+def add_event_by_qrcode(eventInfo):
+    target_dir = os.path.join('static','calendar_event')
+    if not os.path.exists(target_dir):
+        os.makedirs(target_dir)
+    startTime = '0000'
+    endTime = '0000'
+    if 'date' in eventInfo['start'] and 'date' in eventInfo['end']:
+        startDate = datetime.datetime.strptime(eventInfo['start']['date'], '%Y-%m-%d').strftime('%Y%m%d')
+        endDate = datetime.datetime.strptime(eventInfo['end']['date'], '%Y-%m-%d').strftime('%Y%m%d')
+    elif 'dateTime' in eventInfo['start'] and 'dateTime' in eventInfo['end']:
+        startDate = datetime.datetime.strptime(eventInfo['start']['dateTime'].split('T')[0], '%Y-%m-%d').strftime('%Y%m%d')
+        startTime = datetime.datetime.strptime(eventInfo['start']['dateTime'].split('T')[1][:8], '%H:%M:%S').strftime('%H%M%S')
+        endDate = datetime.datetime.strptime(eventInfo['end']['dateTime'].split('T')[0], '%Y-%m-%d').strftime('%Y%m%d')
+        endTime = datetime.datetime.strptime(eventInfo['end']['dateTime'].split('T')[1][:8], '%H:%M:%S').strftime('%H%M%S')
+    link = 'https://www.google.com/calendar/render?'\
+        +'action=TEMPLATE&hl=zh_TW&text={summary}&dates={startDate}T{startTime}Z/{endDate}T{endTime}Z&location&ctz=Asia/Taipei&sf=true&output=xml'\
+        .format(summary=urllib.parse.quote(eventInfo['summary']),startDate=startDate,startTime=startTime,endDate=endDate,endTime=endTime)
+    qrcode.make_qrcode_image(link,target_dir,event=eventInfo['id'])
 
 def find_drive_data_type():
     return_msg = {}
