@@ -48,7 +48,6 @@
           <tr>
             <th>圖片ID</th>
             <th>圖片類型</th>
-            <th>圖片名稱</th>
             <th>上傳時間</th>
             <th>開始播放日期</th>
             <th>結束播放日期</th>
@@ -65,20 +64,19 @@
               <td>{{img[0]}}</td>
               <td>
                   {% for type in data_types %}
-                  {% if type[0] == img[7] %}
+                  {% if type[0] == img[6] %}
                     {{ type[1] }}
                   {% end %}
                   {% end %}
               </td>
-              <td>{{img[2]}}</td>
               <td>{{img[1]}}</td>
-              <td>{{img[5]}}</td>
-              <td>{{img[6]}}</td>
-              <td>{{img[3]}}</td>
               <td>{{img[4]}}</td>
+              <td>{{img[5]}}</td>
+              <td>{{img[2]}}</td>
+              <td>{{img[3]}}</td>
+              <td>{{img[8]}}</td>
               <td>{{img[9]}}</td>
-              <td>{{img[10]}}</td>
-              <td><img src="{{ static_url("thumbnail/"+img[8]) }}"/></td>
+              <td><img src="{{ static_url("thumbnail/"+img[7]) }}"/></td>
               <td>
                   <a href="/edit?img_id={{img[0]}}" class="btn btn-link">Edit</a>
                   <a href="/delete?target_id={{img[0]}}" class="btn btn-link" onclick="return deleteConfirm()">Delete</a>
@@ -101,7 +99,6 @@
                     <th>結束播放時間</th>
                     <th>單次播放時間</th>
                     <th>已播放次數</th>
-                    <th>縮圖</th>
                     <th>修改</th>
                 </tr>
                 {% if texts %}
@@ -122,7 +119,6 @@
                             <td>{{text[6]}}</td>
                             <td>{{text[7]}}</td>
                             <td>{{text[8]}}</td>
-                            <td></td>
                             <td>
                                 <a href="/edit?text_id={{text[0]}}" class='btn btn-link'>Edit</a>
                                 <a href="/delete?target_id={{text[0]}}" class="btn btn-link" onclick="return deleteConfirm()">Delete</a>

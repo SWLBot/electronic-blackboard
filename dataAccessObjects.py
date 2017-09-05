@@ -361,7 +361,7 @@ class ImageDao(DataManipulateDao):
         return Ids
 
     def getDisplayImgs(self,userId=None):
-        sql = "SELECT img_id, img_upload_time, img_file_name, img_start_time, img_end_time, img_start_date, img_end_date, type_id, img_thumbnail_name, img_display_time, img_display_count " \
+        sql = "SELECT img_id, img_upload_time, img_start_time, img_end_time, img_start_date, img_end_date, type_id, img_thumbnail_name, img_display_time, img_display_count " \
                 + "FROM image_data WHERE img_is_delete=0 AND img_is_expire=0"
         if userId:
             sql += " AND user_id={userId}".format(userId=userId)
