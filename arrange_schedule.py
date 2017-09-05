@@ -732,9 +732,10 @@ def google_calendar_text():
         else:
             try:
                 events = get_upcoming_events(credentials)
-                for e in events:
-                    check_event_exist_or_insert(e)
-                    sleep(1.5)
+                for cal, events_value in events.items():
+                    for e in events_value:
+                        check_event_exist_or_insert(e, cal)
+                        sleep(1.5)
                 return_msg["result"] = "success"
                 return return_msg
             except DB_Exception as e:
@@ -771,10 +772,20 @@ def rule_base_agent(event):
 
     return addition_msg
 
-def check_event_exist_or_insert(event):
+def check_event_exist_or_insert(event, calendar_name=None):
     event_id = event['id']
     with TextDao() as textDao:
         existed = textDao.checkExisted(event_id)
+    #display days
+    if calendar_name == "Holidays":
+        display_days = 3
+    elif calendar_name == "Department" or calendar_name == "School":
+        display_days = 7
+    elif calendar_name == "Activities" or calendar_name == "Speechs":
+        display_days = 14
+    else:
+        display_days = 3
+
     if existed:
         # event existed
         # do nothing
@@ -783,11 +794,11 @@ def check_event_exist_or_insert(event):
         send_msg = {}
         send_msg["server_dir"] = os.path.dirname(__file__)
         send_msg["file_type"] = 6
-        send_msg["start_date"] = datetime.datetime.strftime(datetime.datetime.strptime(event['start']['date'],'%Y-%m-%d') - datetime.timedelta(3),'%Y-%m-%d')
+        send_msg["start_date"] = datetime.datetime.strftime(datetime.datetime.strptime(event['start']['date'],'%Y-%m-%d') - datetime.timedelta(display_days),'%Y-%m-%d')
         send_msg["end_date"] = event['start']['date']
         send_msg["start_time"] = ""
         send_msg["end_time"] = ""
-        send_msg["display_time"] = 5
+        send_msg["display_time"] = 10
         send_msg["user_id"] = 1
         send_msg["invisible_title"] = event_id
         receive_msg = upload_text_insert_db(send_msg)

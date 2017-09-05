@@ -1254,9 +1254,16 @@ def exchange_code_and_store_credentials(code):
 
 def get_upcoming_events(credentials):
     target_calendars = ['nctupac@gmail.com']
-    events = []
+    events = {}
     http = credentials.authorize(httplib2.Http())
     service = discovery.build('calendar', 'v3', http=http)
+    #calendars' ID and name dict
+    calendars_dict = {}
+    calendars_dict["92v3jovo2papnqrs02a4lrjs84@group.calendar.google.com"] = "Speechs"
+    calendars_dict["8jpj4urenbr3tsh0vg353fu2fo@group.calendar.google.com"] = "Activities"
+    calendars_dict["nctucs.bot@gmail.com"] = "Department"
+    calendars_dict["zh.taiwan#holiday@group.v.calendar.google.com"] = "Holidays"
+    calendars_dict["nctupac@gmail.com"] = "School"
     try:
         calendars = service.calendarList().list().execute()['items']
         for calendar in calendars:
@@ -1266,7 +1273,13 @@ def get_upcoming_events(credentials):
     for calendarId in target_calendars:
         now = datetime.datetime.utcnow().isoformat() + 'Z' # 'Z' indicates UTC time
         eventsResult = service.events().list(calendarId=calendarId,maxResults=10,timeMin=now).execute()
-        events.extend(eventsResult['items'])
+        if calendarId in calendars_dict.keys():
+            calendar_name = calendars_dict[calendarId]
+            events[calendar_name] = eventsResult['items']
+        else:
+            calendar_name = "Else"
+            events[calendar_name].extend(eventsResult['items'])
+        
     return events
 
 #crawler handle
