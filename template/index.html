@@ -61,25 +61,25 @@
         {% if imgs %}
           {% for img in imgs %}
             <tr>
-              <td>{{img[0]}}</td>
+              <td>{{img['img_id']}}</td>
               <td>
                   {% for type in data_types %}
-                  {% if type[0] == img[6] %}
+                  {% if type[0] == img['type_id'] %}
                     {{ type[1] }}
                   {% end %}
                   {% end %}
               </td>
-              <td>{{img[1]}}</td>
-              <td>{{img[4]}}</td>
-              <td>{{img[5]}}</td>
-              <td>{{img[2]}}</td>
-              <td>{{img[3]}}</td>
-              <td>{{img[8]}}</td>
-              <td>{{img[9]}}</td>
-              <td><img src="{{ static_url("thumbnail/"+img[7]) }}"/></td>
+              <td>{{img['img_upload_time']}}</td>
+              <td>{{img['img_start_date']}}</td>
+              <td>{{img['img_end_date']}}</td>
+              <td>{{img['img_start_time']}}</td>
+              <td>{{img['img_end_time']}}</td>
+              <td>{{img['img_display_time']}}</td>
+              <td>{{img['img_display_count']}}</td>
+              <td><img src="{{ static_url("thumbnail/"+img['img_thumbnail_name']) }}"/></td>
               <td>
-                  <a href="/edit?img_id={{img[0]}}" class="btn btn-link">Edit</a>
-                  <a href="/delete?target_id={{img[0]}}" class="btn btn-link" onclick="return deleteConfirm()">Delete</a>
+                  <a href="/edit?img_id={{img['img_id']}}" class="btn btn-link">Edit</a>
+                  <a href="/delete?target_id={{img['img_id']}}" class="btn btn-link" onclick="return deleteConfirm()">Delete</a>
               </td>
             <tr>
           {% end %}
