@@ -60,7 +60,7 @@ def grab_ptt_articles(boards):
                     push = post.find("span", attrs={'class':'f1'})
                     if push is not None:
                         collect = collect + 1
-                        link = post.a["href"]
+                        link = 'https://www.ptt.cc'+post.a["href"]
                         title = post.a.text
                         serial_number = make_qrcode_image(link,path)
                         send_obj = save_db_data(serial_number, title, "ptt"+board)
