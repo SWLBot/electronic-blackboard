@@ -659,7 +659,7 @@ def upload_image_insert_db(json_obj):
         img_data["userId"] = str(user_id)
         try:
             with ImageDao() as imageDao:
-                imageDao.insertImgData(imgData=img_data)
+                imageDao.insertData(data=img_data)
         except DB_Exception as e:
             return_msg["error"] = "insert mysql error please check file system " + img_system_dir
             try:

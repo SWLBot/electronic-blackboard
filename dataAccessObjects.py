@@ -345,16 +345,6 @@ class ImageDao(DataManipulateDao):
     def generateNewId(self):
         return super().generateNewId()
 
-    def insertImgData(self,imgData):
-        sql = 'INSERT INTO image_data ' \
-            + '(img_id, type_id, img_system_name, img_thumbnail_name, img_file_name, img_start_date, ' \
-            + 'img_end_date, img_start_time, img_end_time, img_display_time, user_id)' \
-            + ' VALUES ' \
-            + '("{data[id]}", {data[typeId]}, "{data[systemName]}", "{data[thumbnailName]}", "{data[fileName]}", "{data[startDate]}",' \
-            + ' "{data[endDate]}", "{data[startTime]}", "{data[endTime]}", {data[displayTime]}, {data[userId]})'
-        sql = sql.format(data=imgData)
-        self.db.cmd(sql)
-
     def getCwbImgIds(self):
         sql = "SELECT img_id FROM image_data WHERE img_is_delete=0 and img_file_name like 'CV1_TW_3600_%'"
         Ids = self.db.query(sql)
