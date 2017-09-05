@@ -799,8 +799,19 @@ def check_event_exist_or_insert(event, calendar_name=None):
         send_msg = {}
         send_msg["server_dir"] = os.path.dirname(__file__)
         send_msg["file_type"] = 6
-        send_msg["start_date"] = datetime.datetime.strftime(datetime.datetime.strptime(event['start']['date'],'%Y-%m-%d') - datetime.timedelta(display_days),'%Y-%m-%d')
-        send_msg["end_date"] = event['start']['date']
+        if 'date' in event['start'].keys():
+            send_msg["start_date"] = datetime.datetime.strftime(datetime.datetime.strptime(event['start']['date'],'%Y-%m-%d') - datetime.timedelta(display_days),'%Y-%m-%d')
+            send_msg["end_date"] = event['start']['date']
+        elif 'dateTime' in event['start'].keys():
+            event_start_date = event['start']['dateTime'].split('T')[0]
+            event_start_time = event['start']['dateTime'].split('T')[1][:5]
+            event_end_date = event['end']['dateTime'].split('T')[0]
+            event_end_time = event['end']['dateTime'].split('T')[1][:5]
+            send_msg["start_date"] = datetime.datetime.strftime(datetime.datetime.strptime(event['start']['dateTime'].split('T')[0],'%Y-%m-%d') - datetime.timedelta(display_days),'%Y-%m-%d')
+            send_msg["end_date"] = event_start_date
+        else:
+            print("no date and dateTime")
+            return
         send_msg["start_time"] = ""
         send_msg["end_time"] = ""
         send_msg["display_time"] = 10
@@ -809,10 +820,25 @@ def check_event_exist_or_insert(event, calendar_name=None):
         receive_msg = upload_text_insert_db(send_msg)
         addition_msg = rule_base_agent(event)
         event_file_path = os.path.join('static','calendar_event','{name}.png'.format(name=event_id))
+        if 'description' in event:
+            description = event['description']
+        else:
+            description = addition_msg['description']
+        if 'location' in event:
+            location = event['location']
+        else:
+            location = ""
+        if 'dateTime' in event['start'].keys() and event_start_date == event_end_date:
+            detailtime = "{start} - {end}".format(start=event_start_time, end=event_end_time)
+        else:
+            detailtime = ""
+
         text_file = {   "con" : send_msg["end_date"],
                         "title1" : addition_msg['title1'],
                         "title2" : addition_msg['title2'],
-                        "description": addition_msg['description'],
+                        "description": description,
+                        "location" : location,
+                        "detailtime": detailtime,
                         "background_color" : "#984B4B",
                         "event_id" : event_file_path
         }

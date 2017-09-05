@@ -1279,6 +1279,7 @@ def get_upcoming_events(credentials):
             target_calendars.append(calendar['id'])
     except Exception as e:
         print(str(e))
+    else_events = []
     for calendarId in target_calendars:
         now = datetime.datetime.utcnow().isoformat() + 'Z' # 'Z' indicates UTC time
         eventsResult = service.events().list(calendarId=calendarId,maxResults=10,timeMin=now).execute()
@@ -1286,8 +1287,8 @@ def get_upcoming_events(credentials):
             calendar_name = calendars_dict[calendarId]
             events[calendar_name] = eventsResult['items']
         else:
-            calendar_name = "Else"
-            events[calendar_name].extend(eventsResult['items'])
+            else_events.extend(eventsResult['items'])
+    events["Else"] = else_events
         
     return events
 

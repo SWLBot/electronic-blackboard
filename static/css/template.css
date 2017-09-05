@@ -34,8 +34,9 @@ div#reward {
     font-weight: bold;
 }
 
-div#description {
+div#description, div#location, div#detailtime {
     position: relative;
+    padding-left: 5%;
     font-size: 250%;
 }
 div.congratulation {
