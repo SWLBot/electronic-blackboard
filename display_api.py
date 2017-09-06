@@ -143,3 +143,27 @@ def display_data_types():
         return_msg={}
         return_msg["error"] = e.args[1]
         return return_msg
+
+def transform_date_string(data_list):
+    for data in data_list:
+        if isinstance(data, dict):
+            for key,value in data.items():
+                if isinstance(value, date):
+                    data[key] = value.isoformat()
+                if isinstance(value, timedelta):
+                    data[key] = str(value)
+        elif isinstance(data, list):
+            for idx,value in enumerate(data):
+                if isinstance(value, date):
+                    data[idx] = value.isoformat()
+                if isinstance(value, timedelta):
+                    data[idx] = str(value)
+
+def convert_img_file_path(handler,data_list,data_types):
+    for data in data_list:
+        if isinstance(data ,dict):
+            for type in data_types:
+                if type[0] == data['type_id']:
+                    target_type = type
+                    break
+            data.update(dict(img_url=handler.static_url(target_type[2]+data['img_file_name'])))

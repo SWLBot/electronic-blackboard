@@ -39,6 +39,19 @@ class MainHandler(BaseHandler):
         else:
             self.redirect("/signin")
 
+class DisplayHandler(BaseHandler):
+    def get(self):
+        user = self.get_current_user().decode('utf-8')
+        data_type = self.get_argument('type')
+        if data_type == 'image':
+            data = display_image(user)
+        elif data_type == 'text':
+            data = display_text(user)
+        data_types = display_data_types()
+        transform_date_string(data)
+        convert_img_file_path(self,data,data_types)
+        self.write(dict(type=data_type,data=data,data_types=data_types))
+
 class SignupHandler(BaseHandler):
     def get(self):
         if self.get_current_user().decode('utf-8') == 'admin':
@@ -283,7 +296,8 @@ def main():
         tornado.web.url(r"/googleapi",googleApiHandler,name="googleapi"),
         tornado.web.url(r"/bluetooth",BluetoothHandler,name="bluetooth"),
         tornado.web.url(r"/sendlike",SendlikeHandler,name="sendlike"),
-        tornado.web.url(r"/appregister",AppRegisterHandler,name="appregister")
+        tornado.web.url(r"/appregister",AppRegisterHandler,name="appregister"),
+        tornado.web.url(r"/display",DisplayHandler,name="display"),
     ],**settings)
     http_server = tornado.httpserver.HTTPServer(application)
 
