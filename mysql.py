@@ -49,7 +49,7 @@ class mysql:
             self.db.commit()
         except:
             self.db.rollback()
-            raise DB_Exception(-1, "Mysql cmd fail")
+            raise DB_Exception(-1, "Mysql cmd fail -- {sql}".format(sql=sql))
             return -1
         return 1
 
@@ -59,7 +59,7 @@ class mysql:
             self.cursor.execute(sql)
             result = self.cursor.fetchall()
         except:
-            raise DB_Exception(-1, "Mysql query fail")
+            raise DB_Exception(-1, "Mysql query fail -- {sql}".format(sql=sql))
             result = -1
         return result
 
