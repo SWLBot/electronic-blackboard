@@ -27,6 +27,11 @@ from dataAccessObjects import *
 from modeUtil import ModeUtil
 from worker import *
 from news_crawler import qrcode
+import sys
+
+def gen_error_msg(msg=''):
+    caller = sys._getframe(1).f_code.co_name
+    return '[{caller}] : {msg}'.format(caller=caller,msg=msg)
 
 #make now activity to is used
 def mark_now_activity():
@@ -49,7 +54,7 @@ def mark_now_activity():
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
         
 #child function of load_next_schedule
@@ -69,7 +74,7 @@ def find_next_schedule():
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
 #The API load schedule.txt and find out the first image which has not print and still meet the time limit
@@ -183,7 +188,7 @@ def load_next_schedule(json_obj):
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
     
 #The API connect mysql and find text data that can be scheduled
@@ -224,7 +229,7 @@ def find_text_acticity(json_obj):
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
 #The API connect mysql and find image data that can be scheduled
@@ -265,7 +270,7 @@ def find_image_acticity(json_obj):
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
 def mix_image_and_text(arrange_mode,deal_obj):
@@ -369,7 +374,7 @@ def expire_data_check_():
                 with ImageDao() as imageDao:
                     imageDao.markExpired(expired_image_id[0])
             except DB_Exception as e:
-                return_msg["error"] = e.args[1]
+                return_msg["error"] = gen_error_msg(e.args[1])
                 
         if "error" in return_msg:
             return return_msg
@@ -385,7 +390,7 @@ def expire_data_check_():
                 with TextDao() as textDao:
                     textDao.markExpired(expired_text_id[0])
             except DB_Exception as e:
-                return_msg["error"] = e.args[1]
+                return_msg["error"] = gen_error_msg(e.args[1])
                 
         if "error" in return_msg:
             return return_msg
@@ -395,7 +400,7 @@ def expire_data_check_():
                 with ScheduleDao() as scheduleDao:
                     scheduleDao.markExpiredSchedule(targetId=target_id)
             except DB_Exception as e:
-                return_msg["error"] = e.args[1]
+                return_msg["error"] = gen_error_msg(e.args[1])
                 
         if "error" in return_msg:
             return return_msg
@@ -403,7 +408,7 @@ def expire_data_check_():
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
 #The API connect mysql and add activity to schedule
@@ -467,7 +472,7 @@ def edit_schedule(json_obj):
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
 #The API connect mysql and add activity to schedule
@@ -507,7 +512,7 @@ def add_schedule(json_obj):
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
 #The API connect mysql and clean non used schedule
@@ -522,7 +527,7 @@ def clean_schedule():
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg   
 
 #The API connect mysql and clean up schedule and write it to the schedule.txt
@@ -578,7 +583,7 @@ def set_schedule_log(json_obj):
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
 #future can write to log.txt. now just print it
@@ -616,7 +621,7 @@ def read_arrange_mode():
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
 def find_cwb_type_id():
@@ -718,7 +723,7 @@ def crawler_cwb_img(json_obj):
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
 def google_calendar_text():
@@ -1015,7 +1020,7 @@ def crawler_news(website):
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
 def crawler_ptt_news(boards):
@@ -1046,7 +1051,7 @@ def crawler_ptt_news(boards):
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
 def crawler_constellation_fortune():
@@ -1066,7 +1071,7 @@ def crawler_constellation_fortune():
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
 def check_table(news=False,fortune=False):
