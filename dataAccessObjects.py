@@ -323,7 +323,20 @@ class ImageDao(DataManipulateDao):
         sql = 'select * from image_data where img_is_delete = 0 and img_id = "{imgId}"'.format(imgId=imgId)
         ret = self.db.query(sql)
         if len(ret):
-            return ret[0]
+            raw_img = ret[0]
+            img = dict(img_id=raw_img[0],
+                        type_id=raw_img[1],
+                        img_file_name=raw_img[2],
+                        img_thumbnail_name=raw_img[3],
+                        img_upload_name=raw_img[4],
+                        img_upload_time=raw_img[5],
+                        img_start_date=raw_img[6],
+                        img_end_date=raw_img[7],
+                        img_start_time=raw_img[8],
+                        img_end_time=raw_img[9],
+                        img_display_count=raw_img[10],
+                        img_display_time=raw_img[11])
+            return img
         else:
             #TODO raise exception
             return None
@@ -361,7 +374,7 @@ class ImageDao(DataManipulateDao):
         return Ids
 
     def getDisplayImgs(self,userId=None):
-        sql = "SELECT img_id, img_upload_time, img_start_time, img_end_time, img_start_date, img_end_date, type_id, img_thumbnail_name, img_display_time, img_display_count " \
+        sql = "SELECT img_id, img_upload_time, img_system_name, img_start_time, img_end_time, img_start_date, img_end_date, type_id, img_thumbnail_name, img_display_time, img_display_count " \
                 + "FROM image_data WHERE img_is_delete=0 AND img_is_expire=0"
         if userId:
             sql += " AND user_id={userId}".format(userId=userId)
@@ -472,7 +485,7 @@ class DataTypeDao(DefaultDao):
         self.db.cmd(sql)
 
     def getTypeData(self):
-        sql = 'select type_id,type_name from data_type'
+        sql = 'select type_id,type_name,type_dir from data_type'
         ret = self.db.query(sql)
         if len(ret):
             return ret

@@ -54,14 +54,15 @@ def display_image(argu_user):
             return_msg_list.append(dict(
                                 img_id=result_row[0],
                                 img_upload_time=result_row[1],
-                                img_start_time=result_row[2],
-                                img_end_time=result_row[3],
-                                img_start_date=result_row[4],
-                                img_end_date=result_row[5],
-                                type_id=result_row[6],
-                                img_thumbnail_name=result_row[7],
-                                img_display_time=result_row[8],
-                                img_display_count=result_row[9]))
+                                img_file_name=result_row[2],
+                                img_start_time=result_row[3],
+                                img_end_time=result_row[4],
+                                img_start_date=result_row[5],
+                                img_end_date=result_row[6],
+                                type_id=result_row[7],
+                                img_thumbnail_name=result_row[8],
+                                img_display_time=result_row[9],
+                                img_display_count=result_row[10]))
         return return_msg_list
     except DB_Exception as e:
         return_msg["error"] = e.args[1]

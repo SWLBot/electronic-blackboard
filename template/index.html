@@ -65,7 +65,8 @@
               <td>
                   {% for type in data_types %}
                   {% if type[0] == img['type_id'] %}
-                    {{ type[1] }}
+                    {% set targe_type = type %}
+                    {{ targe_type[1] }}
                   {% end %}
                   {% end %}
               </td>
@@ -76,7 +77,7 @@
               <td>{{img['img_end_time']}}</td>
               <td>{{img['img_display_time']}}</td>
               <td>{{img['img_display_count']}}</td>
-              <td><img src="{{ static_url("thumbnail/"+img['img_thumbnail_name']) }}"/></td>
+              <td><img width=240 height=180 src="{{ static_url(targe_type[2]+img['img_file_name']) }}"/></td>
               <td>
                   <a href="/edit?img_id={{img['img_id']}}" class="btn btn-link">Edit</a>
                   <a href="/delete?target_id={{img['img_id']}}" class="btn btn-link" onclick="return deleteConfirm()">Delete</a>
