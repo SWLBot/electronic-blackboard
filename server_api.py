@@ -582,6 +582,11 @@ def check_user_level(user_id):
         return_msg["error"] = e.args[1]
         return return_msg
 
+def get_abs_type_dir(type_id,server_dir):
+    with DataTypeDao() as dataTypeDao:
+        type_dir = dataTypeDao.getTypeDir(typeId=type_id)
+    return os.path.join(server_dir,"static",type_dir)
+
 #
 def upload_image_insert_db(json_obj):
     try:
@@ -603,7 +608,6 @@ def upload_image_insert_db(json_obj):
 
         img_id = ""
         img_file_name = os.path.split(img_file_dir)[1]
-        img_new_file_dir = ""
         user_level_low_bound = 100
         #default
         if len(img_start_time)==0:
@@ -615,11 +619,8 @@ def upload_image_insert_db(json_obj):
         if 'fail' in receive_msg:
             return_msg['error'] = receive_msg['error']
         
-        #get new file place
-        with DataTypeDao() as dataTypeDao:
-            type_dir = dataTypeDao.getTypeDir(typeId=str(type_id))
         try:
-            img_new_file_dir = os.path.join(server_dir, "static",type_dir)
+            img_type_dir = get_abs_type_dir(type_id,server_dir)
         except:
             return_msg["error"] = "no such type id : " + str(type_id)
             return return_msg
@@ -630,7 +631,7 @@ def upload_image_insert_db(json_obj):
         
         img_system_name = img_id + os.path.splitext(img_file_name)[1]
         img_thumbnail_name = "thumbnail_" + img_system_name
-        img_system_dir = os.path.join(img_new_file_dir, img_system_name)
+        img_system_dir = os.path.join(img_type_dir, img_system_name)
         try:
             copyfile(img_file_dir, img_system_dir)
             if os.path.isfile(img_file_dir) and os.path.isfile(img_system_dir):
