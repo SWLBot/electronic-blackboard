@@ -613,7 +613,7 @@ def upload_image_insert_db(json_obj):
 
         receive_msg = check_user_level(str(user_id))
         if 'fail' in receive_msg:
-            return_msg['result'] = receive_msg['error']
+            return_msg['error'] = receive_msg['error']
         
         #get new file place
         with DataTypeDao() as dataTypeDao:
