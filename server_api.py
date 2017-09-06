@@ -1287,10 +1287,6 @@ def news_insert_db(json_obj):
     try:
         return_msg = {}
         return_msg["result"] = "fail"
-        news_data_type = 1
-        news_title = ""
-        news_serial_number = ""
-
         try:
             news_data_type = json_obj["data_type"]
             news_title = json_obj["title"]
@@ -1316,11 +1312,6 @@ def fortune_insert_db(json_obj):
     try:
         return_msg = {}
         return_msg["result"] = "fail"
-        constellation = ""
-        overall = ""
-        love = ""
-        career = ""
-        wealth = ""
         date = str(datetime.date.today())
         try:
             constellation = json_obj["constellation"]
