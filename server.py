@@ -58,13 +58,13 @@ class SignupHandler(BaseHandler):
 class LoginHandler(BaseHandler):
     def get(self):
         incorrect = self.get_secure_cookie("incorrect")
-        if incorrect and int(incorrect) > 20:
+        if incorrect and int(incorrect) >= 20:
             self.write('<center>Blocked</center>')
             return
         self.render('signin.html',flash=None)
     def post(self):
         incorrect = self.get_secure_cookie("incorrect")
-        if incorrect and int(incorrect) > 20:
+        if incorrect and int(incorrect) >= 20:
             self.write('<center>Blocked</center>')
             return
 
