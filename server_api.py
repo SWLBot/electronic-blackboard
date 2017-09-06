@@ -1152,31 +1152,26 @@ def change_password(json_obj):
         return_msg = {}
         return_msg["result"] = "fail"
         try:
-            user_name = json_obj["user_name"]
+            user_name = json_obj["user_name"].decode('utf-8')
             old_password = json_obj["old_password"]
             new_password = json_obj["new_password"]
         except:
             return_msg["error"] = "input parameter missing"
             return return_msg
         
-        #get user_id 
-        user_name = user_name.decode('utf-8')
-        user_id  = get_user_id(user_name)
-        if type(user_id) == type(dict()):
+        user_id = get_user_id(user_name)
+        if isinstance(user_id,dict):
             return_msg["error"] = "no such user name"
             return return_msg
 
-        #check user
         with UserDao() as userDao:
             password = userDao.getUserPassword(userId=user_id)
-        hashed_key = ""
         try:
             hashed_key = password.encode('utf-8')
             if bcrypt.checkpw(old_password.encode('utf-8'),hashed_key):
-                # old password correct
                 hashed_key = bcrypt.hashpw(new_password.encode('utf-8'),bcrypt.gensalt())
                 with UserDao() as userDao:
-                    userDao.updatePassword(hashed_key.decode('utf-8'),userId=str(user_id))
+                    userDao.updatePassword(hashed_key.decode('utf-8'),userId=user_id)
             else:
                 return_msg["error"] = "old password incorrect"
                 return return_msg
