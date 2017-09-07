@@ -17,20 +17,20 @@
             </div>
             <div id="navbar" class="navbar-collapse collapse">
               <ul class="nav navbar-nav">
-                <li><a href="/">Home</a></li>
-                <li><a href="/upload">Upload</a></li>
+                <li><a href="/" id='home'>Home</a></li>
+                <li><a href="/upload" id='upload'>Upload</a></li>
                 {% if current_user and current_user.decode('utf-8') == 'admin' %}
-                <li><a href='/signup'>Create User</a></li>
-                <li><a href='/addType'>Add Type</a></li>
-                <li><a href='/googleapi'>Google API Login</a></li>
+                <li><a href='/signup' id='signup'>Create User</a></li>
+                <li><a href='/addType' id='addType'>Add Type</a></li>
+                <li><a href='/googleapi' id='googleapi'>Google API Login</a></li>
                 {% end %}
                 <li><a href="#">Contact</a></li>
               </ul>
               <ul class="nav navbar-nav navbar-right">
                 {% if current_user %}
                     <li><a href="#" class="btn-link btn">{{current_user}}</a></li>
-                    <li><a href="/changepw">Change Password</a></li>
-                    <li><a href="/signout">Sign out</a></li>
+                    <li><a href="/changepw" id='changepw'>Change Password</a></li>
+                    <li><a href="/signout" id='signout'>Sign out</a></li>
                 {% end %}
               </ul>
             </div><!--/.nav-collapse -->
