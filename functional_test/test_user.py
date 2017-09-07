@@ -9,16 +9,19 @@ def connectBackendServer():
     browser.get('http://localhost:3000/')
     return browser
 
+def wait_url(browser,url=''):
+    element = WebDriverWait(browser, 10).until(
+        EC.url_to_be('http://localhost:3000/{url}'.format(url=url))
+    )
+    assert browser.current_url == 'http://localhost:3000/{url}'.format(url=url)
+
 def signin(browser,username,password):
     usernameInput = browser.find_element_by_name('username')
     passwordInput = browser.find_element_by_name('password')
     usernameInput.send_keys(username)
     passwordInput.send_keys(password)
     passwordInput.submit()
-    element = WebDriverWait(browser, 10).until(
-        EC.url_to_be('http://localhost:3000/')
-    )
-    assert browser.current_url == 'http://localhost:3000/'
+    wait_url(browser)
     return browser
 
 def signout(browser):
@@ -61,3 +64,26 @@ def test_add_user():
     except Exception as e:
         closeBrowser(browser)
         raise e
+
+def test_change_password():
+    browser = connectBackendServer()
+
+    signin(browser,'test','test_password')
+
+    changepwLink = browser.find_element_by_id('changepw')
+    changepwLink.click()
+    wait_url(browser,'changepw')
+
+    oldPasswdInput = browser.find_element_by_name('old_password')
+    oldPasswdInput.send_keys('test_password')
+    passwdInput = browser.find_element_by_name('password')
+    passwdInput.send_keys('tester')
+    confirmPasswdInput = browser.find_element_by_name('confirm-password')
+    confirmPasswdInput.send_keys('tester')
+    browser.find_element_by_id('submit').click()
+
+    signout(browser)
+
+    signin(browser,'test','tester')
+
+    closeBrowser(browser)
