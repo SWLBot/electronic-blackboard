@@ -482,6 +482,10 @@ def check_user_password(user_info):
     try:
         return_msg = {}
 
+        if user_info['user_name'] == "":
+            return_msg['fail'] = 'Wrong user name'
+            return return_msg
+
         with UserDao() as userDao:
             password = userDao.getUserPassword(userName=user_info['user_name'])
 
@@ -497,7 +501,11 @@ def check_user_password(user_info):
 
         return return_msg
     except DB_Exception as e:
+        return_msg['fail'] = 'DB Exception'
         return_msg["error"] = e.args[1]
+        return return_msg
+    except Exception as e:
+        return_msg['fail'] = str(e)
         return return_msg
 
 def get_upload_meta_data(handler):
