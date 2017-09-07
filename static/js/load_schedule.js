@@ -119,10 +119,6 @@ function load_schedule()
                 last_schedule_id = jsonRes.schedule_id;
                 $('div.title2').css('display','none');
                 $('div#user_pref').css('display','none');
-                $('img#pic').css('display','inline');
-                $('img#like').css('display','inline');
-                $('div.like_count').css('display','inline');
-                $('p#like_count').css('display','inline');
                 if('like_count' in jsonRes){
                     $('p#like_count').text(jsonRes.like_count);
                 }
@@ -132,6 +128,10 @@ function load_schedule()
                 var height = $('img#pic').height();
                 $('img#pic').height(screen.height * 0.98);
                 $('img#pic').css('maxWidth',($(window).width() * 0.85 | 0 ) + "px");
+                $('img#pic').css('display','inline');
+                $('img#like').css('display','inline');
+                $('div.like_count').css('display','inline');
+                $('p#like_count').css('display','inline');
             }
 		},
 		error: function (xhr, textStatus, error) 
