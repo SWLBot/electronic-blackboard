@@ -1204,14 +1204,12 @@ def read_text_data(text_id):
         return_msg = {}
                 
         with TextDao() as textDao:
-            info = textDao.getIdSysName(Id=text_id)
-        text_file_name = info["systemName"]
-        type_id = info["typeId"]
+            textInfo = textDao.getIdSysName(Id=text_id)
 
         with DataTypeDao() as dataTypeDao:
-            type_dir = dataTypeDao.getTypeDir(typeId=str(type_id))
+            type_dir = dataTypeDao.getTypeDir(typeId=textInfo['typeId'])
         
-        filename = 'static/' + type_dir + text_file_name
+        filename = os.path.join('static',type_dir,textInfo['systemName'])
         with open(filename,'r') as fp:
             text_content = json.load(fp)
 
