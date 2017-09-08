@@ -12,15 +12,51 @@ function formatParams( params ){
         .join("&")
 }
 
-function show_display(type='image'){
+function show_display(type='image',page=1){
     var http = new XMLHttpRequest();
-    http.open('GET','/display'+formatParams({type:type}), true);
+    http.open('GET','/display'+formatParams({type:type,page:page}), true);
     http.onreadystatechange = function(){
         if(this.readyState === 4 && this.status === 200){
             display_data(this.response)
         }
     }
     http.send();
+}
+
+function create_pagination(pageList,type){
+    //TODO page number updated display on pagination bar
+    var ul = document.createElement('ul');
+    ul.setAttribute('class','pagination');
+    if(type==='image' && $( "#img_pagination" ).length<=0){
+        ul.setAttribute('id','img_pagination');
+        document.getElementById('img_content').appendChild(ul);
+    }
+    else if(type==='text' && $( "#text_pagination" ).length<=0){
+        ul.setAttribute('id','text_pagination');
+        document.getElementById('text_content').appendChild(ul);
+    }
+    for (var page=0; page<pageList.length; page++){
+        var li = document.createElement('li');
+        var a = document.createElement('a');
+        a.innerHTML = pageList[page];
+        if(type==='image'){
+            a.setAttribute('href','#img_content/'+pageList[page]);
+            a.setAttribute('onclick',"return directPage('image',"+pageList[page]+")");
+        }else{
+            a.setAttribute('href','#text_content/'+pageList[page]);
+            a.setAttribute('onclick',"return directPage('text',"+pageList[page]+")");
+        }
+        li.appendChild(a);
+        ul.appendChild(li);
+    }
+}
+
+function directPage(type,page){
+    if(type==='image'){
+        show_display('image',page)
+    }else{
+        show_display('text',page)
+    }
 }
 
 function create_editButton(type,id){
@@ -44,12 +80,17 @@ function create_deleteButton(id){
     return deleteButton
 }
 
-function insert_imgs(imgs,data_types){
+function insert_imgs(imgs,data_types,page,type){
     var img_table = document.getElementById('img_table')
     while(img_table.rows.length > 1){
         img_table.deleteRow(-1);
     }
-    for(let obj of imgs){
+    var count = imgs.length
+    var perPage = 8
+    var totalPage = Math.ceil(count/perPage)
+    var start = (page-1)*perPage
+    var end = page*perPage
+    for(let obj of imgs.slice(start,end)){
         var row = img_table.insertRow();
         for (let type of data_types){
             if(type[0] === obj['type_id']){
@@ -78,14 +119,42 @@ function insert_imgs(imgs,data_types){
         editCell.appendChild(editButton);
         editCell.appendChild(deleteButton);
     }
+    var pageList=[]
+    if(Number(page)>=3){
+        if(Number(page)<=totalPage-2){
+            pageList.push(Number(page)-2,Number(page)-1,Number(page),Number(page)+1,Number(page)+2);
+        }
+        else if(Number(page)===totalPage-1){
+            pageList.push(Number(page)-3,Number(page)-2,Number(page)-1,Number(page),Number(page)+1);
+        }
+        else{
+            pageList.push(Number(page)-4,Number(page)-3,Number(page)-2,Number(page)-1,Number(page));
+        }
+    }else{
+        if(totalPage<=5){
+            for(let i=page;i<=totalPage;i++){
+                pageList.push(i);
+            }
+        }else{
+            for(let i=page;i<=5;i++){
+                pageList.push(i);
+            }
+        }
+    }
+    create_pagination(pageList,type);
 }
 
-function insert_texts(texts,data_types){
+function insert_texts(texts,data_types,page,type){
     text_table = document.getElementById('text_table');
     while(text_table.rows.length > 1){
         text_table.deleteRow(-1);
     }
-    for(let text of texts){
+    var count = texts.length
+    var perPage = 8;
+    var totalPage = Math.ceil(count/perPage)
+    var start = (page-1)*perPage
+    var end = page*perPage
+    for(let text of texts.slice(start,end)){
         var row = text_table.insertRow();
         for (let type of data_types){
             if(type[0] === text[1]){
@@ -113,13 +182,36 @@ function insert_texts(texts,data_types){
         editCell.appendChild(editButton);
         editCell.appendChild(deleteButton);
     }
+    var pageList=[]
+    if(Number(page)>=3){
+        if(page<=totalPage-2){
+            pageList.push(Number(page)-2,Number(page)-1,Number(page),Number(page)+1,Number(page)+2);
+        }
+        else if(page===totalPage-1){
+            pageList.push(Number(page)-3,Number(page)-2,Number(page)-1,Number(page),Number(page)+1);
+        }
+        else{
+            pageList.push(Number(page)-4,Number(page)-3,Number(page)-2,Number(page)-1,Number(page));
+        }
+    }else{
+        if(totalPage<=5){
+            for(let i=page;i<=totalPage;i++){
+                pageList.push(i);
+            }
+        }else{
+            for(let i=page;i<=5;i++){
+                pageList.push(i);
+            }
+        }
+    }
+    create_pagination(pageList,type);
 }
 
 function display_data(response){
     response = JSON.parse(response)
     if(response.type === 'image'){
-        insert_imgs(response.data,response.data_types)
+        insert_imgs(response.data,response.data_types,response.page,response.type)
     }else if(response.type === 'text'){
-        insert_texts(response.data,response.data_types)
+        insert_texts(response.data,response.data_types,response.page,response.type)
     }
 }

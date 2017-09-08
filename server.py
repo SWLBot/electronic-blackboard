@@ -43,6 +43,7 @@ class DisplayHandler(BaseHandler):
     def get(self):
         user = self.get_current_user().decode('utf-8')
         data_type = self.get_argument('type')
+        page = self.get_argument('page')
         if data_type == 'image':
             data = display_image(user)
         elif data_type == 'text':
@@ -50,7 +51,7 @@ class DisplayHandler(BaseHandler):
         data_types = display_data_types()
         transform_date_string(data)
         convert_img_file_path(self,data,data_types)
-        self.write(dict(type=data_type,data=data,data_types=data_types))
+        self.write(dict(type=data_type,data=data,data_types=data_types,page=page))
 
 class SignupHandler(BaseHandler):
     def get(self):

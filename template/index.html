@@ -77,7 +77,6 @@
                 </tr>
             </table>
         </div>
-
           </div>
         </div>
     <script>
@@ -89,11 +88,12 @@
             $(this).parent().siblings().removeClass('active');
             $(other).css('display','none');
             if($(this).attr('id') === 'img_display'){
-                show_display('image')
+                show_display('image',1)
             }else{
-                show_display('text')
+                show_display('text',1)
             }
         });
+
         function deleteConfirm(){
             return confirm("確定要刪除嗎?");
         }
