@@ -88,6 +88,16 @@ function load_schedule()
                     }
                     $('#title1').html(jsonRes.file_text.title1);
                     $('#title2').html(jsonRes.file_text.title2);
+                    if(jsonRes.file_text.location != ""){
+                        $('#location').html("地點： "+jsonRes.file_text.location)
+                    }else{
+                        $('#location').html("")
+                    }
+                    if(jsonRes.file_text.detailtime != ""){
+                        $('#detailtime').html("時間： "+jsonRes.file_text.detailtime)
+                    }else{
+                        $('#detailtime').html("")
+                    }
                     $('#description').html(jsonRes.file_text.description);
                     if(jsonRes.type_name === "獲獎公告"){
                         console.log('reward');
