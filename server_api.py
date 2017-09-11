@@ -482,6 +482,10 @@ def check_user_password(user_info):
     try:
         return_msg = {}
 
+        if user_info['user_name'] == "":
+            return_msg['fail'] = 'Wrong user name'
+            return return_msg
+
         with UserDao() as userDao:
             password = userDao.getUserPassword(userName=user_info['user_name'])
 
@@ -497,7 +501,11 @@ def check_user_password(user_info):
 
         return return_msg
     except DB_Exception as e:
+        return_msg['fail'] = 'DB Exception'
         return_msg["error"] = e.args[1]
+        return return_msg
+    except Exception as e:
+        return_msg['fail'] = str(e)
         return return_msg
 
 def get_upload_meta_data(handler):
@@ -582,6 +590,11 @@ def check_user_level(user_id):
         return_msg["error"] = e.args[1]
         return return_msg
 
+def get_abs_type_dir(type_id,server_dir):
+    with DataTypeDao() as dataTypeDao:
+        type_dir = dataTypeDao.getTypeDir(typeId=type_id)
+    return os.path.join(server_dir,"static",type_dir)
+
 #
 def upload_image_insert_db(json_obj):
     try:
@@ -603,7 +616,6 @@ def upload_image_insert_db(json_obj):
 
         img_id = ""
         img_file_name = os.path.split(img_file_dir)[1]
-        img_new_file_dir = ""
         user_level_low_bound = 100
         #default
         if len(img_start_time)==0:
@@ -613,13 +625,10 @@ def upload_image_insert_db(json_obj):
 
         receive_msg = check_user_level(str(user_id))
         if 'fail' in receive_msg:
-            return_msg['result'] = receive_msg['error']
+            return_msg['error'] = receive_msg['error']
         
-        #get new file place
-        with DataTypeDao() as dataTypeDao:
-            type_dir = dataTypeDao.getTypeDir(typeId=str(type_id))
         try:
-            img_new_file_dir = os.path.join(server_dir, "static",type_dir)
+            img_type_dir = get_abs_type_dir(type_id,server_dir)
         except:
             return_msg["error"] = "no such type id : " + str(type_id)
             return return_msg
@@ -630,7 +639,7 @@ def upload_image_insert_db(json_obj):
         
         img_system_name = img_id + os.path.splitext(img_file_name)[1]
         img_thumbnail_name = "thumbnail_" + img_system_name
-        img_system_dir = os.path.join(img_new_file_dir, img_system_name)
+        img_system_dir = os.path.join(img_type_dir, img_system_name)
         try:
             copyfile(img_file_dir, img_system_dir)
             if os.path.isfile(img_file_dir) and os.path.isfile(img_system_dir):
@@ -1152,31 +1161,26 @@ def change_password(json_obj):
         return_msg = {}
         return_msg["result"] = "fail"
         try:
-            user_name = json_obj["user_name"]
+            user_name = json_obj["user_name"].decode('utf-8')
             old_password = json_obj["old_password"]
             new_password = json_obj["new_password"]
         except:
             return_msg["error"] = "input parameter missing"
             return return_msg
         
-        #get user_id 
-        user_name = user_name.decode('utf-8')
-        user_id  = get_user_id(user_name)
-        if type(user_id) == type(dict()):
+        user_id = get_user_id(user_name)
+        if isinstance(user_id,dict):
             return_msg["error"] = "no such user name"
             return return_msg
 
-        #check user
         with UserDao() as userDao:
             password = userDao.getUserPassword(userId=user_id)
-        hashed_key = ""
         try:
             hashed_key = password.encode('utf-8')
             if bcrypt.checkpw(old_password.encode('utf-8'),hashed_key):
-                # old password correct
                 hashed_key = bcrypt.hashpw(new_password.encode('utf-8'),bcrypt.gensalt())
                 with UserDao() as userDao:
-                    userDao.updatePassword(hashed_key.decode('utf-8'),userId=str(user_id))
+                    userDao.updatePassword(hashed_key.decode('utf-8'),userId=user_id)
             else:
                 return_msg["error"] = "old password incorrect"
                 return return_msg
@@ -1195,14 +1199,12 @@ def read_text_data(text_id):
         return_msg = {}
                 
         with TextDao() as textDao:
-            info = textDao.getIdSysName(Id=text_id)
-        text_file_name = info["systemName"]
-        type_id = info["typeId"]
+            textInfo = textDao.getIdSysName(Id=text_id)
 
         with DataTypeDao() as dataTypeDao:
-            type_dir = dataTypeDao.getTypeDir(typeId=str(type_id))
+            type_dir = dataTypeDao.getTypeDir(typeId=textInfo['typeId'])
         
-        filename = 'static/' + type_dir + text_file_name
+        filename = os.path.join('static',type_dir,textInfo['systemName'])
         with open(filename,'r') as fp:
             text_content = json.load(fp)
 
@@ -1254,19 +1256,33 @@ def exchange_code_and_store_credentials(code):
 
 def get_upcoming_events(credentials):
     target_calendars = ['nctupac@gmail.com']
-    events = []
+    events = {}
     http = credentials.authorize(httplib2.Http())
     service = discovery.build('calendar', 'v3', http=http)
+    #calendars' ID and name dict
+    calendars_dict = {}
+    calendars_dict["92v3jovo2papnqrs02a4lrjs84@group.calendar.google.com"] = "Speechs"
+    calendars_dict["8jpj4urenbr3tsh0vg353fu2fo@group.calendar.google.com"] = "Activities"
+    calendars_dict["nctucs.bot@gmail.com"] = "Department"
+    calendars_dict["zh.taiwan#holiday@group.v.calendar.google.com"] = "Holidays"
+    calendars_dict["nctupac@gmail.com"] = "School"
     try:
         calendars = service.calendarList().list().execute()['items']
         for calendar in calendars:
             target_calendars.append(calendar['id'])
     except Exception as e:
         print(str(e))
+    else_events = []
     for calendarId in target_calendars:
         now = datetime.datetime.utcnow().isoformat() + 'Z' # 'Z' indicates UTC time
         eventsResult = service.events().list(calendarId=calendarId,maxResults=10,timeMin=now).execute()
-        events.extend(eventsResult['items'])
+        if calendarId in calendars_dict.keys():
+            calendar_name = calendars_dict[calendarId]
+            events[calendar_name] = eventsResult['items']
+        else:
+            else_events.extend(eventsResult['items'])
+    events["Else"] = else_events
+        
     return events
 
 #crawler handle
@@ -1274,10 +1290,6 @@ def news_insert_db(json_obj):
     try:
         return_msg = {}
         return_msg["result"] = "fail"
-        news_data_type = 1
-        news_title = ""
-        news_serial_number = ""
-
         try:
             news_data_type = json_obj["data_type"]
             news_title = json_obj["title"]
@@ -1303,11 +1315,6 @@ def fortune_insert_db(json_obj):
     try:
         return_msg = {}
         return_msg["result"] = "fail"
-        constellation = ""
-        overall = ""
-        love = ""
-        career = ""
-        wealth = ""
         date = str(datetime.date.today())
         try:
             constellation = json_obj["constellation"]

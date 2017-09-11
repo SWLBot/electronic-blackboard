@@ -27,6 +27,11 @@ from dataAccessObjects import *
 from modeUtil import ModeUtil
 from worker import *
 from news_crawler import qrcode
+import sys
+
+def gen_error_msg(msg=''):
+    caller = sys._getframe(1).f_code.co_name
+    return '[{caller}] : {msg}'.format(caller=caller,msg=msg)
 
 #make now activity to is used
 def mark_now_activity():
@@ -49,7 +54,7 @@ def mark_now_activity():
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
         
 #child function of load_next_schedule
@@ -69,7 +74,7 @@ def find_next_schedule():
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
 #The API load schedule.txt and find out the first image which has not print and still meet the time limit
@@ -183,7 +188,7 @@ def load_next_schedule(json_obj):
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
     
 #The API connect mysql and find text data that can be scheduled
@@ -224,7 +229,7 @@ def find_text_acticity(json_obj):
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
 #The API connect mysql and find image data that can be scheduled
@@ -265,7 +270,7 @@ def find_image_acticity(json_obj):
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
 def mix_image_and_text(arrange_mode,deal_obj):
@@ -369,7 +374,7 @@ def expire_data_check_():
                 with ImageDao() as imageDao:
                     imageDao.markExpired(expired_image_id[0])
             except DB_Exception as e:
-                return_msg["error"] = e.args[1]
+                return_msg["error"] = gen_error_msg(e.args[1])
                 
         if "error" in return_msg:
             return return_msg
@@ -385,7 +390,7 @@ def expire_data_check_():
                 with TextDao() as textDao:
                     textDao.markExpired(expired_text_id[0])
             except DB_Exception as e:
-                return_msg["error"] = e.args[1]
+                return_msg["error"] = gen_error_msg(e.args[1])
                 
         if "error" in return_msg:
             return return_msg
@@ -395,7 +400,7 @@ def expire_data_check_():
                 with ScheduleDao() as scheduleDao:
                     scheduleDao.markExpiredSchedule(targetId=target_id)
             except DB_Exception as e:
-                return_msg["error"] = e.args[1]
+                return_msg["error"] = gen_error_msg(e.args[1])
                 
         if "error" in return_msg:
             return return_msg
@@ -403,7 +408,7 @@ def expire_data_check_():
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
 #The API connect mysql and add activity to schedule
@@ -467,7 +472,7 @@ def edit_schedule(json_obj):
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
 #The API connect mysql and add activity to schedule
@@ -507,7 +512,7 @@ def add_schedule(json_obj):
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
 #The API connect mysql and clean non used schedule
@@ -522,7 +527,7 @@ def clean_schedule():
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg   
 
 #The API connect mysql and clean up schedule and write it to the schedule.txt
@@ -578,7 +583,7 @@ def set_schedule_log(json_obj):
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
 #future can write to log.txt. now just print it
@@ -616,7 +621,7 @@ def read_arrange_mode():
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
 def find_cwb_type_id():
@@ -718,7 +723,7 @@ def crawler_cwb_img(json_obj):
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
 def google_calendar_text():
@@ -732,9 +737,10 @@ def google_calendar_text():
         else:
             try:
                 events = get_upcoming_events(credentials)
-                for e in events:
-                    check_event_exist_or_insert(e)
-                    sleep(1.5)
+                for cal, events_value in events.items():
+                    for e in events_value:
+                        check_event_exist_or_insert(e, cal)
+                        sleep(1.5)
                 return_msg["result"] = "success"
                 return return_msg
             except DB_Exception as e:
@@ -771,10 +777,20 @@ def rule_base_agent(event):
 
     return addition_msg
 
-def check_event_exist_or_insert(event):
+def check_event_exist_or_insert(event, calendar_name=None):
     event_id = event['id']
     with TextDao() as textDao:
         existed = textDao.checkExisted(event_id)
+    #display days
+    if calendar_name == "Holidays":
+        display_days = 3
+    elif calendar_name == "Department" or calendar_name == "School":
+        display_days = 7
+    elif calendar_name == "Activities" or calendar_name == "Speechs":
+        display_days = 14
+    else:
+        display_days = 3
+
     if existed:
         # event existed
         # do nothing
@@ -783,20 +799,46 @@ def check_event_exist_or_insert(event):
         send_msg = {}
         send_msg["server_dir"] = os.path.dirname(__file__)
         send_msg["file_type"] = 6
-        send_msg["start_date"] = datetime.datetime.strftime(datetime.datetime.strptime(event['start']['date'],'%Y-%m-%d') - datetime.timedelta(3),'%Y-%m-%d')
-        send_msg["end_date"] = event['start']['date']
+        if 'date' in event['start'].keys():
+            send_msg["start_date"] = datetime.datetime.strftime(datetime.datetime.strptime(event['start']['date'],'%Y-%m-%d') - datetime.timedelta(display_days),'%Y-%m-%d')
+            send_msg["end_date"] = event['start']['date']
+        elif 'dateTime' in event['start'].keys():
+            event_start_date = event['start']['dateTime'].split('T')[0]
+            event_start_time = event['start']['dateTime'].split('T')[1][:5]
+            event_end_date = event['end']['dateTime'].split('T')[0]
+            event_end_time = event['end']['dateTime'].split('T')[1][:5]
+            send_msg["start_date"] = datetime.datetime.strftime(datetime.datetime.strptime(event['start']['dateTime'].split('T')[0],'%Y-%m-%d') - datetime.timedelta(display_days),'%Y-%m-%d')
+            send_msg["end_date"] = event_start_date
+        else:
+            print("no date and dateTime")
+            return
         send_msg["start_time"] = ""
         send_msg["end_time"] = ""
-        send_msg["display_time"] = 5
+        send_msg["display_time"] = 10
         send_msg["user_id"] = 1
         send_msg["invisible_title"] = event_id
         receive_msg = upload_text_insert_db(send_msg)
         addition_msg = rule_base_agent(event)
         event_file_path = os.path.join('static','calendar_event','{name}.png'.format(name=event_id))
+        if 'description' in event:
+            description = event['description']
+        else:
+            description = addition_msg['description']
+        if 'location' in event:
+            location = event['location']
+        else:
+            location = ""
+        if 'dateTime' in event['start'].keys() and event_start_date == event_end_date:
+            detailtime = "{start} - {end}".format(start=event_start_time, end=event_end_time)
+        else:
+            detailtime = ""
+
         text_file = {   "con" : send_msg["end_date"],
                         "title1" : addition_msg['title1'],
                         "title2" : addition_msg['title2'],
-                        "description": addition_msg['description'],
+                        "description": description,
+                        "location" : location,
+                        "detailtime": detailtime,
                         "background_color" : "#984B4B",
                         "event_id" : event_file_path
         }
@@ -1015,7 +1057,7 @@ def crawler_news(website):
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
 def crawler_ptt_news(boards):
@@ -1046,7 +1088,7 @@ def crawler_ptt_news(boards):
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
 def crawler_constellation_fortune():
@@ -1066,7 +1108,7 @@ def crawler_constellation_fortune():
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
 def check_table(news=False,fortune=False):
