@@ -12,7 +12,7 @@
             <h5>Confirm Password: </h5><input type="password" id="confirm-password" name="confirm-password" /> <span id='message'></span>
             <p><input type="submit" id="submit" value="Sign up" class="btn btn-primary"/></p>
             {% if flash %}
-                <div>{{flash}}</div>
+                <div id='flash'>{{flash}}</div>
             {% end %}
             {% module xsrf_form_html() %}
 
