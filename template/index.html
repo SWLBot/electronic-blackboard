@@ -6,10 +6,11 @@
         <link href={{ static_url("css/bootstrap.min.css") }} rel="stylesheet">
         <link href={{ static_url("css/navbar-fixed-top.css") }} rel="stylesheet">
         <script type="text/javascript" src={{ static_url("js/jquery-3.1.1.min.js") }}></script>
+        <script type="text/javascript" src={{ static_url("js/display.js") }}></script>
         {% block head %}
         {% end %}
     </head>
-    <body>
+    <body onload="show_display();">
         <nav class="navbar navbar-default navbar-fixed-top">
           <div class="container">
             <div class="navbar-header">
@@ -40,15 +41,14 @@
         <div class="container">
           <div class="jumbotron">
               <ul class='nav nav-pills'>
-                <li class='active'><a href='#img_content' >已上傳圖片</a></li>
-                <li><a href='#text_content' >已上傳文字</a></li>
+                <li class='active'><a id='img_display' href='#img_content' >已上傳圖片</a></li>
+                <li><a id='text_display' href='#text_content' >已上傳文字</a></li>
               </ul>
         <div id='img_content'>
         <table class="table" id='img_table'>
           <tr>
             <th>圖片ID</th>
             <th>圖片類型</th>
-            <th>圖片名稱</th>
             <th>上傳時間</th>
             <th>開始播放日期</th>
             <th>結束播放日期</th>
@@ -59,38 +59,10 @@
             <th>縮圖</th>
             <th>修改</th>
           </tr>
-        {% if imgs %}
-          {% for img in imgs %}
-            <tr>
-              <td>{{img[0]}}</td>
-              <td>
-                  {% for type in data_types %}
-                  {% if type[0] == img[7] %}
-                    {{ type[1] }}
-                  {% end %}
-                  {% end %}
-              </td>
-              <td>{{img[2]}}</td>
-              <td>{{img[1]}}</td>
-              <td>{{img[5]}}</td>
-              <td>{{img[6]}}</td>
-              <td>{{img[3]}}</td>
-              <td>{{img[4]}}</td>
-              <td>{{img[9]}}</td>
-              <td>{{img[10]}}</td>
-              <td><img src="{{ static_url("thumbnail/"+img[8]) }}"/></td>
-              <td>
-                  <a href="/edit?img_id={{img[0]}}" class="btn btn-link">Edit</a>
-                  <a href="/delete?target_id={{img[0]}}" class="btn btn-link" onclick="return deleteConfirm()">Delete</a>
-              </td>
-            <tr>
-          {% end %}
-        {% end %}
-
         </table>
         </div>
         <div id='text_content'style='display:none'>
-            <table class='table'>
+            <table class='table' id='text_table'>
                 <tr>
                     <th>文字ID</th>
                     <th>文字類型</th>
@@ -101,38 +73,10 @@
                     <th>結束播放時間</th>
                     <th>單次播放時間</th>
                     <th>已播放次數</th>
-                    <th>縮圖</th>
                     <th>修改</th>
                 </tr>
-                {% if texts %}
-                    {% for text in texts %}
-                        <tr>
-                            <td>{{text[0]}}</td>
-                            <td>
-                                {% for type in data_types %}
-                                    {% if type[0] == text[1] %}
-                                        {{ type[1] }}
-                                    {% end %}
-                                {% end %}
-                            </td>
-                            <td>{{text[2]}}</td>
-                            <td>{{text[3]}}</td>
-                            <td>{{text[4]}}</td>
-                            <td>{{text[5]}}</td>
-                            <td>{{text[6]}}</td>
-                            <td>{{text[7]}}</td>
-                            <td>{{text[8]}}</td>
-                            <td></td>
-                            <td>
-                                <a href="/edit?text_id={{text[0]}}" class='btn btn-link'>Edit</a>
-                                <a href="/delete?target_id={{text[0]}}" class="btn btn-link" onclick="return deleteConfirm()">Delete</a>
-                            </td>
-                        </tr>
-                    {% end %}
-                {% end %}
             </table>
         </div>
-
           </div>
         </div>
     <script>
@@ -143,7 +87,13 @@
             var other = $(this).parent().siblings().children().attr('href');
             $(this).parent().siblings().removeClass('active');
             $(other).css('display','none');
+            if($(this).attr('id') === 'img_display'){
+                show_display('image',1)
+            }else{
+                show_display('text',1)
+            }
         });
+
         function deleteConfirm(){
             return confirm("確定要刪除嗎?");
         }

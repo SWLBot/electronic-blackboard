@@ -51,9 +51,18 @@ def display_image(argu_user):
 
         #restruct results of query
         for result_row in imgs:
-            return_msg_list.append([result_row[0],result_row[1],result_row[2],result_row[3],result_row[4],result_row[5],result_row[6],result_row[7],result_row[8],result_row[9],result_row[10]])
-            #                   img_id, img_upload_time, img_file_name, img_start_time, img_end_time, img_start_date, img_end_date, type_id, img_thumbnail_name, img_display_time, img_display_count
-
+            return_msg_list.append(dict(
+                                img_id=result_row[0],
+                                img_upload_time=result_row[1],
+                                img_file_name=result_row[2],
+                                img_start_time=result_row[3],
+                                img_end_time=result_row[4],
+                                img_start_date=result_row[5],
+                                img_end_date=result_row[6],
+                                type_id=result_row[7],
+                                img_thumbnail_name=result_row[8],
+                                img_display_time=result_row[9],
+                                img_display_count=result_row[10]))
         return return_msg_list
     except DB_Exception as e:
         return_msg["error"] = e.args[1]
@@ -134,3 +143,27 @@ def display_data_types():
         return_msg={}
         return_msg["error"] = e.args[1]
         return return_msg
+
+def transform_date_string(data_list):
+    for data in data_list:
+        if isinstance(data, dict):
+            for key,value in data.items():
+                if isinstance(value, date):
+                    data[key] = value.isoformat()
+                if isinstance(value, timedelta):
+                    data[key] = str(value)
+        elif isinstance(data, list):
+            for idx,value in enumerate(data):
+                if isinstance(value, date):
+                    data[idx] = value.isoformat()
+                if isinstance(value, timedelta):
+                    data[idx] = str(value)
+
+def convert_img_file_path(handler,data_list,data_types):
+    for data in data_list:
+        if isinstance(data ,dict):
+            for type in data_types:
+                if type[0] == data['type_id']:
+                    target_type = type
+                    break
+            data.update(dict(img_url=handler.static_url(target_type[2]+data['img_file_name'])))
