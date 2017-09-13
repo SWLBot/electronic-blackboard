@@ -426,6 +426,10 @@ class TextDao(DataManipulateDao):
         ret = self.db.query(sql)
         return ret
 
+    def expireAllNews(self):
+        sql = 'UPDATE text_data SET text_is_expire=1 WHERE text_is_expire=0 and text_invisible_title="news"'
+        self.db.cmd(sql)
+
 class UserPreferDao(DefaultDao):
     def generateNewId(self):
         sql ='SELECT pref_id FROM user_prefer ORDER BY pref_set_time DESC, pref_id DESC LIMIT 1'
@@ -573,6 +577,18 @@ class NewsQRCodeDao(DefaultDao):
             + '(SELECT title, serial_number,data_type ' \
             + 'FROM news_QR_code where is_delete=0 and data_type IN {preferStr} '.format(preferStr=preferStr) \
             + 'ORDER BY upload_time DESC LIMIT 10) as data ORDER BY RAND() LIMIT 2'
+        ret = self.db.query(sql)
+        if len(ret):
+            return ret
+        else:
+            #TODO check need to raise exception or not
+            return None
+
+    def getNewsByTime(self,hours,limit):
+        sql = 'SELECT title, serial_number, data_type ' \
+            + 'FROM news_QR_code where is_delete=0 and serial_number != "-1" ' \
+            + 'and upload_time >= DATE_SUB(NOW(), INTERVAL {hours} HOUR) '.format(hours=hours) \
+            + 'ORDER BY RAND() LIMIT {limitNumber}'.format(limitNumber=limit)
         ret = self.db.query(sql)
         if len(ret):
             return ret

@@ -1145,6 +1145,88 @@ def crawler_schedule():
         print("crawler execution fail")
         return return_msg
 
+def add_news_text(typeId, textFile):
+    now_time = time.time()
+    send_msg = {}
+    send_msg["server_dir"] = os.path.dirname(__file__)
+    send_msg["file_type"] = typeId
+    send_msg["start_date"] = time.strftime("%Y-%m-%d", time.localtime(now_time))
+    send_msg["end_date"] = time.strftime("%Y-%m-%d", time.localtime(now_time))
+    send_msg["start_time"] = ""
+    send_msg["end_time"] = ""
+    send_msg["display_time"] = 5
+    send_msg["user_id"] = 1
+    send_msg["invisible_title"] = "news"
+    receive_msg = upload_text_insert_db(send_msg)
+    with open(receive_msg["text_system_dir"],"w") as fp:
+        print(json.dumps(textFile),file=fp)
+
+def news2text(text_count):
+    try:
+        return_msg = {}
+        return_msg["result"] = "fail"
+        
+        #get type id
+        with DataTypeDao() as dataTypeDao:
+            typeId = dataTypeDao.getTypeId('新聞')
+        #get news
+        with NewsQRCodeDao() as newsQRCodeDao:
+            news = newsQRCodeDao.getNewsByTime(3,text_count*2)
+        #mark old news text to expired
+        with TextDao() as textDao:
+            textDao.expireAllNews()
+            
+        #pack news to text
+        if news is not None:
+            text_count = int(len(news)/2)
+            for counts in range(text_count):
+                with DataTypeDao() as dataTypeDao:
+                    type_dir1 = dataTypeDao.getTypeDir(typeId=news[counts][2])
+                    type_dir2 = dataTypeDao.getTypeDir(typeId=news[counts+text_count][2])
+                    type_name1 = dataTypeDao.getTypeName(typeId=news[counts][2])
+                    type_name2 = dataTypeDao.getTypeName(typeId=news[counts+text_count][2])
+                textFile = {   "text_type" : "news",
+                                "forum_name1" : type_name1,
+                                "title1" : news[counts][0],
+                                "QR1": os.path.join('static','{typeDir}'.format(typeDir=type_dir1),'{name}.png'.format(name=news[counts][1])),
+                                "forum_name2" : type_name2,
+                                "title2" : news[counts+text_count][0],
+                                "QR2": os.path.join('static','{typeDir}'.format(typeDir=type_dir2),'{name}.png'.format(name=news[counts+text_count][1]))
+                                }
+                add_news_text(typeId, textFile)
+        
+        return_msg["result"] = "success"
+        return return_msg
+    except Exception as e:
+        return_msg["error"] = str(e)
+        return return_msg
+
+def auto_text_generator():
+    try:
+        return_msg = {}
+        return_msg["result"] = "fail"
+
+        with DataTypeDao() as dataTypeDao:
+            existed = dataTypeDao.checkTypeExisted("文字")
+        if not existed:
+            create_data_type("文字")
+
+        #generate news text from db news_QR_code table
+        with DataTypeDao() as dataTypeDao:
+            existed = dataTypeDao.checkTypeExisted("新聞")
+        if not existed:
+            create_data_type("新聞","文字")
+        
+        receive_msg = news2text(10)
+        if receive_msg["result"] == "fail":
+            return receive_msg
+        
+        return_msg["result"] = "success"
+        return return_msg
+    except Exception as e:
+        return_msg["error"] = str(e)
+        return return_msg
+
 #deal with defunct 
 def CHLD_handler(para1, para2):
     try:
@@ -1236,6 +1318,14 @@ def do_crawler_schedule():
         receive_obj["error"] = "crawler_news : " + receive_obj["error"]
         set_system_log(receive_obj)
 
+def do_auto_text_generator():
+    receive_obj = auto_text_generator()
+    if receive_obj["result"] == "success":
+        "DO NOTHING"
+    else :
+        receive_obj["error"] = "auto_text_generator : " + receive_obj["error"]
+        set_system_log(receive_obj)
+
 board_py_dir = ""
 shutdown = 0
 max_db_log = 100
@@ -1283,6 +1373,7 @@ def main():
     alarm_google_calendar_text = raw_time + 5.0
     alarm_crawler_google_drive_img = raw_time + 13.0
     alarm_crawler_functions = raw_time + 15.0
+    alarm_auto_text_generator = raw_time + 97.0
 
     check_expire_data_worker = Worker(job=expire_data_check,name='Check expired data')
     set_schedule_log_worker = Worker(job=do_set_schedule_log,name='Set schedule log')
@@ -1290,6 +1381,7 @@ def main():
     google_calendar_worker = Worker(job=do_google_calendar,name='Grab Google calendar event')
     google_drive_worker = Worker(job=do_google_drive,name='Grab Google drive image')
     crawler_schedule_worker = Worker(job=do_crawler_schedule,name='Crawler for news')
+    auto_text_generator_worker = Worker(job=do_auto_text_generator,name='Generator news text')
 
     #start scheduling
     while shutdown == 0:
@@ -1444,6 +1536,14 @@ def main():
                 alarm_crawler_functions += 600.0
             else:
                 alarm_crawler_functions += 3600.0
+
+        #auto make news text
+        if raw_time >= alarm_auto_text_generator:
+            fork_failed = auto_text_generator_worker.do(time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
+            if fork_failed:
+                alarm_auto_text_generator += 600.0
+            else:
+                alarm_auto_text_generator += 3600.0
 
         #delay
         sleep(0.1)
