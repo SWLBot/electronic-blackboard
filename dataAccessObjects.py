@@ -323,7 +323,20 @@ class ImageDao(DataManipulateDao):
         sql = 'select * from image_data where img_is_delete = 0 and img_id = "{imgId}"'.format(imgId=imgId)
         ret = self.db.query(sql)
         if len(ret):
-            return ret[0]
+            raw_img = ret[0]
+            img = dict(img_id=raw_img[0],
+                        type_id=raw_img[1],
+                        img_file_name=raw_img[2],
+                        img_thumbnail_name=raw_img[3],
+                        img_upload_name=raw_img[4],
+                        img_upload_time=raw_img[5],
+                        img_start_date=raw_img[6],
+                        img_end_date=raw_img[7],
+                        img_start_time=raw_img[8],
+                        img_end_time=raw_img[9],
+                        img_display_count=raw_img[10],
+                        img_display_time=raw_img[11])
+            return img
         else:
             #TODO raise exception
             return None
@@ -345,26 +358,17 @@ class ImageDao(DataManipulateDao):
     def generateNewId(self):
         return super().generateNewId()
 
-    def insertImgData(self,imgData):
-        sql = 'INSERT INTO image_data ' \
-            + '(img_id, type_id, img_system_name, img_thumbnail_name, img_file_name, img_start_date, ' \
-            + 'img_end_date, img_start_time, img_end_time, img_display_time, user_id)' \
-            + ' VALUES ' \
-            + '("{data[id]}", {data[typeId]}, "{data[systemName]}", "{data[thumbnailName]}", "{data[fileName]}", "{data[startDate]}",' \
-            + ' "{data[endDate]}", "{data[startTime]}", "{data[endTime]}", {data[displayTime]}, {data[userId]})'
-        sql = sql.format(data=imgData)
-        self.db.cmd(sql)
-
     def getCwbImgIds(self):
         sql = "SELECT img_id FROM image_data WHERE img_is_delete=0 and img_file_name like 'CV1_TW_3600_%'"
         Ids = self.db.query(sql)
         return Ids
 
     def getDisplayImgs(self,userId=None):
-        sql = "SELECT img_id, img_upload_time, img_file_name, img_start_time, img_end_time, img_start_date, img_end_date, type_id, img_thumbnail_name, img_display_time, img_display_count " \
-                + "FROM image_data WHERE img_is_delete=0 "
+        sql = "SELECT img_id, img_upload_time, img_system_name, img_start_time, img_end_time, img_start_date, img_end_date, type_id, img_thumbnail_name, img_display_time, img_display_count " \
+                + "FROM image_data WHERE img_is_delete=0 AND img_is_expire=0"
         if userId:
             sql += " AND user_id={userId}".format(userId=userId)
+        sql += " ORDER BY img_id DESC"
         ret = self.db.query(sql)
         return ret
 
@@ -415,11 +419,16 @@ class TextDao(DataManipulateDao):
 
     def getDisplayTexts(self,userId=None):
         sql = "SELECT text_id, type_id, text_upload_time, text_start_date, text_end_date, text_start_time, text_end_time, text_display_time, text_display_count " \
-                + "FROM text_data WHERE text_is_delete=0"
+                + "FROM text_data WHERE text_is_delete=0 AND text_is_expire=0"
         if userId:
             sql += " AND user_id={userId}".format(userId=userId)
+        sql += " ORDER BY text_id DESC"
         ret = self.db.query(sql)
         return ret
+
+    def expireAllNews(self):
+        sql = 'UPDATE text_data SET text_is_expire=1 WHERE text_is_expire=0 and text_invisible_title="news"'
+        self.db.cmd(sql)
 
 class UserPreferDao(DefaultDao):
     def generateNewId(self):
@@ -470,7 +479,7 @@ class DataTypeDao(DefaultDao):
         self.db.cmd(sql)
 
     def getTypeData(self):
-        sql = 'select type_id,type_name from data_type'
+        sql = 'select type_id,type_name,type_dir from data_type'
         ret = self.db.query(sql)
         if len(ret):
             return ret
@@ -568,6 +577,18 @@ class NewsQRCodeDao(DefaultDao):
             + '(SELECT title, serial_number,data_type ' \
             + 'FROM news_QR_code where is_delete=0 and data_type IN {preferStr} '.format(preferStr=preferStr) \
             + 'ORDER BY upload_time DESC LIMIT 10) as data ORDER BY RAND() LIMIT 2'
+        ret = self.db.query(sql)
+        if len(ret):
+            return ret
+        else:
+            #TODO check need to raise exception or not
+            return None
+
+    def getNewsByTime(self,hours,limit):
+        sql = 'SELECT title, serial_number, data_type ' \
+            + 'FROM news_QR_code where is_delete=0 and serial_number != "-1" ' \
+            + 'and upload_time >= DATE_SUB(NOW(), INTERVAL {hours} HOUR) '.format(hours=hours) \
+            + 'ORDER BY RAND() LIMIT {limitNumber}'.format(limitNumber=limit)
         ret = self.db.query(sql)
         if len(ret):
             return ret

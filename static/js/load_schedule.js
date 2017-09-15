@@ -1,24 +1,24 @@
 var last_schedule_id = "no_id"
 function load_schedule()
 {
-	$.ajaxSetup({
-	    beforeSend: function (jqXHR, settings)  {
-		type = settings.type
-		if (type != 'GET' && type != 'HEAD' && type != 'OPTIONS' ) {
-		     var pattern = /(.+; *)?_xsrf *= *([^;" ]+)/ ;
-		     var xsrf = pattern.exec( document .cookie);
-		     if (xsrf) {
-			jqXHR.setRequestHeader( 'X-Xsrftoken' , xsrf[ 2 ]);
-		    }
-		}
-	}});
-	
-	$.ajax({
-		url: '/db_schedule',
-		type: 'GET',
-		contentType : 'application/text',
-		success: function (jsonRes) 
-		{
+    $.ajaxSetup({
+        beforeSend: function (jqXHR, settings){
+        type = settings.type
+        if (type != 'GET' && type != 'HEAD' && type != 'OPTIONS' ){
+            var pattern = /(.+; *)?_xsrf *= *([^;" ]+)/ ;
+            var xsrf = pattern.exec( document .cookie);
+            if (xsrf){
+                jqXHR.setRequestHeader( 'X-Xsrftoken' , xsrf[ 2 ]);
+            }
+        }
+    }});
+    
+    $.ajax({
+        url: '/db_schedule',
+        type: 'GET',
+        contentType : 'application/text',
+        success: function (jsonRes) 
+        {
             if(jsonRes.result == "fail"){
                 console.log("fail");
                 console.log(jsonRes);
@@ -29,13 +29,20 @@ function load_schedule()
                 $('div.title2').css('display','none');
                 $('img#pic').css('display','none');
                 $('div.like_count').css('display','none');
-                $('div#user_pref').css('display','inline');
-                $('img#qrcode1').css('display','inline');
-                $('img#qrcode2').css('display','inline');
+                $('img#event_qrcode').css('display','none');
+                $('div#user_pref').css('display','none');
+                $('div#news').css('display','none');
+                $('img#event_qrcode').css('display','none');
+                $('img#qrcode1').css('display','none');
+                $('img#qrcode2').css('display','none');
                 
                 console.log("text");
                 if ('preference' in jsonRes.file_text){
                     console.log(jsonRes);
+                    last_schedule_id = jsonRes.schedule_id;
+                    $('div#user_pref').css('display','inline');
+                    $('img#qrcode1').css('display','inline');
+                    $('img#qrcode2').css('display','inline');
                     if(jsonRes.file_text.preference === 1){
                         var weekday=new Array(7);
                         weekday[0]="Mon.";
@@ -71,10 +78,18 @@ function load_schedule()
                             $('div#newsTitle2').text(jsonRes.file_text.news[1].title);
                         }
                     }
+                }else if('text_type' in jsonRes.file_text && jsonRes.file_text.text_type=='news'){
+                    console.log("News");
+                    last_schedule_id = jsonRes.schedule_id;
+                    $('div#news').css('display','inline');
+                    $('div#forum-1').text(jsonRes.file_text.forum_name1);
+                    $('p#title-1').text(jsonRes.file_text.title1);
+                    $('img#qrcode-1').attr('src',String(jsonRes.file_text.QR1));
+                    $('div#forum-2').text(jsonRes.file_text.forum_name2);
+                    $('p#title-2').text(jsonRes.file_text.title2);
+                    $('img#qrcode-2').attr('src',String(jsonRes.file_text.QR2));
                 }else{
                     last_schedule_id = jsonRes.schedule_id;
-                    $('img').css('display','none');
-                    $('div#user_pref').css('display','none');
                     $('footer').css('display','inline');
                     $('div.title2').css('display','inline');
                     if ( 'con' in jsonRes.file_text){
@@ -88,6 +103,16 @@ function load_schedule()
                     }
                     $('#title1').html(jsonRes.file_text.title1);
                     $('#title2').html(jsonRes.file_text.title2);
+                    if(jsonRes.file_text.location != ""){
+                        $('#location').html("地點： "+jsonRes.file_text.location)
+                    }else{
+                        $('#location').html("")
+                    }
+                    if(jsonRes.file_text.detailtime != ""){
+                        $('#detailtime').html("時間： "+jsonRes.file_text.detailtime)
+                    }else{
+                        $('#detailtime').html("")
+                    }
                     $('#description').html(jsonRes.file_text.description);
                     if(jsonRes.type_name === "獲獎公告"){
                         console.log('reward');
@@ -109,16 +134,17 @@ function load_schedule()
                         $('div#footer').css('display','none');
                     }
                 }
+                if ('event_id' in jsonRes.file_text){
+                    $('img#event_qrcode').attr('src',String(jsonRes.file_text.event_id));
+                    $('img#event_qrcode').css('display','inline');
+                }
             }else{
                 console.log("image");
                 console.log(jsonRes);
                 last_schedule_id = jsonRes.schedule_id;
                 $('div.title2').css('display','none');
                 $('div#user_pref').css('display','none');
-                $('img#pic').css('display','inline');
-                $('img#like').css('display','inline');
-                $('div.like_count').css('display','inline');
-                $('p#like_count').css('display','inline');
+                $('div#news').css('display','none');
                 if('like_count' in jsonRes){
                     $('p#like_count').text(jsonRes.like_count);
                 }
@@ -128,24 +154,26 @@ function load_schedule()
                 var height = $('img#pic').height();
                 $('img#pic').height(screen.height * 0.98);
                 $('img#pic').css('maxWidth',($(window).width() * 0.85 | 0 ) + "px");
+                $('img#pic').css('display','inline');
+                $('img#like').css('display','inline');
+                $('div.like_count').css('display','inline');
+                $('p#like_count').css('display','inline');
             }
-		},
-		error: function (xhr, textStatus, error) 
-		{
-			console.log(xhr.statusText);
-			console.log(textStatus);
-			console.log(error);
-			console.log("load_schedule error");
-		}
-	});
-
+        },
+        error: function (xhr, textStatus, error) 
+        {
+            console.log(xhr.statusText);
+            console.log(textStatus);
+            console.log(error);
+            console.log("load_schedule error");
+        }
+    });
 }
 
 function timer()
 {
     load_schedule()
 }
-
 
 $(window).on('load',function(){
     window.setInterval(timer,1000);

@@ -13,6 +13,7 @@ from server_api import get_upcoming_events
 from apiclient.http import MediaIoBaseDownload
 from apiclient import discovery
 from news_crawler.news_crawler import *
+import urllib
 import httplib2
 import io
 import datetime
@@ -25,6 +26,12 @@ import config.settings as setting
 from dataAccessObjects import *
 from modeUtil import ModeUtil
 from worker import *
+from news_crawler import qrcode
+import sys
+
+def gen_error_msg(msg=''):
+    caller = sys._getframe(1).f_code.co_name
+    return '[{caller}] : {msg}'.format(caller=caller,msg=msg)
 
 #make now activity to is used
 def mark_now_activity():
@@ -47,7 +54,7 @@ def mark_now_activity():
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
         
 #child function of load_next_schedule
@@ -67,7 +74,7 @@ def find_next_schedule():
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
 #The API load schedule.txt and find out the first image which has not print and still meet the time limit
@@ -181,7 +188,7 @@ def load_next_schedule(json_obj):
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
     
 #The API connect mysql and find text data that can be scheduled
@@ -222,7 +229,7 @@ def find_text_acticity(json_obj):
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
 #The API connect mysql and find image data that can be scheduled
@@ -263,7 +270,7 @@ def find_image_acticity(json_obj):
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
 def mix_image_and_text(arrange_mode,deal_obj):
@@ -367,7 +374,7 @@ def expire_data_check_():
                 with ImageDao() as imageDao:
                     imageDao.markExpired(expired_image_id[0])
             except DB_Exception as e:
-                return_msg["error"] = e.args[1]
+                return_msg["error"] = gen_error_msg(e.args[1])
                 
         if "error" in return_msg:
             return return_msg
@@ -383,7 +390,7 @@ def expire_data_check_():
                 with TextDao() as textDao:
                     textDao.markExpired(expired_text_id[0])
             except DB_Exception as e:
-                return_msg["error"] = e.args[1]
+                return_msg["error"] = gen_error_msg(e.args[1])
                 
         if "error" in return_msg:
             return return_msg
@@ -393,7 +400,7 @@ def expire_data_check_():
                 with ScheduleDao() as scheduleDao:
                     scheduleDao.markExpiredSchedule(targetId=target_id)
             except DB_Exception as e:
-                return_msg["error"] = e.args[1]
+                return_msg["error"] = gen_error_msg(e.args[1])
                 
         if "error" in return_msg:
             return return_msg
@@ -401,7 +408,7 @@ def expire_data_check_():
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
 #The API connect mysql and add activity to schedule
@@ -465,7 +472,7 @@ def edit_schedule(json_obj):
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
 #The API connect mysql and add activity to schedule
@@ -505,7 +512,7 @@ def add_schedule(json_obj):
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
 #The API connect mysql and clean non used schedule
@@ -520,7 +527,7 @@ def clean_schedule():
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg   
 
 #The API connect mysql and clean up schedule and write it to the schedule.txt
@@ -576,7 +583,7 @@ def set_schedule_log(json_obj):
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
 #future can write to log.txt. now just print it
@@ -614,7 +621,7 @@ def read_arrange_mode():
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
 def find_cwb_type_id():
@@ -716,28 +723,32 @@ def crawler_cwb_img(json_obj):
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
 def google_calendar_text():
-    return_msg = {}
-    return_msg["result"] = "fail"
-    credentials = get_credentials()
-    if not credentials:
-        return_msg["error"] = "No credential file"
+    try:
+        return_msg = {}
+        return_msg["result"] = "fail"
+        credentials = get_credentials()
+        if not credentials:
+            return_msg["error"] = "No credential file"
+            return return_msg
+        else:
+            try:
+                events = get_upcoming_events(credentials)
+                for cal, events_value in events.items():
+                    for e in events_value:
+                        check_event_exist_or_insert(e, cal)
+                        sleep(1.5)
+                return_msg["result"] = "success"
+                return return_msg
+            except DB_Exception as e:
+                return_msg["error"] = e.arg[1]
+                return return_msg
+    except Exception as e:
+        return_msg["error"] = str(e)
         return return_msg
-    else:
-        try:
-            eventsResult = get_upcoming_events(credentials)
-            events = eventsResult['items']
-            for e in events:
-                check_event_exist_or_insert(e)
-                sleep(1.5)
-            return_msg["result"] = "success"
-            return return_msg
-        except DB_Exception as e:
-            return_msg["error"] = e.arg[1]
-            return return_msg
 
 def rule_base_agent(event):
     addition_msg = {}
@@ -766,10 +777,20 @@ def rule_base_agent(event):
 
     return addition_msg
 
-def check_event_exist_or_insert(event):
+def check_event_exist_or_insert(event, calendar_name=None):
     event_id = event['id']
     with TextDao() as textDao:
         existed = textDao.checkExisted(event_id)
+    #display days
+    if calendar_name == "Holidays":
+        display_days = 3
+    elif calendar_name == "Department" or calendar_name == "School":
+        display_days = 7
+    elif calendar_name == "Activities" or calendar_name == "Speechs":
+        display_days = 14
+    else:
+        display_days = 3
+
     if existed:
         # event existed
         # do nothing
@@ -778,23 +799,71 @@ def check_event_exist_or_insert(event):
         send_msg = {}
         send_msg["server_dir"] = os.path.dirname(__file__)
         send_msg["file_type"] = 6
-        send_msg["start_date"] = datetime.datetime.strftime(datetime.datetime.strptime(event['start']['date'],'%Y-%m-%d') - datetime.timedelta(3),'%Y-%m-%d')
-        send_msg["end_date"] = event['start']['date']
+        if 'date' in event['start'].keys():
+            send_msg["start_date"] = datetime.datetime.strftime(datetime.datetime.strptime(event['start']['date'],'%Y-%m-%d') - datetime.timedelta(display_days),'%Y-%m-%d')
+            send_msg["end_date"] = event['start']['date']
+        elif 'dateTime' in event['start'].keys():
+            event_start_date = event['start']['dateTime'].split('T')[0]
+            event_start_time = event['start']['dateTime'].split('T')[1][:5]
+            event_end_date = event['end']['dateTime'].split('T')[0]
+            event_end_time = event['end']['dateTime'].split('T')[1][:5]
+            send_msg["start_date"] = datetime.datetime.strftime(datetime.datetime.strptime(event['start']['dateTime'].split('T')[0],'%Y-%m-%d') - datetime.timedelta(display_days),'%Y-%m-%d')
+            send_msg["end_date"] = event_start_date
+        else:
+            print("no date and dateTime")
+            return
         send_msg["start_time"] = ""
         send_msg["end_time"] = ""
-        send_msg["display_time"] = 5
+        send_msg["display_time"] = 10
         send_msg["user_id"] = 1
         send_msg["invisible_title"] = event_id
         receive_msg = upload_text_insert_db(send_msg)
         addition_msg = rule_base_agent(event)
+        event_file_path = os.path.join('static','calendar_event','{name}.png'.format(name=event_id))
+        if 'description' in event:
+            description = event['description']
+        else:
+            description = addition_msg['description']
+        if 'location' in event:
+            location = event['location']
+        else:
+            location = ""
+        if 'dateTime' in event['start'].keys() and event_start_date == event_end_date:
+            detailtime = "{start} - {end}".format(start=event_start_time, end=event_end_time)
+        else:
+            detailtime = ""
+
         text_file = {   "con" : send_msg["end_date"],
                         "title1" : addition_msg['title1'],
                         "title2" : addition_msg['title2'],
-                        "description": addition_msg['description'],
-                        "background_color" : "#984B4B"
+                        "description": description,
+                        "location" : location,
+                        "detailtime": detailtime,
+                        "background_color" : "#984B4B",
+                        "event_id" : event_file_path
         }
         with open(receive_msg["text_system_dir"],"w") as fp:
             print(json.dumps(text_file),file=fp)
+        add_event_by_qrcode(event)
+
+def add_event_by_qrcode(eventInfo):
+    target_dir = os.path.join('static','calendar_event')
+    if not os.path.exists(target_dir):
+        os.makedirs(target_dir)
+    startTime = '0000'
+    endTime = '0000'
+    if 'date' in eventInfo['start'] and 'date' in eventInfo['end']:
+        startDate = datetime.datetime.strptime(eventInfo['start']['date'], '%Y-%m-%d').strftime('%Y%m%d')
+        endDate = datetime.datetime.strptime(eventInfo['end']['date'], '%Y-%m-%d').strftime('%Y%m%d')
+    elif 'dateTime' in eventInfo['start'] and 'dateTime' in eventInfo['end']:
+        startDate = datetime.datetime.strptime(eventInfo['start']['dateTime'].split('T')[0], '%Y-%m-%d').strftime('%Y%m%d')
+        startTime = datetime.datetime.strptime(eventInfo['start']['dateTime'].split('T')[1][:8], '%H:%M:%S').strftime('%H%M%S')
+        endDate = datetime.datetime.strptime(eventInfo['end']['dateTime'].split('T')[0], '%Y-%m-%d').strftime('%Y%m%d')
+        endTime = datetime.datetime.strptime(eventInfo['end']['dateTime'].split('T')[1][:8], '%H:%M:%S').strftime('%H%M%S')
+    link = 'https://www.google.com/calendar/render?'\
+        +'action=TEMPLATE&hl=zh_TW&text={summary}&dates={startDate}T{startTime}Z/{endDate}T{endTime}Z&location&ctz=Asia/Taipei&sf=true&output=xml'\
+        .format(summary=urllib.parse.quote(eventInfo['summary']),startDate=startDate,startTime=startTime,endDate=endDate,endTime=endTime)
+    qrcode.make_qrcode_image(link,target_dir,event=eventInfo['id'])
 
 def find_drive_data_type():
     return_msg = {}
@@ -988,7 +1057,7 @@ def crawler_news(website):
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
 def crawler_ptt_news(boards):
@@ -1019,7 +1088,7 @@ def crawler_ptt_news(boards):
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
 def crawler_constellation_fortune():
@@ -1039,7 +1108,7 @@ def crawler_constellation_fortune():
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
-        return_msg["error"] = e.args[1]
+        return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
 def check_table(news=False,fortune=False):
@@ -1074,6 +1143,88 @@ def crawler_schedule():
         return return_msg
     except:
         print("crawler execution fail")
+        return return_msg
+
+def add_news_text(typeId, textFile):
+    now_time = time.time()
+    send_msg = {}
+    send_msg["server_dir"] = os.path.dirname(__file__)
+    send_msg["file_type"] = typeId
+    send_msg["start_date"] = time.strftime("%Y-%m-%d", time.localtime(now_time))
+    send_msg["end_date"] = time.strftime("%Y-%m-%d", time.localtime(now_time))
+    send_msg["start_time"] = ""
+    send_msg["end_time"] = ""
+    send_msg["display_time"] = 5
+    send_msg["user_id"] = 1
+    send_msg["invisible_title"] = "news"
+    receive_msg = upload_text_insert_db(send_msg)
+    with open(receive_msg["text_system_dir"],"w") as fp:
+        print(json.dumps(textFile),file=fp)
+
+def news2text(text_count):
+    try:
+        return_msg = {}
+        return_msg["result"] = "fail"
+        
+        #get type id
+        with DataTypeDao() as dataTypeDao:
+            typeId = dataTypeDao.getTypeId('新聞')
+        #get news
+        with NewsQRCodeDao() as newsQRCodeDao:
+            news = newsQRCodeDao.getNewsByTime(3,text_count*2)
+        #mark old news text to expired
+        with TextDao() as textDao:
+            textDao.expireAllNews()
+            
+        #pack news to text
+        if news is not None:
+            text_count = int(len(news)/2)
+            for counts in range(text_count):
+                with DataTypeDao() as dataTypeDao:
+                    type_dir1 = dataTypeDao.getTypeDir(typeId=news[counts][2])
+                    type_dir2 = dataTypeDao.getTypeDir(typeId=news[counts+text_count][2])
+                    type_name1 = dataTypeDao.getTypeName(typeId=news[counts][2])
+                    type_name2 = dataTypeDao.getTypeName(typeId=news[counts+text_count][2])
+                textFile = {   "text_type" : "news",
+                                "forum_name1" : type_name1,
+                                "title1" : news[counts][0],
+                                "QR1": os.path.join('static','{typeDir}'.format(typeDir=type_dir1),'{name}.png'.format(name=news[counts][1])),
+                                "forum_name2" : type_name2,
+                                "title2" : news[counts+text_count][0],
+                                "QR2": os.path.join('static','{typeDir}'.format(typeDir=type_dir2),'{name}.png'.format(name=news[counts+text_count][1]))
+                                }
+                add_news_text(typeId, textFile)
+        
+        return_msg["result"] = "success"
+        return return_msg
+    except Exception as e:
+        return_msg["error"] = str(e)
+        return return_msg
+
+def auto_text_generator():
+    try:
+        return_msg = {}
+        return_msg["result"] = "fail"
+
+        with DataTypeDao() as dataTypeDao:
+            existed = dataTypeDao.checkTypeExisted("文字")
+        if not existed:
+            create_data_type("文字")
+
+        #generate news text from db news_QR_code table
+        with DataTypeDao() as dataTypeDao:
+            existed = dataTypeDao.checkTypeExisted("新聞")
+        if not existed:
+            create_data_type("新聞","文字")
+        
+        receive_msg = news2text(10)
+        if receive_msg["result"] == "fail":
+            return receive_msg
+        
+        return_msg["result"] = "success"
+        return return_msg
+    except Exception as e:
+        return_msg["error"] = str(e)
         return return_msg
 
 #deal with defunct 
@@ -1120,6 +1271,45 @@ def expire_data_check():
         receive_obj["error"] = "expire_data_check : {errorMsg}".format(errorMsg=receive_obj["error"])
         set_system_log(receive_obj)
 
+def do_set_schedule_log():
+    global board_py_dir
+    global max_db_log
+    send_obj = dict(board_py_dir=board_py_dir,max_db_log=max_db_log)
+    receive_obj = set_schedule_log(send_obj)
+    if receive_obj["result"] == "success":
+        "DO NOTHING"
+    else :
+        receive_obj["error"] = "set_schedule_log : " + receive_obj["error"]
+        set_system_log(receive_obj)
+
+def do_cwb_crawler():
+    global board_py_dir
+    send_obj = dict(server_dir=board_py_dir,user_id=1)
+    receive_obj = crawler_cwb_img(send_obj)
+    if receive_obj["result"] == "success":
+        "DO NOTHING"
+    else :
+        receive_obj["error"] = "crawler_cwb_img : " + receive_obj["error"]
+        set_system_log(receive_obj)
+
+def do_google_calendar():
+    receive_obj = google_calendar_text()
+    if receive_obj["result"] == "success":
+        "DO NOTHING"
+    else:
+        receive_obj["error"] = "google_calendar_text" + receive_obj["error"]
+        set_system_log(receive_obj)
+
+def do_google_drive():
+    global board_py_dir
+    send_obj = dict(server_dir=board_py_dir,user_id=1)
+    receive_obj = crawler_google_drive_img(send_obj)
+    if receive_obj["result"] == "success":
+        "DO NOTHING"
+    else :
+        receive_obj["error"] = "crawler_google_drive_img : " + receive_obj["error"]
+        set_system_log(receive_obj)
+
 def do_crawler_schedule():
     receive_obj = crawler_schedule()
     if receive_obj["result"] == "success":
@@ -1128,12 +1318,21 @@ def do_crawler_schedule():
         receive_obj["error"] = "crawler_news : " + receive_obj["error"]
         set_system_log(receive_obj)
 
+def do_auto_text_generator():
+    receive_obj = auto_text_generator()
+    if receive_obj["result"] == "success":
+        "DO NOTHING"
+    else :
+        receive_obj["error"] = "auto_text_generator : " + receive_obj["error"]
+        set_system_log(receive_obj)
+
+board_py_dir = ""
+shutdown = 0
+max_db_log = 100
+min_db_activity = 10
+
 def main():
     just_startup = 1
-    board_py_dir = ""
-    shutdown = 0
-    max_db_log = 100
-    min_db_activity = 10
     arrange_mode_change = 0
     arrange_sn = 0
     arrange_mode = 0
@@ -1141,6 +1340,10 @@ def main():
     condition = []
     send_obj = {}
     receive_obj = {}
+    global board_py_dir
+    global shutdown
+    global max_db_log
+    global min_db_activity
 
     #for non blocking fork
     signal.signal(signal.SIGCHLD, CHLD_handler)
@@ -1170,9 +1373,15 @@ def main():
     alarm_google_calendar_text = raw_time + 5.0
     alarm_crawler_google_drive_img = raw_time + 13.0
     alarm_crawler_functions = raw_time + 15.0
+    alarm_auto_text_generator = raw_time + 97.0
 
     check_expire_data_worker = Worker(job=expire_data_check,name='Check expired data')
+    set_schedule_log_worker = Worker(job=do_set_schedule_log,name='Set schedule log')
+    cwb_crawler_worker = Worker(job=do_cwb_crawler,name='Crawler for cwb image')
+    google_calendar_worker = Worker(job=do_google_calendar,name='Grab Google calendar event')
+    google_drive_worker = Worker(job=do_google_drive,name='Grab Google drive image')
     crawler_schedule_worker = Worker(job=do_crawler_schedule,name='Crawler for news')
+    auto_text_generator_worker = Worker(job=do_auto_text_generator,name='Generator news text')
 
     #start scheduling
     while shutdown == 0:
@@ -1203,28 +1412,11 @@ def main():
         
         #set_schedule_log
         if raw_time >= alarm_set_schedule_log:
-            print("#3 "+ time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
-            try:
-                newpid = os.fork()
-                if newpid == 0: #child
-                    shutdown = 1
-                    send_obj["board_py_dir"] = board_py_dir
-                    send_obj["max_db_log"] = max_db_log
-                    receive_obj = set_schedule_log(send_obj)
-                    if receive_obj["result"] == "success":
-                        "DO NOTHING"
-                    else :
-                        receive_obj["error"] = "set_schedule_log : " + receive_obj["error"]
-                        set_system_log(receive_obj)
-                    os._exit(0)
-                else: #Parent
-                    alarm_set_schedule_log = raw_time + 1800.0
-            except:
-                receive_obj["result"] = "fail"
-                receive_obj["error"] = "fork2 error"
-                set_system_log(receive_obj)
-                alarm_set_schedule_log = raw_time + 3.0
-            
+            fork_failed = set_schedule_log_worker.do(timestamp=time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
+            if fork_failed:
+                alarm_set_schedule_log += 3.0
+            else:
+                alarm_set_schedule_log += 1800.0
 
         #load next schedule
         if not os.path.isfile(check_file_dir) or raw_time >= alarm_load_next_schedule:
@@ -1315,73 +1507,27 @@ def main():
         
         #crawl cwb radar image
         if raw_time >= alarm_crawler_cwb_img:
-            print("#6 "+ time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
-            try:
-                newpid = os.fork()
-                if newpid == 0: #child
-                    shutdown = 1
-                    send_obj["server_dir"] = board_py_dir
-                    send_obj["user_id"] = 1
-                    receive_obj = crawler_cwb_img(send_obj)
-                    if receive_obj["result"] == "success":
-                        "DO NOTHING"
-                    else :
-                        receive_obj["error"] = "crawler_cwb_img : " + receive_obj["error"]
-                        set_system_log(receive_obj)
-                    os._exit(0)
-                else: #Parent
-                    alarm_crawler_cwb_img = raw_time + 3600.0
-            except:
-                receive_obj["result"] = "fail"
-                receive_obj["error"] = "fork4 error"
-                set_system_log(receive_obj)
-                alarm_crawler_cwb_img = raw_time + 600.0
+            fork_failed = cwb_crawler_worker.do(time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
+            if fork_failed:
+                alarm_crawler_cwb_img += 600.0
+            else:
+                alarm_crawler_cwb_img += 3600.0
 
         #google calendar add to text data
         if raw_time >= alarm_google_calendar_text:
-            print("#7 "+ time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
-            try:
-                newpid = os.fork()
-                if newpid == 0: #child
-                    shutdown = 1
-                    receive_obj = google_calendar_text()
-                    if receive_obj["result"] == "success":
-                        "DO NOTHING"
-                    else:
-                        receive_obj["error"] = "google_calendar_text" + receive_obj["error"]
-                        set_system_log(receive_obj)
-                    os._exit(0)
-                else: #Parent
-                    alarm_google_calendar_text = raw_time + 43200.0
-            except:
-                receive_obj["result"] = "fail"
-                receive_obj["error"] = "fork5 error"
-                set_system_log(receive_obj)
-                alarm_google_calendar_text = raw_time + 10.0
+            fork_failed = google_calendar_worker.do(time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
+            if fork_failed:
+                alarm_google_calendar_text += 10.0
+            else:
+                alarm_google_calendar_text += 43200.0
         
         #google drive add to text data
         if raw_time >= alarm_crawler_google_drive_img:
-            print("#8 "+ time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
-            try:
-                newpid = os.fork()
-                if newpid == 0: #child
-                    shutdown = 1
-                    send_obj["server_dir"] = board_py_dir
-                    send_obj["user_id"] = 1
-                    receive_obj = crawler_google_drive_img(send_obj)
-                    if receive_obj["result"] == "success":
-                        "DO NOTHING"
-                    else :
-                        receive_obj["error"] = "crawler_google_drive_img : " + receive_obj["error"]
-                        set_system_log(receive_obj)
-                    os._exit(0)
-                else: #Parent
-                    alarm_crawler_google_drive_img = raw_time + 3600.0
-            except:
-                receive_obj["result"] = "fail"
-                receive_obj["error"] = "fork6 error"
-                set_system_log(receive_obj)
-                alarm_crawler_google_drive_img = raw_time + 600.0
+            fork_failed = google_drive_worker.do(time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
+            if fork_failed:
+                alarm_crawler_google_drive_img += 600.0
+            else:
+                alarm_crawler_google_drive_img += 3600.0
 
         #crawler
         if raw_time >= alarm_crawler_functions:
@@ -1390,6 +1536,14 @@ def main():
                 alarm_crawler_functions += 600.0
             else:
                 alarm_crawler_functions += 3600.0
+
+        #auto make news text
+        if raw_time >= alarm_auto_text_generator:
+            fork_failed = auto_text_generator_worker.do(time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
+            if fork_failed:
+                alarm_auto_text_generator += 600.0
+            else:
+                alarm_auto_text_generator += 3600.0
 
         #delay
         sleep(0.1)
