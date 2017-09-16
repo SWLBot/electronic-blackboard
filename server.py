@@ -127,8 +127,8 @@ class UploadHandler(BaseHandler):
     def post(self):
         send_msg = {}
         receive_msg = {}
-        upload_path = os.path.join(os.path.dirname(__file__),"static/img")
-        thumbnail_path = os.path.join(os.path.dirname(__file__),"static/thumbnail")
+        upload_path = os.path.join(os.path.dirname(__file__),"static","img")
+        thumbnail_path = os.path.join(os.path.dirname(__file__),"static","thumbnail")
         send_msg = get_upload_meta_data(self) 
         send_msg["file_dir"] = upload_path
         if self.get_argument('type') == 'image':
