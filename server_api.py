@@ -603,7 +603,7 @@ def upload_image_insert_db(json_obj):
         try:
             server_dir = json_obj["server_dir"]
             type_id = json_obj["file_type"]
-            img_file_dir = json_obj["file_dir"]
+            img_filepath = json_obj["filepath"]
             img_start_date = json_obj["start_date"]
             img_end_date = json_obj["end_date"]
             img_start_time = json_obj["start_time"]
@@ -615,7 +615,7 @@ def upload_image_insert_db(json_obj):
             return return_msg
 
         img_id = ""
-        img_file_name = os.path.split(img_file_dir)[1]
+        img_file_name = os.path.split(img_filepath)[1]
         user_level_low_bound = 100
         #default
         if len(img_start_time)==0:
@@ -639,15 +639,15 @@ def upload_image_insert_db(json_obj):
         
         img_system_name = img_id + os.path.splitext(img_file_name)[1]
         img_thumbnail_name = "thumbnail_" + img_system_name
-        img_system_dir = os.path.join(img_type_dir, img_system_name)
+        img_system_filepath = os.path.join(img_type_dir, img_system_name)
         try:
-            copyfile(img_file_dir, img_system_dir)
-            if os.path.isfile(img_file_dir) and os.path.isfile(img_system_dir):
-                os.remove(img_file_dir)
+            copyfile(img_filepath, img_system_filepath)
+            if os.path.isfile(img_filepath) and os.path.isfile(img_system_filepath):
+                os.remove(img_filepath)
         except:
             try:
-                if os.path.isfile(img_file_dir) and os.path.isfile(img_system_dir):
-                    os.remove(img_system_dir)
+                if os.path.isfile(img_filepath) and os.path.isfile(img_system_filepath):
+                    os.remove(img_system_filepath)
             except:
                 "DO NOTHING"
             return_msg["error"] = "copy or remove file error"
@@ -670,18 +670,18 @@ def upload_image_insert_db(json_obj):
             with ImageDao() as imageDao:
                 imageDao.insertData(data=img_data)
         except DB_Exception as e:
-            return_msg["error"] = "insert mysql error please check file system " + img_system_dir
+            return_msg["error"] = "insert mysql error ({filename}) {msg}".format(filename=img_filepath,msg=str(e))
             try:
-                copyfile(img_system_dir, img_file_dir)
-                if os.path.isfile(img_file_dir) and os.path.isfile(img_system_dir):
-                    os.remove(img_system_dir)
-                return_msg["error"] = "insert mysql error please check file system " + img_file_dir
+                copyfile(img_system_filepath, img_filepath)
+                if os.path.isfile(img_filepath) and os.path.isfile(img_system_filepath):
+                    os.remove(img_system_filepath)
+                return_msg["error"] = "insert mysql error ({filename}) {msg}".format(filename=img_filepath,msg=str(e))
             except:
                 "DO NOTHING"
             return return_msg
 
         return_msg["img_id"] = img_id
-        return_msg["img_system_dir"] = img_system_dir
+        return_msg["img_system_filepath"] = img_system_filepath
         return_msg["img_thumbnail_name"] = img_thumbnail_name
         return_msg["result"] = "success"
         return return_msg
