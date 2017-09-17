@@ -1336,6 +1336,15 @@ def do_auto_text_generator():
         receive_obj["error"] = "auto_text_generator : " + receive_obj["error"]
         set_system_log(receive_obj)
 
+def fork_time_management(raw_time,now_time,alarm,worker,fail_time,success_time):
+    if raw_time >= alarm:
+        fork_failed = worker.do(timestamp=time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
+        if fork_failed:
+            alarm += fail_time
+        else:
+            alarm += success_time
+    return alarm
+
 board_py_dir = ""
 shutdown = 0
 max_db_log = 100
@@ -1413,20 +1422,11 @@ def main():
             alarm_read_system_setting = raw_time + 300.0
         
         #expire_data_check
-        if raw_time >= alarm_expire_data_check:
-            fork_failed = check_expire_data_worker.do(timestamp=time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
-            if fork_failed:
-                alarm_expire_data_check += 3.0
-            else:
-                alarm_expire_data_check += 1800.0
-        
+        alarm_expire_data_check = fork_time_management(raw_time,now_time,
+            alarm_expire_data_check,check_expire_data_worker,3.0,1800.0)
         #set_schedule_log
-        if raw_time >= alarm_set_schedule_log:
-            fork_failed = set_schedule_log_worker.do(timestamp=time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
-            if fork_failed:
-                alarm_set_schedule_log += 3.0
-            else:
-                alarm_set_schedule_log += 1800.0
+        alarm_set_schedule_log = fork_time_management(raw_time,now_time,
+            alarm_set_schedule_log,set_schedule_log_worker,3.0,1800.0)
 
         #load next schedule
         if not os.path.isfile(check_file_dir) or raw_time >= alarm_load_next_schedule:
@@ -1472,8 +1472,7 @@ def main():
                 receive_obj["error"] = "read_arrange_mode : " + receive_obj["error"]
                 set_system_log(receive_obj)
                 arrange_mode_change = 0
-                
-            
+
             try:
                 newpid = os.fork()
                 if newpid == 0: #child
@@ -1516,44 +1515,20 @@ def main():
                 alarm_add_schedule = raw_time + 3
         
         #crawl cwb radar image
-        if raw_time >= alarm_crawler_cwb_img:
-            fork_failed = cwb_crawler_worker.do(time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
-            if fork_failed:
-                alarm_crawler_cwb_img += 600.0
-            else:
-                alarm_crawler_cwb_img += 3600.0
-
+        alarm_crawler_cwb_img = fork_time_management(raw_time,now_time,
+            alarm_crawler_cwb_img,cwb_crawler_worker,600.0,3600.0)
         #google calendar add to text data
-        if raw_time >= alarm_google_calendar_text:
-            fork_failed = google_calendar_worker.do(time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
-            if fork_failed:
-                alarm_google_calendar_text += 10.0
-            else:
-                alarm_google_calendar_text += 43200.0
-        
+        alarm_google_calendar_text = fork_time_management(raw_time,now_time,
+            alarm_google_calendar_text,google_calendar_worker,10.0,43200.0)
         #google drive add to text data
-        if raw_time >= alarm_crawler_google_drive_img:
-            fork_failed = google_drive_worker.do(time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
-            if fork_failed:
-                alarm_crawler_google_drive_img += 600.0
-            else:
-                alarm_crawler_google_drive_img += 3600.0
-
+        alarm_crawler_google_drive_img = fork_time_management(raw_time,now_time,
+            alarm_crawler_google_drive_img,google_drive_worker,600.0,3600.0)
         #crawler
-        if raw_time >= alarm_crawler_functions:
-            fork_failed = crawler_schedule_worker.do(time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
-            if fork_failed:
-                alarm_crawler_functions += 600.0
-            else:
-                alarm_crawler_functions += 3600.0
-
+        alarm_crawler_functions = fork_time_management(raw_time,now_time,
+            alarm_crawler_functions,crawler_schedule_worker,600.0,3600.0)
         #auto make news text
-        if raw_time >= alarm_auto_text_generator:
-            fork_failed = auto_text_generator_worker.do(time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
-            if fork_failed:
-                alarm_auto_text_generator += 600.0
-            else:
-                alarm_auto_text_generator += 3600.0
+        alarm_auto_text_generator = fork_time_management(raw_time,now_time,
+            alarm_auto_text_generator,auto_text_generator_worker,600.0,3600.0)
 
         #delay
         sleep(0.1)
