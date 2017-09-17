@@ -695,7 +695,7 @@ def crawler_cwb_img(json_obj):
             #upload new file
             send_obj["server_dir"] = server_dir
             send_obj["file_type"] = data_type
-            send_obj["file_dir"] = 'static/img/' + target_img
+            send_obj["filepath"] = 'static/img/' + target_img
             send_obj["start_date"] = time.strftime("%Y-%m-%d", time.localtime(time.time()))
             send_obj["end_date"] = time.strftime("%Y-%m-%d", time.localtime(time.time()+86400))
             send_obj["start_time"] = "00:00:00"
@@ -705,7 +705,7 @@ def crawler_cwb_img(json_obj):
             receive_obj = upload_image_insert_db(send_obj)
             try:
                 if receive_obj["result"] == "success":
-                    filepath = receive_obj["img_system_dir"]
+                    filepath = receive_obj["img_system_filepath"]
                     thumbnail_path = "static/thumbnail/"
                     thumbnail_path = os.path.join(thumbnail_path,receive_obj["img_thumbnail_name"])
                     im = Image.open(filepath)
@@ -933,7 +933,7 @@ def save_google_drive_file(service, json_obj):
             send_obj = {}
             send_obj["server_dir"] = json_obj['server_dir']
             send_obj["file_type"] = json_obj['data_type']
-            send_obj["file_dir"] = 'static/img/' + file_name
+            send_obj["filepath"] = 'static/img/' + file_name
             send_obj["start_date"] = time.strftime("%Y-%m-%d", time.localtime(time.time()))
             send_obj["end_date"] = time.strftime("%Y-%m-%d", time.localtime(time.time()+item['time']))
             send_obj["start_time"] = "00:00:00"
@@ -945,7 +945,7 @@ def save_google_drive_file(service, json_obj):
             #save thumbnail image
             try:
                 if receive_obj["result"] == "success":
-                    filepath = receive_obj["img_system_dir"]
+                    filepath = receive_obj["img_system_filepath"]
                     thumbnail_path = "static/thumbnail/"
                     thumbnail_path = os.path.join(thumbnail_path,receive_obj["img_thumbnail_name"])
                     im = Image.open(filepath)
