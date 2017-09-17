@@ -852,6 +852,8 @@ def add_event_by_qrcode(eventInfo):
         os.makedirs(target_dir)
     startTime = '0000'
     endTime = '0000'
+    location = ""
+    description = ""
     if 'date' in eventInfo['start'] and 'date' in eventInfo['end']:
         startDate = datetime.datetime.strptime(eventInfo['start']['date'], '%Y-%m-%d').strftime('%Y%m%d')
         endDate = datetime.datetime.strptime(eventInfo['end']['date'], '%Y-%m-%d').strftime('%Y%m%d')
@@ -860,9 +862,17 @@ def add_event_by_qrcode(eventInfo):
         startTime = datetime.datetime.strptime(eventInfo['start']['dateTime'].split('T')[1][:8], '%H:%M:%S').strftime('%H%M%S')
         endDate = datetime.datetime.strptime(eventInfo['end']['dateTime'].split('T')[0], '%Y-%m-%d').strftime('%Y%m%d')
         endTime = datetime.datetime.strptime(eventInfo['end']['dateTime'].split('T')[1][:8], '%H:%M:%S').strftime('%H%M%S')
+    if 'location' in eventInfo:
+        location = eventInfo['location']
+    if 'description' in eventInfo:
+        description = eventInfo['description']
+    summary = urllib.parse.quote(eventInfo['summary'])
+    location = urllib.parse.quote(location)
+    description = urllib.parse.quote(description)
     link = 'https://www.google.com/calendar/render?'\
-        +'action=TEMPLATE&hl=zh_TW&text={summary}&dates={startDate}T{startTime}Z/{endDate}T{endTime}Z&location&ctz=Asia/Taipei&sf=true&output=xml'\
-        .format(summary=urllib.parse.quote(eventInfo['summary']),startDate=startDate,startTime=startTime,endDate=endDate,endTime=endTime)
+        +'action=TEMPLATE&hl=zh_TW&ctz=Asia/Taipei&sf=true&output=xml'\
+        +'&text={summary}&dates={startDate}T{startTime}Z/{endDate}T{endTime}Z&location={location}&details={detail}'\
+        .format(summary=summary,startDate=startDate,startTime=startTime,endDate=endDate,endTime=endTime,location=location,detail=description)
     qrcode.make_qrcode_image(link,target_dir,event=eventInfo['id'])
 
 def find_drive_data_type():
