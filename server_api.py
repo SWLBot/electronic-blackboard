@@ -23,14 +23,29 @@ import datetime
 from dataAccessObjects import *
 
 class ArgumentUtil():
+    """Provide the interface to get argument from handler
+
+    This class is the base class defines the basic method for getting
+    the argument(s).
+    """
     def __init__(self,requestHandler):
+        """
+        Store request handler as the class variable.
+        """
         self.handler = requestHandler
 
     def getArgument(self,name):
+        """
+        Get one argument from request handler and transform some
+        character for security reason.
+        """
         rawArg = self.handler.get_argument(name)
         return xhtml_escape(rawArg)
 
     def getArguments(self):
+        """
+        This method should be implement in derived class.
+        """
         raise NotImplementedError("The getArgument() is not implemented.")
 
 class UserArgumentsUtil(ArgumentUtil):
