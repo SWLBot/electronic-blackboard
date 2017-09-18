@@ -127,23 +127,22 @@ class UploadHandler(BaseHandler):
     def post(self):
         send_msg = {}
         receive_msg = {}
-        upload_path = os.path.join(os.path.dirname(__file__),"static/img")
-        thumbnail_path = os.path.join(os.path.dirname(__file__),"static/thumbnail")
+        upload_path = os.path.join(os.path.dirname(__file__),"static","img")
+        thumbnail_filepath = os.path.join(os.path.dirname(__file__),"static","thumbnail")
         send_msg = get_upload_meta_data(self) 
         send_msg["file_dir"] = upload_path
         if self.get_argument('type') == 'image':
             try:
                 file_metas=self.request.files['file']
                 for meta in file_metas:
-                    filename=meta['filename']
-                    filepath=os.path.join(upload_path,filename)
-                    send_msg["file_dir"] = filepath
+                    filepath = os.path.join(upload_path,meta['filename'])
+                    send_msg["filepath"] = filepath
                     store_image(filepath,meta['body'])
                     receive_msg = upload_image_insert_db(send_msg)
 
-                    filepath = receive_msg["img_system_dir"]
-                    thumbnail_path=os.path.join(thumbnail_path,receive_msg["img_thumbnail_name"])
-                    store_thumbnail_image(filepath,thumbnail_path)
+                    filepath = receive_msg["img_system_filepath"]
+                    thumbnail_filepath=os.path.join(thumbnail_filepath,receive_msg["img_thumbnail_name"])
+                    store_thumbnail_image(filepath,thumbnail_filepath)
 
                 data_types = display_data_types()
                 self.render("upload.html",flash="Upload finish!",data_types=data_types)
