@@ -1262,6 +1262,17 @@ def set_system_log(json_obj):
     
     return_msg["result"] = "success"
     return return_msg
+
+def do_read_system_setting():
+    receive_obj = read_system_setting()
+    if receive_obj["result"] == "success":
+        board_py_dir = str(receive_obj["board_py_dir"])
+        shutdown = int(receive_obj["shutdown"])
+        max_db_log = int(receive_obj["max_db_log"])
+        min_db_activity = int(receive_obj["min_db_activity"])
+    else :
+        receive_obj["error"] = "read_system_setting : " + receive_obj["error"]
+        set_system_log(receive_obj)
         
 def expire_data_check():
     receive_obj = expire_data_check_()
@@ -1375,6 +1386,7 @@ def main():
     alarm_crawler_functions = raw_time + 15.0
     alarm_auto_text_generator = raw_time + 97.0
 
+    read_system_setting_worker = Worker(job=do_read_system_setting,name='Read system setting')
     check_expire_data_worker = Worker(job=expire_data_check,name='Check expired data')
     set_schedule_log_worker = Worker(job=do_set_schedule_log,name='Set schedule log')
     cwb_crawler_worker = Worker(job=do_cwb_crawler,name='Crawler for cwb image')
@@ -1390,17 +1402,11 @@ def main():
         
         #read_system_setting
         if raw_time >= alarm_read_system_setting:
-            print("#1 "+ time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
-            receive_obj = read_system_setting()
-            if receive_obj["result"] == "success":
-                board_py_dir = str(receive_obj["board_py_dir"])
-                shutdown = int(receive_obj["shutdown"])
-                max_db_log = int(receive_obj["max_db_log"])
-                min_db_activity = int(receive_obj["min_db_activity"])
-            else :
-                receive_obj["error"] = "read_system_setting : " + receive_obj["error"]
-                set_system_log(receive_obj)
-            alarm_read_system_setting = raw_time + 300.0
+            fork_failed = read_system_setting_worker.do(timestamp=time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
+            if fork_failed:
+                alarm_read_system_setting += 3
+            else:
+                alarm_read_system_setting += 300
         
         #expire_data_check
         if raw_time >= alarm_expire_data_check:
