@@ -120,31 +120,19 @@ def add_now_like_count():
         return return_msg
 def register_preference(data):
     try:
-        inside_type = str(display_data_type(type_name='inside')[0])
-        techOrange_type = str(display_data_type(type_name='techOrange')[0])
-        medium_type = str(display_data_type(type_name='medium')[0])
-        pttBeauty_type = str(display_data_type(type_name='pttBeauty')[0])
-        pttjoke_type = str(display_data_type(type_name='pttjoke')[0])
-        pttStupidClown_type = str(display_data_type(type_name='pttStupidClown')[0])
+        data_types = dict()
+        data_types['inside'] = str(display_data_type(type_name='inside')[0])
+        data_types['techOrange'] = str(display_data_type(type_name='techOrange')[0])
+        data_types['medium'] = str(display_data_type(type_name='medium')[0])
+        data_types['pttBeauty'] = str(display_data_type(type_name='pttBeauty')[0])
+        data_types['pttjoke'] = str(display_data_type(type_name='pttjoke')[0])
+        data_types['pttStupidClown'] = str(display_data_type(type_name='pttStupidClown')[0])
 
         pref_str = ""
         if "all" in data["user_preference"]:
-            pref_str = inside_type+" "+medium_type+" "+pttBeauty_type+" "+pttStupidClown_type+" "+pttjoke_type+" "+techOrange_type
+            pref_str = " ".join(data_types.values())
         else:
-            if "inside" in data["user_preference"]:
-                pref_str = pref_str + inside_type + " "
-            if "techOrange" in data["user_preference"]:
-                pref_str = pref_str + techOrange_type + " "
-            if "medium" in data["user_preference"]:
-                pref_str = pref_str + medium_type + " "
-            if "pttBeauty" in data["user_preference"]:
-                pref_str = pref_str + pttBeauty_type + " "
-            if "pttjoke" in data["user_preference"]:
-                pref_str = pref_str + pttjoke_type + " "
-            if "pttStupidClown" in data["user_preference"]:
-                pref_str = pref_str + pttStupidClown_type + " "
-            if len(pref_str)>0:
-                pref_str = pref_str[:-1]
+            pref_str = " ".join([data_types[key] for key in data["user_preference"]])
 
         #generate new id
         try:
