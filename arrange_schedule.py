@@ -1,18 +1,18 @@
-from mysql import mysql
-from mysql import DB_Exception
+from mysql import *
+from server_api import *
+from worker import *
+from dataAccessObjects import *
 from random import sample
 from datetime import date
 from time import sleep
 from PIL import Image
 from urllib import request
-from server_api import upload_image_insert_db
-from server_api import upload_text_insert_db
-from server_api import delete_image_or_text_data
-from server_api import get_credentials
-from server_api import get_upcoming_events
 from apiclient.http import MediaIoBaseDownload
 from apiclient import discovery
 from news_crawler.news_crawler import *
+from util import switch
+from modeUtil import ModeUtil
+from news_crawler import qrcode
 import urllib
 import httplib2
 import io
@@ -21,13 +21,8 @@ import signal
 import time
 import os.path
 import json
-from util import switch
-import config.settings as setting
-from dataAccessObjects import *
-from modeUtil import ModeUtil
-from worker import *
-from news_crawler import qrcode
 import sys
+import config.settings as setting
 
 def gen_error_msg(msg=''):
     caller = sys._getframe(1).f_code.co_name
@@ -82,12 +77,6 @@ def load_next_schedule(json_obj):
     try:
         return_msg = {}
         return_msg["result"] = "fail"
-        target_dir = ""
-        sche_target_id = ""
-        target_sn = 0
-        type_id = ""
-        system_file_name = ""
-        no_need_check_time = 0
         try:
             target_dir = json_obj["board_py_dir"]
         except:
@@ -96,7 +85,6 @@ def load_next_schedule(json_obj):
         
         while True:
             #find schedule
-            receive_msg = {}
             receive_msg = find_next_schedule()
             if receive_msg["result"]=="fail":
                 return_msg["error"] = receive_msg["error"]
@@ -1185,13 +1173,15 @@ def news2text(text_count):
                     type_dir2 = dataTypeDao.getTypeDir(typeId=news[counts+text_count][2])
                     type_name1 = dataTypeDao.getTypeName(typeId=news[counts][2])
                     type_name2 = dataTypeDao.getTypeName(typeId=news[counts+text_count][2])
+                QR1 = os.path.join('static',type_dir1,'{name}.png'.format(name=news[counts][1]))
+                QR2 = os.path.join('static',type_dir2,'{name}.png'.format(name=news[counts+text_count][1]))
                 textFile = {   "text_type" : "news",
                                 "forum_name1" : type_name1,
                                 "title1" : news[counts][0],
-                                "QR1": os.path.join('static','{typeDir}'.format(typeDir=type_dir1),'{name}.png'.format(name=news[counts][1])),
+                                "QR1": QR1,
                                 "forum_name2" : type_name2,
                                 "title2" : news[counts+text_count][0],
-                                "QR2": os.path.join('static','{typeDir}'.format(typeDir=type_dir2),'{name}.png'.format(name=news[counts+text_count][1]))
+                                "QR2": QR2
                                 }
                 add_news_text(typeId, textFile)
         
