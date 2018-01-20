@@ -24,6 +24,13 @@ import json
 import sys
 import config.settings as setting
 
+class loadScheduleError(Exception):
+    def __init__(self,value):
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)
+
 def gen_error_msg(msg=''):
     caller = sys._getframe(1).f_code.co_name
     return '[{caller}] : {msg}'.format(caller=caller,msg=msg)
@@ -90,81 +97,71 @@ def load_next_schedule(json_obj):
                 return_msg["error"] = receive_msg["error"]
                 return return_msg
             
-            return_msg["schedule_id"] = receive_msg["schedule_id"]
             sche_target_id = receive_msg["sche_target_id"]
-            return_msg["display_time"] = receive_msg["display_time"]
             no_need_check_time = receive_msg["no_need_check_time"]
             target_sn = receive_msg["target_sn"]
+            #fill return msg
+            return_msg["schedule_id"] = receive_msg["schedule_id"]
+            return_msg["display_time"] = receive_msg["display_time"]
     
-            #find the file
-            if sche_target_id[0:4]=="imge":
-                with ImageDao() as imageDao:
-                    file_info= imageDao.getFileInfo(sche_target_id)
-                return_msg["file_type"] = "image" 
-            elif sche_target_id[0:4]=="text":
-                with TextDao() as textDao:
-                    file_info = textDao.getFileInfo(sche_target_id)
-                return_msg["file_type"] = "text"
-            else :
-                if target_sn != 0:
-                    with ScheduleDao() as scheduleDao:
-                        scheduleDao.markExpiredSchedule(target_sn)
-                    target_sn = 0
-                continue
-
-            if file_info:
-                type_id = file_info['typeId']
-                system_file_name = file_info['systemFileName']
-            else:
-                if target_sn != 0:
-                    with ScheduleDao() as scheduleDao:
-                        scheduleDao.markExpiredSchedule(target_sn)
-                    target_sn = 0
-                continue
-    
-            # check display target expired
-            if no_need_check_time == b'\x00':
-                if return_msg["file_type"]=="image":
+            #get type id and filename accord to type
+            try:
+                if sche_target_id[0:4]=="imge":
                     with ImageDao() as imageDao:
-                        expired = imageDao.checkExpired(sche_target_id)
-                elif return_msg["file_type"]=="text":
+                        file_info= imageDao.getFileInfo(sche_target_id)
+                    return_msg["file_type"] = "image"
+                elif sche_target_id[0:4]=="text":
                     with TextDao() as textDao:
-                        expired = textDao.checkExpired(sche_target_id)
-                else:
-                    "impossible"
+                        file_info = textDao.getFileInfo(sche_target_id)
+                    return_msg["file_type"] = "text"
+                else :
+                    raise loadScheduleError("No such type data {}".format(sche_target_id[0:4]))
 
-                if expired:
-                    if target_sn != 0:
-                        with ScheduleDao() as scheduleDao:
-                            scheduleDao.markExpiredSchedule(target_sn)
-                        target_sn = 0
-                    continue
-            
-            #find type dir
-            check_target_dir = ""
-            with DataTypeDao() as dataTypeDao:
-                type_dir = dataTypeDao.getTypeDir(type_id)
-            if type_dir:
-                check_target_dir = os.path.join(target_dir,'static',
-                                        type_dir,system_file_name)
-            else:
-                # mark activity is used
-                if target_sn != 0:
-                    with ScheduleDao() as scheduleDao:
-                        scheduleDao.markExpiredSchedule(scheSn=target_sn)
-                    target_sn = 0
-                continue
-    
-            #if text read file
-            if not os.path.isfile(check_target_dir) :
+                if file_info:
+                    type_id = file_info['typeId']
+                    system_file_name = file_info['systemFileName']
+                else:
+                    raise loadScheduleError("No file info of {}".format(sche_target_id))
+
+                # check display target expired
+                if no_need_check_time == b'\x00':
+                    if return_msg["file_type"]=="image":
+                        with ImageDao() as imageDao:
+                            expired = imageDao.checkExpired(sche_target_id)
+                    elif return_msg["file_type"]=="text":
+                        with TextDao() as textDao:
+                            expired = textDao.checkExpired(sche_target_id)
+                    else:
+                        "impossible"
+
+                    if expired:
+                        raise loadScheduleError("Schedule target expired {}".format(sche_target_id))
+
+                #find type dir
+                check_target_dir = ""
+                with DataTypeDao() as dataTypeDao:
+                    type_dir = dataTypeDao.getTypeDir(type_id)
+
+                if type_dir:
+                    check_target_dir = os.path.join(target_dir,'static',
+                                            type_dir,system_file_name)
+                else:
+                    raise loadScheduleError("No such type dir for type id {}".format(type_id))
+
+                #if text read file
+                if not os.path.isfile(check_target_dir) :
+                    raise loadScheduleError("File {} doesn't exist".format(check_target_dir))
+                else :
+                    return_msg["file"] = check_target_dir
+                    break
+
+            except loadScheduleError as e:
                 if target_sn != 0:
                     with ScheduleDao() as scheduleDao:
                         scheduleDao.markExpiredSchedule(target_sn)
                     target_sn = 0
+                print(e)
                 continue
-            else :
-                return_msg["file"] = check_target_dir
-                break
         
         #check less activity number
         with ScheduleDao() as scheduleDao:
