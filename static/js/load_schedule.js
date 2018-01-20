@@ -184,7 +184,7 @@ function setAnnouncementInfo(jsonRes){
         $('#location').html('')
     }
     if('detailtime' in jsonRes.file_text && jsonRes.file_text.detailtime != ''){
-        $('#detailtime').html('時間： ' + jsonRes.file_text.detailtime
+        $('#detailtime').html('時間： ' + jsonRes.file_text.detailtime)
     }
     else{
         $('#detailtime').html('')
@@ -231,3 +231,4 @@ function setImageInfo(jsonRes){
         $('p#like_count').text(jsonRes.like_count);
     }
 }
+
