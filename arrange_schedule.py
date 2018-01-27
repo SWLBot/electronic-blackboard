@@ -35,8 +35,10 @@ def gen_error_msg(msg=''):
     caller = sys._getframe(1).f_code.co_name
     return '[{caller}] : {msg}'.format(caller=caller,msg=msg)
 
-#make now activity to is used
 def mark_now_activity():
+    """
+    Find out displaying schedule, then mark it expired
+    """
     try:
         return_msg = {}
         return_msg["result"] = "fail"
@@ -58,9 +60,11 @@ def mark_now_activity():
     except DB_Exception as e:
         return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
-        
-#child function of load_next_schedule
+
 def find_next_schedule():
+    """
+    Find out the next undisplayed schedule
+    """
     try:
         return_msg = {}
         return_msg["result"] = "fail"
@@ -79,8 +83,12 @@ def find_next_schedule():
         return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
-#The API load schedule.txt and find out the first image which has not print and still meet the time limit
 def load_next_schedule(json_obj):
+    """
+    This function will call find_next_schedule() to decide next display
+    item, and check it has expired or not, and count the undisplayed
+    schedule
+    """
     try:
         return_msg = {}
         return_msg["result"] = "fail"
@@ -175,9 +183,23 @@ def load_next_schedule(json_obj):
     except DB_Exception as e:
         return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
-    
-#The API connect mysql and find text data that can be scheduled
+
 def find_text_acticity(json_obj):
+    """
+    According current `arrange_mode` and `condition`, to find out
+    candidates text data returns to caller
+
+    return text candidates for displaying
+
+    Variables:
+    arrange_mode: Different mode has different method to select candidates
+    arrange_condition: The type_id list of data_type will be used by some
+        arrange_mode
+    orderById: According to arrange_mode, the candidates should sort by id
+        or not
+    conditionAssigned: According to arrange_mode, the candidates should in
+    arrange_condition or not.
+    """
     try:
         return_msg = {}
         return_msg["result"] = "fail"
@@ -217,8 +239,22 @@ def find_text_acticity(json_obj):
         return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
-#The API connect mysql and find image data that can be scheduled
 def find_image_acticity(json_obj):
+    """
+    According current `arrange_mode` and `condition`, to find out
+    candidates image data returns to caller
+
+    return image candidates for displaying
+
+    Variables:
+    arrange_mode: Different mode has different method to select candidates
+    arrange_condition: The type_id list of data_type will be used by some
+        arrange_mode
+    orderById: According to arrange_mode, the candidates should sort by id
+        or not
+    conditionAssigned: According to arrange_mode, the candidates should in
+    arrange_condition or not.
+    """
     try:
         return_msg = {}
         return_msg["result"] = "fail"
