@@ -23,14 +23,29 @@ import datetime
 from dataAccessObjects import *
 
 class ArgumentUtil():
+    """Provide the interface to get argument from handler
+
+    This class is the base class defines the basic method for getting
+    the argument(s).
+    """
     def __init__(self,requestHandler):
+        """
+        Store request handler as the class variable.
+        """
         self.handler = requestHandler
 
     def getArgument(self,name):
+        """
+        Get one argument from request handler and transform some
+        character for security reason.
+        """
         rawArg = self.handler.get_argument(name)
         return xhtml_escape(rawArg)
 
     def getArguments(self):
+        """
+        This method should be implement in derived class.
+        """
         raise NotImplementedError("The getArgument() is not implemented.")
 
 class UserArgumentsUtil(ArgumentUtil):
@@ -120,31 +135,19 @@ def add_now_like_count():
         return return_msg
 def register_preference(data):
     try:
-        inside_type = str(display_data_type(type_name='inside')[0])
-        techOrange_type = str(display_data_type(type_name='techOrange')[0])
-        medium_type = str(display_data_type(type_name='medium')[0])
-        pttBeauty_type = str(display_data_type(type_name='pttBeauty')[0])
-        pttjoke_type = str(display_data_type(type_name='pttjoke')[0])
-        pttStupidClown_type = str(display_data_type(type_name='pttStupidClown')[0])
+        data_types = dict()
+        data_types['inside'] = str(display_data_type(type_name='inside')[0])
+        data_types['techOrange'] = str(display_data_type(type_name='techOrange')[0])
+        data_types['medium'] = str(display_data_type(type_name='medium')[0])
+        data_types['pttBeauty'] = str(display_data_type(type_name='pttBeauty')[0])
+        data_types['pttjoke'] = str(display_data_type(type_name='pttjoke')[0])
+        data_types['pttStupidClown'] = str(display_data_type(type_name='pttStupidClown')[0])
 
         pref_str = ""
         if "all" in data["user_preference"]:
-            pref_str = inside_type+" "+medium_type+" "+pttBeauty_type+" "+pttStupidClown_type+" "+pttjoke_type+" "+techOrange_type
+            pref_str = " ".join(data_types.values())
         else:
-            if "inside" in data["user_preference"]:
-                pref_str = pref_str + inside_type + " "
-            if "techOrange" in data["user_preference"]:
-                pref_str = pref_str + techOrange_type + " "
-            if "medium" in data["user_preference"]:
-                pref_str = pref_str + medium_type + " "
-            if "pttBeauty" in data["user_preference"]:
-                pref_str = pref_str + pttBeauty_type + " "
-            if "pttjoke" in data["user_preference"]:
-                pref_str = pref_str + pttjoke_type + " "
-            if "pttStupidClown" in data["user_preference"]:
-                pref_str = pref_str + pttStupidClown_type + " "
-            if len(pref_str)>0:
-                pref_str = pref_str[:-1]
+            pref_str = " ".join([data_types[key] for key in data["user_preference"]])
 
         #generate new id
         try:
@@ -603,7 +606,7 @@ def upload_image_insert_db(json_obj):
         try:
             server_dir = json_obj["server_dir"]
             type_id = json_obj["file_type"]
-            img_file_dir = json_obj["file_dir"]
+            img_filepath = json_obj["filepath"]
             img_start_date = json_obj["start_date"]
             img_end_date = json_obj["end_date"]
             img_start_time = json_obj["start_time"]
@@ -615,7 +618,7 @@ def upload_image_insert_db(json_obj):
             return return_msg
 
         img_id = ""
-        img_file_name = os.path.split(img_file_dir)[1]
+        img_file_name = os.path.split(img_filepath)[1]
         user_level_low_bound = 100
         #default
         if len(img_start_time)==0:
@@ -639,15 +642,15 @@ def upload_image_insert_db(json_obj):
         
         img_system_name = img_id + os.path.splitext(img_file_name)[1]
         img_thumbnail_name = "thumbnail_" + img_system_name
-        img_system_dir = os.path.join(img_type_dir, img_system_name)
+        img_system_filepath = os.path.join(img_type_dir, img_system_name)
         try:
-            copyfile(img_file_dir, img_system_dir)
-            if os.path.isfile(img_file_dir) and os.path.isfile(img_system_dir):
-                os.remove(img_file_dir)
+            copyfile(img_filepath, img_system_filepath)
+            if os.path.isfile(img_filepath) and os.path.isfile(img_system_filepath):
+                os.remove(img_filepath)
         except:
             try:
-                if os.path.isfile(img_file_dir) and os.path.isfile(img_system_dir):
-                    os.remove(img_system_dir)
+                if os.path.isfile(img_filepath) and os.path.isfile(img_system_filepath):
+                    os.remove(img_system_filepath)
             except:
                 "DO NOTHING"
             return_msg["error"] = "copy or remove file error"
@@ -670,18 +673,18 @@ def upload_image_insert_db(json_obj):
             with ImageDao() as imageDao:
                 imageDao.insertData(data=img_data)
         except DB_Exception as e:
-            return_msg["error"] = "insert mysql error please check file system " + img_system_dir
+            return_msg["error"] = "insert mysql error ({filename}) {msg}".format(filename=img_filepath,msg=str(e))
             try:
-                copyfile(img_system_dir, img_file_dir)
-                if os.path.isfile(img_file_dir) and os.path.isfile(img_system_dir):
-                    os.remove(img_system_dir)
-                return_msg["error"] = "insert mysql error please check file system " + img_file_dir
+                copyfile(img_system_filepath, img_filepath)
+                if os.path.isfile(img_filepath) and os.path.isfile(img_system_filepath):
+                    os.remove(img_system_filepath)
+                return_msg["error"] = "insert mysql error ({filename}) {msg}".format(filename=img_filepath,msg=str(e))
             except:
                 "DO NOTHING"
             return return_msg
 
         return_msg["img_id"] = img_id
-        return_msg["img_system_dir"] = img_system_dir
+        return_msg["img_system_filepath"] = img_system_filepath
         return_msg["img_thumbnail_name"] = img_thumbnail_name
         return_msg["result"] = "success"
         return return_msg

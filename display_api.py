@@ -5,8 +5,11 @@ from datetime import datetime
 from datetime import timedelta
 from dataAccessObjects import *
 import os.path
-#
+
 def get_user_id(user_name):
+    """
+    Get user id from database by user name
+    """
     try:
         return_msg = {}
         result = ""

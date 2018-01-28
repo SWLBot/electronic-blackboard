@@ -1,18 +1,18 @@
-from mysql import mysql
-from mysql import DB_Exception
+from mysql import *
+from server_api import *
+from worker import *
+from dataAccessObjects import *
 from random import sample
 from datetime import date
 from time import sleep
 from PIL import Image
 from urllib import request
-from server_api import upload_image_insert_db
-from server_api import upload_text_insert_db
-from server_api import delete_image_or_text_data
-from server_api import get_credentials
-from server_api import get_upcoming_events
 from apiclient.http import MediaIoBaseDownload
 from apiclient import discovery
 from news_crawler.news_crawler import *
+from util import switch
+from modeUtil import ModeUtil
+from news_crawler import qrcode
 import urllib
 import httplib2
 import io
@@ -21,20 +21,24 @@ import signal
 import time
 import os.path
 import json
-from util import switch
-import config.settings as setting
-from dataAccessObjects import *
-from modeUtil import ModeUtil
-from worker import *
-from news_crawler import qrcode
 import sys
+import config.settings as setting
+
+class loadScheduleError(Exception):
+    def __init__(self,value):
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)
 
 def gen_error_msg(msg=''):
     caller = sys._getframe(1).f_code.co_name
     return '[{caller}] : {msg}'.format(caller=caller,msg=msg)
 
-#make now activity to is used
 def mark_now_activity():
+    """
+    Find out displaying schedule, then mark it expired
+    """
     try:
         return_msg = {}
         return_msg["result"] = "fail"
@@ -56,9 +60,11 @@ def mark_now_activity():
     except DB_Exception as e:
         return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
-        
-#child function of load_next_schedule
+
 def find_next_schedule():
+    """
+    Find out the next undisplayed schedule
+    """
     try:
         return_msg = {}
         return_msg["result"] = "fail"
@@ -77,17 +83,15 @@ def find_next_schedule():
         return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
-#The API load schedule.txt and find out the first image which has not print and still meet the time limit
 def load_next_schedule(json_obj):
+    """
+    This function will call find_next_schedule() to decide next display
+    item, and check it has expired or not, and count the undisplayed
+    schedule
+    """
     try:
         return_msg = {}
         return_msg["result"] = "fail"
-        target_dir = ""
-        sche_target_id = ""
-        target_sn = 0
-        type_id = ""
-        system_file_name = ""
-        no_need_check_time = 0
         try:
             target_dir = json_obj["board_py_dir"]
         except:
@@ -96,87 +100,76 @@ def load_next_schedule(json_obj):
         
         while True:
             #find schedule
-            receive_msg = {}
             receive_msg = find_next_schedule()
             if receive_msg["result"]=="fail":
                 return_msg["error"] = receive_msg["error"]
                 return return_msg
             
-            return_msg["schedule_id"] = receive_msg["schedule_id"]
             sche_target_id = receive_msg["sche_target_id"]
-            return_msg["display_time"] = receive_msg["display_time"]
             no_need_check_time = receive_msg["no_need_check_time"]
             target_sn = receive_msg["target_sn"]
+            #fill return msg
+            return_msg["schedule_id"] = receive_msg["schedule_id"]
+            return_msg["display_time"] = receive_msg["display_time"]
     
-            #find the file
-            if sche_target_id[0:4]=="imge":
-                with ImageDao() as imageDao:
-                    file_info= imageDao.getFileInfo(sche_target_id)
-                return_msg["file_type"] = "image" 
-            elif sche_target_id[0:4]=="text":
-                with TextDao() as textDao:
-                    file_info = textDao.getFileInfo(sche_target_id)
-                return_msg["file_type"] = "text"
-            else :
-                if target_sn != 0:
-                    with ScheduleDao() as scheduleDao:
-                        scheduleDao.markExpiredSchedule(target_sn)
-                    target_sn = 0
-                continue
-
-            if file_info:
-                type_id = file_info['typeId']
-                system_file_name = file_info['systemFileName']
-            else:
-                if target_sn != 0:
-                    with ScheduleDao() as scheduleDao:
-                        scheduleDao.markExpiredSchedule(target_sn)
-                    target_sn = 0
-                continue
-    
-            # check display target expired
-            if no_need_check_time == b'\x00':
-                if return_msg["file_type"]=="image":
+            #get type id and filename accord to type
+            try:
+                if sche_target_id[0:4]=="imge":
                     with ImageDao() as imageDao:
-                        expired = imageDao.checkExpired(sche_target_id)
-                elif return_msg["file_type"]=="text":
+                        file_info= imageDao.getFileInfo(sche_target_id)
+                    return_msg["file_type"] = "image"
+                elif sche_target_id[0:4]=="text":
                     with TextDao() as textDao:
-                        expired = textDao.checkExpired(sche_target_id)
-                else:
-                    "impossible"
+                        file_info = textDao.getFileInfo(sche_target_id)
+                    return_msg["file_type"] = "text"
+                else :
+                    raise loadScheduleError("No such type data {}".format(sche_target_id[0:4]))
 
-                if expired:
-                    if target_sn != 0:
-                        with ScheduleDao() as scheduleDao:
-                            scheduleDao.markExpiredSchedule(target_sn)
-                        target_sn = 0
-                    continue
-            
-            #find type dir
-            check_target_dir = ""
-            with DataTypeDao() as dataTypeDao:
-                type_dir = dataTypeDao.getTypeDir(type_id)
-            if type_dir:
-                check_target_dir = os.path.join(target_dir,'static',
-                                        type_dir,system_file_name)
-            else:
-                # mark activity is used
-                if target_sn != 0:
-                    with ScheduleDao() as scheduleDao:
-                        scheduleDao.markExpiredSchedule(scheSn=target_sn)
-                    target_sn = 0
-                continue
-    
-            #if text read file
-            if not os.path.isfile(check_target_dir) :
+                if file_info:
+                    type_id = file_info['typeId']
+                    system_file_name = file_info['systemFileName']
+                else:
+                    raise loadScheduleError("No file info of {}".format(sche_target_id))
+
+                # check display target expired
+                if no_need_check_time == b'\x00':
+                    if return_msg["file_type"]=="image":
+                        with ImageDao() as imageDao:
+                            expired = imageDao.checkExpired(sche_target_id)
+                    elif return_msg["file_type"]=="text":
+                        with TextDao() as textDao:
+                            expired = textDao.checkExpired(sche_target_id)
+                    else:
+                        "impossible"
+
+                    if expired:
+                        raise loadScheduleError("Schedule target expired {}".format(sche_target_id))
+
+                #find type dir
+                check_target_dir = ""
+                with DataTypeDao() as dataTypeDao:
+                    type_dir = dataTypeDao.getTypeDir(type_id)
+
+                if type_dir:
+                    check_target_dir = os.path.join(target_dir,'static',
+                                            type_dir,system_file_name)
+                else:
+                    raise loadScheduleError("No such type dir for type id {}".format(type_id))
+
+                #if text read file
+                if not os.path.isfile(check_target_dir) :
+                    raise loadScheduleError("File {} doesn't exist".format(check_target_dir))
+                else :
+                    return_msg["file"] = check_target_dir
+                    break
+
+            except loadScheduleError as e:
                 if target_sn != 0:
                     with ScheduleDao() as scheduleDao:
                         scheduleDao.markExpiredSchedule(target_sn)
                     target_sn = 0
+                print(e)
                 continue
-            else :
-                return_msg["file"] = check_target_dir
-                break
         
         #check less activity number
         with ScheduleDao() as scheduleDao:
@@ -190,9 +183,23 @@ def load_next_schedule(json_obj):
     except DB_Exception as e:
         return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
-    
-#The API connect mysql and find text data that can be scheduled
+
 def find_text_acticity(json_obj):
+    """
+    According current `arrange_mode` and `condition`, to find out
+    candidates text data returns to caller
+
+    return text candidates for displaying
+
+    Variables:
+    arrange_mode: Different mode has different method to select candidates
+    arrange_condition: The type_id list of data_type will be used by some
+        arrange_mode
+    orderById: According to arrange_mode, the candidates should sort by id
+        or not
+    conditionAssigned: According to arrange_mode, the candidates should in
+    arrange_condition or not.
+    """
     try:
         return_msg = {}
         return_msg["result"] = "fail"
@@ -232,8 +239,22 @@ def find_text_acticity(json_obj):
         return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
-#The API connect mysql and find image data that can be scheduled
 def find_image_acticity(json_obj):
+    """
+    According current `arrange_mode` and `condition`, to find out
+    candidates image data returns to caller
+
+    return image candidates for displaying
+
+    Variables:
+    arrange_mode: Different mode has different method to select candidates
+    arrange_condition: The type_id list of data_type will be used by some
+        arrange_mode
+    orderById: According to arrange_mode, the candidates should sort by id
+        or not
+    conditionAssigned: According to arrange_mode, the candidates should in
+    arrange_condition or not.
+    """
     try:
         return_msg = {}
         return_msg["result"] = "fail"
@@ -624,14 +645,14 @@ def read_arrange_mode():
         return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
-def find_cwb_type_id():
+def find_cwb_type():
     return_msg = {}
     with DataTypeDao() as dataTypeDao:
-        typeId = dataTypeDao.getTypeId('氣像雲圖')
-    if typeId != None:
-        return typeId
-    else:
-        return -1
+        return_msg["typeId"] = dataTypeDao.getTypeId('氣像雲圖')
+        if return_msg["typeId"] == None:
+            return None
+        return_msg["typeDir"] = dataTypeDao.getTypeDir(return_msg["typeId"])
+    return return_msg
 
 def delete_old_cwb_img(server_dir,user_id):
     send_obj = {}
@@ -661,29 +682,27 @@ def crawler_cwb_img(json_obj):
     try:
         return_msg = {}
         return_msg["result"] = "fail"
-        server_dir = ""
-        user_id = 1
         try:
             server_dir = json_obj["server_dir"]
             user_id = json_obj["user_id"]
         except:
             return_msg["error"] = "input parameter missing"
             return return_msg
-        data_type = 3
         now_time = time.time()
         send_obj = {}
         receive_obj = {}
 
-        data_type = find_cwb_type_id()
-        if data_type == -1:
+        data_type = find_cwb_type()
+        if data_type is None:
             return_msg["error"] = "no cwb img data type"
             return return_msg
 
         for num1 in range(60):
-            target_img = 'CV1_TW_3600_' + time.strftime("%Y%m%d%H%M", time.localtime(now_time)) + '.png'
+            target_img = 'CV1_TW_3600_{timeStamp}.png'.format(timeStamp=time.strftime("%Y%m%d%H%M", time.localtime(now_time)))
             url = 'http://www.cwb.gov.tw/V7/observe/radar/Data/HD_Radar/' + target_img
             try:
-                request.urlretrieve(url, "static/img/"+target_img)
+                target_img = os.path.join('static',data_type["typeDir"],target_img)
+                request.urlretrieve(url, target_img)
             except:
                 now_time -= 60
                 continue
@@ -694,8 +713,8 @@ def crawler_cwb_img(json_obj):
 
             #upload new file
             send_obj["server_dir"] = server_dir
-            send_obj["file_type"] = data_type
-            send_obj["file_dir"] = 'static/img/' + target_img
+            send_obj["file_type"] = data_type["typeId"]
+            send_obj["filepath"] = target_img
             send_obj["start_date"] = time.strftime("%Y-%m-%d", time.localtime(time.time()))
             send_obj["end_date"] = time.strftime("%Y-%m-%d", time.localtime(time.time()+86400))
             send_obj["start_time"] = "00:00:00"
@@ -705,13 +724,12 @@ def crawler_cwb_img(json_obj):
             receive_obj = upload_image_insert_db(send_obj)
             try:
                 if receive_obj["result"] == "success":
-                    filepath = receive_obj["img_system_dir"]
+                    filepath = receive_obj["img_system_filepath"]
                     thumbnail_path = "static/thumbnail/"
                     thumbnail_path = os.path.join(thumbnail_path,receive_obj["img_thumbnail_name"])
                     im = Image.open(filepath)
                     im.thumbnail((100,100))
                     im.save(thumbnail_path)
-                    #print(target_img)
                     break
                 else:
                     return_msg = receive_obj
@@ -852,6 +870,8 @@ def add_event_by_qrcode(eventInfo):
         os.makedirs(target_dir)
     startTime = '0000'
     endTime = '0000'
+    location = ""
+    description = ""
     if 'date' in eventInfo['start'] and 'date' in eventInfo['end']:
         startDate = datetime.datetime.strptime(eventInfo['start']['date'], '%Y-%m-%d').strftime('%Y%m%d')
         endDate = datetime.datetime.strptime(eventInfo['end']['date'], '%Y-%m-%d').strftime('%Y%m%d')
@@ -860,9 +880,17 @@ def add_event_by_qrcode(eventInfo):
         startTime = datetime.datetime.strptime(eventInfo['start']['dateTime'].split('T')[1][:8], '%H:%M:%S').strftime('%H%M%S')
         endDate = datetime.datetime.strptime(eventInfo['end']['dateTime'].split('T')[0], '%Y-%m-%d').strftime('%Y%m%d')
         endTime = datetime.datetime.strptime(eventInfo['end']['dateTime'].split('T')[1][:8], '%H:%M:%S').strftime('%H%M%S')
+    if 'location' in eventInfo:
+        location = eventInfo['location']
+    if 'description' in eventInfo:
+        description = eventInfo['description']
+    summary = urllib.parse.quote(eventInfo['summary'])
+    location = urllib.parse.quote(location)
+    description = urllib.parse.quote(description)
     link = 'https://www.google.com/calendar/render?'\
-        +'action=TEMPLATE&hl=zh_TW&text={summary}&dates={startDate}T{startTime}Z/{endDate}T{endTime}Z&location&ctz=Asia/Taipei&sf=true&output=xml'\
-        .format(summary=urllib.parse.quote(eventInfo['summary']),startDate=startDate,startTime=startTime,endDate=endDate,endTime=endTime)
+        +'action=TEMPLATE&hl=zh_TW&ctz=Asia/Taipei&sf=true&output=xml'\
+        +'&text={summary}&dates={startDate}T{startTime}Z/{endDate}T{endTime}Z&location={location}&details={detail}'\
+        .format(summary=summary,startDate=startDate,startTime=startTime,endDate=endDate,endTime=endTime,location=location,detail=description)
     qrcode.make_qrcode_image(link,target_dir,event=eventInfo['id'])
 
 def find_drive_data_type():
@@ -933,7 +961,7 @@ def save_google_drive_file(service, json_obj):
             send_obj = {}
             send_obj["server_dir"] = json_obj['server_dir']
             send_obj["file_type"] = json_obj['data_type']
-            send_obj["file_dir"] = 'static/img/' + file_name
+            send_obj["filepath"] = 'static/img/' + file_name
             send_obj["start_date"] = time.strftime("%Y-%m-%d", time.localtime(time.time()))
             send_obj["end_date"] = time.strftime("%Y-%m-%d", time.localtime(time.time()+item['time']))
             send_obj["start_time"] = "00:00:00"
@@ -945,7 +973,7 @@ def save_google_drive_file(service, json_obj):
             #save thumbnail image
             try:
                 if receive_obj["result"] == "success":
-                    filepath = receive_obj["img_system_dir"]
+                    filepath = receive_obj["img_system_filepath"]
                     thumbnail_path = "static/thumbnail/"
                     thumbnail_path = os.path.join(thumbnail_path,receive_obj["img_thumbnail_name"])
                     im = Image.open(filepath)
@@ -1185,13 +1213,15 @@ def news2text(text_count):
                     type_dir2 = dataTypeDao.getTypeDir(typeId=news[counts+text_count][2])
                     type_name1 = dataTypeDao.getTypeName(typeId=news[counts][2])
                     type_name2 = dataTypeDao.getTypeName(typeId=news[counts+text_count][2])
+                QR1 = os.path.join('static',type_dir1,'{name}.png'.format(name=news[counts][1]))
+                QR2 = os.path.join('static',type_dir2,'{name}.png'.format(name=news[counts+text_count][1]))
                 textFile = {   "text_type" : "news",
                                 "forum_name1" : type_name1,
                                 "title1" : news[counts][0],
-                                "QR1": os.path.join('static','{typeDir}'.format(typeDir=type_dir1),'{name}.png'.format(name=news[counts][1])),
+                                "QR1": QR1,
                                 "forum_name2" : type_name2,
                                 "title2" : news[counts+text_count][0],
-                                "QR2": os.path.join('static','{typeDir}'.format(typeDir=type_dir2),'{name}.png'.format(name=news[counts+text_count][1]))
+                                "QR2": QR2
                                 }
                 add_news_text(typeId, textFile)
         
@@ -1326,6 +1356,15 @@ def do_auto_text_generator():
         receive_obj["error"] = "auto_text_generator : " + receive_obj["error"]
         set_system_log(receive_obj)
 
+def fork_time_management(raw_time,now_time,alarm,worker,fail_time,success_time):
+    if raw_time >= alarm:
+        fork_failed = worker.do(timestamp=time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
+        if fork_failed:
+            alarm += fail_time
+        else:
+            alarm += success_time
+    return alarm
+
 board_py_dir = ""
 shutdown = 0
 max_db_log = 100
@@ -1403,20 +1442,11 @@ def main():
             alarm_read_system_setting = raw_time + 300.0
         
         #expire_data_check
-        if raw_time >= alarm_expire_data_check:
-            fork_failed = check_expire_data_worker.do(timestamp=time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
-            if fork_failed:
-                alarm_expire_data_check += 3.0
-            else:
-                alarm_expire_data_check += 1800.0
-        
+        alarm_expire_data_check = fork_time_management(raw_time,now_time,
+            alarm_expire_data_check,check_expire_data_worker,3.0,1800.0)
         #set_schedule_log
-        if raw_time >= alarm_set_schedule_log:
-            fork_failed = set_schedule_log_worker.do(timestamp=time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
-            if fork_failed:
-                alarm_set_schedule_log += 3.0
-            else:
-                alarm_set_schedule_log += 1800.0
+        alarm_set_schedule_log = fork_time_management(raw_time,now_time,
+            alarm_set_schedule_log,set_schedule_log_worker,3.0,1800.0)
 
         #load next schedule
         if not os.path.isfile(check_file_dir) or raw_time >= alarm_load_next_schedule:
@@ -1462,8 +1492,7 @@ def main():
                 receive_obj["error"] = "read_arrange_mode : " + receive_obj["error"]
                 set_system_log(receive_obj)
                 arrange_mode_change = 0
-                
-            
+
             try:
                 newpid = os.fork()
                 if newpid == 0: #child
@@ -1506,44 +1535,20 @@ def main():
                 alarm_add_schedule = raw_time + 3
         
         #crawl cwb radar image
-        if raw_time >= alarm_crawler_cwb_img:
-            fork_failed = cwb_crawler_worker.do(time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
-            if fork_failed:
-                alarm_crawler_cwb_img += 600.0
-            else:
-                alarm_crawler_cwb_img += 3600.0
-
+        alarm_crawler_cwb_img = fork_time_management(raw_time,now_time,
+            alarm_crawler_cwb_img,cwb_crawler_worker,600.0,3600.0)
         #google calendar add to text data
-        if raw_time >= alarm_google_calendar_text:
-            fork_failed = google_calendar_worker.do(time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
-            if fork_failed:
-                alarm_google_calendar_text += 10.0
-            else:
-                alarm_google_calendar_text += 43200.0
-        
+        alarm_google_calendar_text = fork_time_management(raw_time,now_time,
+            alarm_google_calendar_text,google_calendar_worker,10.0,43200.0)
         #google drive add to text data
-        if raw_time >= alarm_crawler_google_drive_img:
-            fork_failed = google_drive_worker.do(time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
-            if fork_failed:
-                alarm_crawler_google_drive_img += 600.0
-            else:
-                alarm_crawler_google_drive_img += 3600.0
-
+        alarm_crawler_google_drive_img = fork_time_management(raw_time,now_time,
+            alarm_crawler_google_drive_img,google_drive_worker,600.0,3600.0)
         #crawler
-        if raw_time >= alarm_crawler_functions:
-            fork_failed = crawler_schedule_worker.do(time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
-            if fork_failed:
-                alarm_crawler_functions += 600.0
-            else:
-                alarm_crawler_functions += 3600.0
-
+        alarm_crawler_functions = fork_time_management(raw_time,now_time,
+            alarm_crawler_functions,crawler_schedule_worker,600.0,3600.0)
         #auto make news text
-        if raw_time >= alarm_auto_text_generator:
-            fork_failed = auto_text_generator_worker.do(time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
-            if fork_failed:
-                alarm_auto_text_generator += 600.0
-            else:
-                alarm_auto_text_generator += 3600.0
+        alarm_auto_text_generator = fork_time_management(raw_time,now_time,
+            alarm_auto_text_generator,auto_text_generator_worker,600.0,3600.0)
 
         #delay
         sleep(0.1)
