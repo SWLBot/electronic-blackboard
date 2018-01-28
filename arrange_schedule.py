@@ -1255,29 +1255,30 @@ def CHLD_handler(para1, para2):
         send_obj["error"] = ("kill : ( " + str(para1) + ", " + str(para2)+" ) ")
         set_system_log(send_obj)
 
-#future can write to log.txt. now just print it
 def set_system_log(json_obj):
+    """
+    Print error message and write to log file
+    """
     return_msg = {}
     return_msg["result"] = "fail"
     file_name = "static/log/impossible_error.txt"
-    debug = 1
-    file_pointer = ""
 
-    if debug == 1:
-        try:
-            if json_obj["result"]=="fail":
-                print("#error : " + json_obj["error"])
-                if not os.path.isfile(file_name) :
-                    file_pointer = open(file_name, "w")
-                else :
-                    file_pointer = open(file_name, "a")
-                str_write = str(time.time()) + " fail : " + str(json_obj["error"]) + "\n"
-                file_pointer.write(str_write)
-                file_pointer.close()
-        except:
-            return_msg["result"] = "fail to print error"
+    if "result" not in json_obj:
+        return_msg["error"] = "set_system_log failed no `result` in input parameter"
+        return return_msg
+
+    if json_obj["result"] == "fail":
+        if "error" not in json_obj:
+            return_msg["result"] = "success"
             return return_msg
-    
+
+        print("#error : " + json_obj["error"])
+        mode = "a" if os.path.isfile(file_name) else "w"
+        with open(file_name,mode) as fp:
+            fp.write("{timestamp} fail: {err_msg}\n".format(
+                timestamp=time.time(),err_msg=json_obj["error"])
+            )
+
     return_msg["result"] = "success"
     return return_msg
         
