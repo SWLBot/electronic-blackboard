@@ -378,8 +378,11 @@ def find_activity(json_obj):
     return_msg["result"] = "success"
     return return_msg
 
-#The API connect mysql and clean expire data
 def expire_data_check_():
+    """
+    Check text and image data has expired, and if it is in schedule,
+    mark it expired, too.
+    """
     try:
         return_msg = {}
         return_msg["result"] = "fail"
@@ -391,14 +394,8 @@ def expire_data_check_():
         #update expire data
         for expired_image_id in pure_result:
             deal_result.append(expired_image_id[0])
-            try:
-                with ImageDao() as imageDao:
-                    imageDao.markExpired(expired_image_id[0])
-            except DB_Exception as e:
-                return_msg["error"] = gen_error_msg(e.args[1])
-                
-        if "error" in return_msg:
-            return return_msg
+            with ImageDao() as imageDao:
+                imageDao.markExpired(expired_image_id[0])
 
         #find expire text data
         with TextDao() as textDao:
@@ -407,24 +404,12 @@ def expire_data_check_():
         #update expire data
         for expired_text_id in pure_result:
             deal_result.append(expired_text_id[0])
-            try:
-                with TextDao() as textDao:
-                    textDao.markExpired(expired_text_id[0])
-            except DB_Exception as e:
-                return_msg["error"] = gen_error_msg(e.args[1])
-                
-        if "error" in return_msg:
-            return return_msg
-        
+            with TextDao() as textDao:
+                textDao.markExpired(expired_text_id[0])
+
         for target_id in deal_result:
-            try:
-                with ScheduleDao() as scheduleDao:
-                    scheduleDao.markExpiredSchedule(targetId=target_id)
-            except DB_Exception as e:
-                return_msg["error"] = gen_error_msg(e.args[1])
-                
-        if "error" in return_msg:
-            return return_msg
+            with ScheduleDao() as scheduleDao:
+                scheduleDao.markExpiredSchedule(targetId=target_id)
 
         return_msg["result"] = "success"
         return return_msg
