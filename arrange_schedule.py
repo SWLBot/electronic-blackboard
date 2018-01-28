@@ -326,8 +326,11 @@ def mix_image_and_text(arrange_mode,deal_obj):
         deal_obj = new_list
     return deal_obj
 
-#The API connect mysql and find image data that can be scheduled
 def find_activity(json_obj):
+    """
+    According to the input arrange_mode setting, check the arrange mode consistence,
+    and find out the text and image can be add into schedule, return the candidates
+    """
     return_msg = {}
     return_msg["result"] = "fail"
     receive_obj = {}
