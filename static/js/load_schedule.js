@@ -60,10 +60,9 @@ function load_schedule(){
                 }
                 // 3. other announcement //
                 else{
-                    setAnnouncementDisplay();
+                    setAnnouncementDisplay(jsonRes);
                     setConInfo(jsonRes);
                     setAnnouncementInfo(jsonRes);
-                    setAnnouncementStyle(jsonRes);
                 }
 
                 if ('event_id' in jsonRes.file_text){
