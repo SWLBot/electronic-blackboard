@@ -972,16 +972,12 @@ def crawler_google_drive_img(json_obj):
     try:
         return_msg = {}
         return_msg["result"] = "fail"
-        server_dir = ""
-        user_id = 1
         try:
             server_dir = json_obj["server_dir"]
             user_id = json_obj["user_id"]
         except:
             return_msg["error"] = "input parameter missing"
             return return_msg
-        data_type = 4
-        receive_obj = {}
 
         #find google_drive_image type id 
         receive_msg = find_drive_data_type()
