@@ -59,24 +59,6 @@ class DataManipulateDao(DefaultDao):
                 sql += " and ({type_condition}) ".format(type_condition=type_condition)
             if orderById:
                 sql += " ORDER BY {dataName}_id ASC".format(dataName=self.dataName)
-        elif arrangeMode == 6:
-            sql = "SELECT a0.{dataName}_id, a0.{dataName}_display_time, a1.type_weight FROM " \
-                +" (SELECT {dataName}_id, type_id, {dataName}_display_time FROM {tableName} WHERE " \
-                +" {dataName}_is_delete=0 and {dataName}_is_expire=0 "\
-                +" and (TO_DAYS(NOW()) between TO_DAYS({dataName}_start_date) and TO_DAYS({dataName}_end_date)) " \
-                +" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC({dataName}_start_time) and TIME_TO_SEC({dataName}_end_time))) AS a0 "\
-                +" LEFT JOIN (SELECT type_id, type_weight FROM data_type ) AS a1 "\
-                +" ON a0.type_id=a1.type_id ORDER BY a1.type_weight ASC"
-        elif arrangeMode == 7:
-            sql = "SELECT a0.{dataName}_id, a0.{dataName}_display_time, a1.type_weight FROM " \
-                +" (SELECT {dataName}_id, type_id, {dataName}_display_time FROM {tableName} WHERE "\
-                +" ({type_condition})".format(type_condition=type_condition)\
-                +" and {dataName}_is_delete=0 and {dataName}_is_expire=0 "\
-                +" and (TO_DAYS(NOW()) between TO_DAYS({dataName}_start_date) and TO_DAYS({dataName}_end_date)) " \
-                +" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC({dataName}_start_time) and TIME_TO_SEC({dataName}_end_time))) AS a0 "\
-                +" LEFT JOIN (SELECT type_id, type_weight FROM data_type WHERE "\
-                +" ({type_condition})".format(type_condition=type_condition)\
-                +" ) AS a1 ON a0.type_id=a1.type_id ORDER BY a1.type_weight ASC"
 
         sql = sql.format(dataName=self.dataName,tableName=self.tableName)
         ret = self.db.query(sql)

@@ -204,7 +204,6 @@ def find_text_acticity(json_obj):
         return_msg = {}
         return_msg["result"] = "fail"
         deal_result = []
-        arrange_mode = 1
         arrange_condition = []
         try:
             arrange_mode = json_obj["arrange_mode"]
@@ -295,35 +294,13 @@ def find_image_acticity(json_obj):
         return return_msg
 
 def mix_image_and_text(arrange_mode,deal_obj):
-    if arrange_mode == 0 or arrange_mode == 3:
+    if arrange_mode in [0,3]:
         "DO NOTHING"
-    elif arrange_mode == 1 or arrange_mode == 4:
+    elif arrange_mode in [1,4]:
         deal_obj = sample(deal_obj, len(deal_obj))
-    elif arrange_mode == 2 or arrange_mode == 5:
+    elif arrange_mode in [2,5]:
         if len(deal_obj)>20:
             deal_obj = sample(deal_obj, 20)
-    elif arrange_mode == 6 or arrange_mode == 7:
-        img_start_num = 0
-        for num1 in range(len(deal_obj)-1):
-            if deal_obj[num1][2] < deal_obj[num1+1][2]:
-                img_start_num = num1 + 1
-        num1 = 0
-        num2 = img_start_num
-        new_list = []
-        for num3 in range(len(deal_obj)):
-            if num1 == img_start_num:
-                new_list.append(deal_obj[num2])
-                num2 += 1
-            elif num2 == len(deal_obj):
-                new_list.append(deal_obj[num1])
-                num1 += 1
-            elif deal_obj[num1][2] >= deal_obj[num2][2]:
-                new_list.append(deal_obj[num1])
-                num1 += 1
-            else :
-                new_list.append(deal_obj[num2])
-                num2 += 1
-        deal_obj = new_list
     return deal_obj
 
 def find_activity(json_obj):
@@ -346,7 +323,7 @@ def find_activity(json_obj):
         return_msg["error"] = "input parameter missing"
         return return_msg
 
-    if arrange_mode in [3,4,5,7] and len(arrange_condition) == 0:
+    if arrange_mode in [3,4,5] and len(arrange_condition) == 0:
         return_msg["error"] = 'Then arrange mode {mode} need to assgin condition'.format(mode=arrange_mode)
         return return_msg
     
