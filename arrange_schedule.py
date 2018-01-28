@@ -710,6 +710,10 @@ def crawler_cwb_img(json_obj):
         return return_msg
 
 def google_calendar_text():
+    """
+    Get google api credential, and grab calendar's upcoming events,
+    then check existed or insert into DB
+    """
     try:
         return_msg = {}
         return_msg["result"] = "fail"
@@ -718,17 +722,13 @@ def google_calendar_text():
             return_msg["error"] = "No credential file"
             return return_msg
         else:
-            try:
-                events = get_upcoming_events(credentials)
-                for cal, events_value in events.items():
-                    for e in events_value:
-                        check_event_exist_or_insert(e, cal)
-                        sleep(1.5)
-                return_msg["result"] = "success"
-                return return_msg
-            except DB_Exception as e:
-                return_msg["error"] = e.arg[1]
-                return return_msg
+            events = get_upcoming_events(credentials)
+            for calendar, events_value in events.items():
+                for event in events_value:
+                    check_event_exist_or_insert(event, calendar)
+                    sleep(1.5)
+            return_msg["result"] = "success"
+            return return_msg
     except Exception as e:
         return_msg["error"] = str(e)
         return return_msg
