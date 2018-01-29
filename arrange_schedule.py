@@ -861,14 +861,16 @@ def search_google_drive_folder(service):
     return items
 
 def search_google_drive_file(service):
-    #set time
+    """
+    Search images which is modified or uploaded in last 12 hours on google drive
+    """
     now_time = time.time()
     start_time = time.strftime("%Y-%m-%dT%H:%M:%S+08:00", time.localtime(now_time-43200))
     results = service.files().list(
-        q="modifiedTime > '" + start_time + "' and mimeType contains 'image/'", 
+        q="modifiedTime > '{start_time}' and mimeType contains 'image/'".format(start_time=start_time),
         fields="nextPageToken, files(id, name, parents)").execute()
-    items = results.get('files', [])
-    return items
+    files = results.get('files', [])
+    return files
     
 def merge_files_and_days(days_limit, drive_file):
     for num1 in range(len(drive_file)):
