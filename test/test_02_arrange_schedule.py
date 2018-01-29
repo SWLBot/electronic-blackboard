@@ -49,10 +49,6 @@ class Arrange_Schedule(unittest.TestCase):
             receive_msg = crawler_ptt_news(boards)
             self.assertEqual(receive_msg['result'],'success')
 
-    def test_crawler_schedule(self):
-        receive_msg = crawler_schedule()
-        self.assertEqual(receive_msg['result'],'success')
-
     def test_check_fortune_table(self):
         receive_msg = check_table(fortune=True)
         self.assertEqual(receive_msg['result'],'success')
