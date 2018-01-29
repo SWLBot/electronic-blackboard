@@ -797,14 +797,9 @@ def check_event_exist_or_insert(event, calendar_name=None):
         receive_msg = upload_text_insert_db(send_msg)
         addition_msg = rule_base_agent(event)
         event_file_path = os.path.join('static','calendar_event','{name}.png'.format(name=event_id))
-        if 'description' in event:
-            description = event['description']
-        else:
-            description = addition_msg['description']
-        if 'location' in event:
-            location = event['location']
-        else:
-            location = ""
+        description = event.get('description',addition_msg['description'])
+        location = event.get('location','')
+
         if 'dateTime' in event['start'].keys() and event_start_date == event_end_date:
             detailtime = "{start} - {end}".format(start=event_start_time, end=event_end_time)
         else:
