@@ -204,7 +204,6 @@ def find_text_acticity(json_obj):
         return_msg = {}
         return_msg["result"] = "fail"
         deal_result = []
-        arrange_mode = 1
         arrange_condition = []
         try:
             arrange_mode = json_obj["arrange_mode"]
@@ -295,39 +294,20 @@ def find_image_acticity(json_obj):
         return return_msg
 
 def mix_image_and_text(arrange_mode,deal_obj):
-    if arrange_mode == 0 or arrange_mode == 3:
+    if arrange_mode in [0,3]:
         "DO NOTHING"
-    elif arrange_mode == 1 or arrange_mode == 4:
+    elif arrange_mode in [1,4]:
         deal_obj = sample(deal_obj, len(deal_obj))
-    elif arrange_mode == 2 or arrange_mode == 5:
+    elif arrange_mode in [2,5]:
         if len(deal_obj)>20:
             deal_obj = sample(deal_obj, 20)
-    elif arrange_mode == 6 or arrange_mode == 7:
-        img_start_num = 0
-        for num1 in range(len(deal_obj)-1):
-            if deal_obj[num1][2] < deal_obj[num1+1][2]:
-                img_start_num = num1 + 1
-        num1 = 0
-        num2 = img_start_num
-        new_list = []
-        for num3 in range(len(deal_obj)):
-            if num1 == img_start_num:
-                new_list.append(deal_obj[num2])
-                num2 += 1
-            elif num2 == len(deal_obj):
-                new_list.append(deal_obj[num1])
-                num1 += 1
-            elif deal_obj[num1][2] >= deal_obj[num2][2]:
-                new_list.append(deal_obj[num1])
-                num1 += 1
-            else :
-                new_list.append(deal_obj[num2])
-                num2 += 1
-        deal_obj = new_list
     return deal_obj
 
-#The API connect mysql and find image data that can be scheduled
 def find_activity(json_obj):
+    """
+    According to the input arrange_mode setting, check the arrange mode consistence,
+    and find out the text and image can be add into schedule, return the candidates
+    """
     return_msg = {}
     return_msg["result"] = "fail"
     receive_obj = {}
@@ -343,7 +323,7 @@ def find_activity(json_obj):
         return_msg["error"] = "input parameter missing"
         return return_msg
 
-    if arrange_mode in [3,4,5,7] and len(arrange_condition) == 0:
+    if arrange_mode in [3,4,5] and len(arrange_condition) == 0:
         return_msg["error"] = 'Then arrange mode {mode} need to assgin condition'.format(mode=arrange_mode)
         return return_msg
     
@@ -378,8 +358,11 @@ def find_activity(json_obj):
     return_msg["result"] = "success"
     return return_msg
 
-#The API connect mysql and clean expire data
 def expire_data_check_():
+    """
+    Check text and image data has expired, and if it is in schedule,
+    mark it expired, too.
+    """
     try:
         return_msg = {}
         return_msg["result"] = "fail"
@@ -391,14 +374,8 @@ def expire_data_check_():
         #update expire data
         for expired_image_id in pure_result:
             deal_result.append(expired_image_id[0])
-            try:
-                with ImageDao() as imageDao:
-                    imageDao.markExpired(expired_image_id[0])
-            except DB_Exception as e:
-                return_msg["error"] = gen_error_msg(e.args[1])
-                
-        if "error" in return_msg:
-            return return_msg
+            with ImageDao() as imageDao:
+                imageDao.markExpired(expired_image_id[0])
 
         #find expire text data
         with TextDao() as textDao:
@@ -407,24 +384,12 @@ def expire_data_check_():
         #update expire data
         for expired_text_id in pure_result:
             deal_result.append(expired_text_id[0])
-            try:
-                with TextDao() as textDao:
-                    textDao.markExpired(expired_text_id[0])
-            except DB_Exception as e:
-                return_msg["error"] = gen_error_msg(e.args[1])
-                
-        if "error" in return_msg:
-            return return_msg
-        
+            with TextDao() as textDao:
+                textDao.markExpired(expired_text_id[0])
+
         for target_id in deal_result:
-            try:
-                with ScheduleDao() as scheduleDao:
-                    scheduleDao.markExpiredSchedule(targetId=target_id)
-            except DB_Exception as e:
-                return_msg["error"] = gen_error_msg(e.args[1])
-                
-        if "error" in return_msg:
-            return return_msg
+            with ScheduleDao() as scheduleDao:
+                scheduleDao.markExpiredSchedule(targetId=target_id)
 
         return_msg["result"] = "success"
         return return_msg
@@ -745,6 +710,10 @@ def crawler_cwb_img(json_obj):
         return return_msg
 
 def google_calendar_text():
+    """
+    Get google api credential, and grab calendar's upcoming events,
+    then check existed or insert into DB
+    """
     try:
         return_msg = {}
         return_msg["result"] = "fail"
@@ -753,17 +722,13 @@ def google_calendar_text():
             return_msg["error"] = "No credential file"
             return return_msg
         else:
-            try:
-                events = get_upcoming_events(credentials)
-                for cal, events_value in events.items():
-                    for e in events_value:
-                        check_event_exist_or_insert(e, cal)
-                        sleep(1.5)
-                return_msg["result"] = "success"
-                return return_msg
-            except DB_Exception as e:
-                return_msg["error"] = e.arg[1]
-                return return_msg
+            events = get_upcoming_events(credentials)
+            for calendar, events_value in events.items():
+                for event in events_value:
+                    check_event_exist_or_insert(event, calendar)
+                    sleep(1.5)
+            return_msg["result"] = "success"
+            return return_msg
     except Exception as e:
         return_msg["error"] = str(e)
         return return_msg
@@ -1007,16 +972,12 @@ def crawler_google_drive_img(json_obj):
     try:
         return_msg = {}
         return_msg["result"] = "fail"
-        server_dir = ""
-        user_id = 1
         try:
             server_dir = json_obj["server_dir"]
             user_id = json_obj["user_id"]
         except:
             return_msg["error"] = "input parameter missing"
             return return_msg
-        data_type = 4
-        receive_obj = {}
 
         #find google_drive_image type id 
         receive_msg = find_drive_data_type()
@@ -1267,29 +1228,30 @@ def CHLD_handler(para1, para2):
         send_obj["error"] = ("kill : ( " + str(para1) + ", " + str(para2)+" ) ")
         set_system_log(send_obj)
 
-#future can write to log.txt. now just print it
 def set_system_log(json_obj):
+    """
+    Print error message and write to log file
+    """
     return_msg = {}
     return_msg["result"] = "fail"
     file_name = "static/log/impossible_error.txt"
-    debug = 1
-    file_pointer = ""
 
-    if debug == 1:
-        try:
-            if json_obj["result"]=="fail":
-                print("#error : " + json_obj["error"])
-                if not os.path.isfile(file_name) :
-                    file_pointer = open(file_name, "w")
-                else :
-                    file_pointer = open(file_name, "a")
-                str_write = str(time.time()) + " fail : " + str(json_obj["error"]) + "\n"
-                file_pointer.write(str_write)
-                file_pointer.close()
-        except:
-            return_msg["result"] = "fail to print error"
+    if "result" not in json_obj:
+        return_msg["error"] = "set_system_log failed no `result` in input parameter"
+        return return_msg
+
+    if json_obj["result"] == "fail":
+        if "error" not in json_obj:
+            return_msg["result"] = "success"
             return return_msg
-    
+
+        print("#error : " + json_obj["error"])
+        mode = "a" if os.path.isfile(file_name) else "w"
+        with open(file_name,mode) as fp:
+            fp.write("{timestamp} fail: {err_msg}\n".format(
+                timestamp=time.time(),err_msg=json_obj["error"])
+            )
+
     return_msg["result"] = "success"
     return return_msg
         
