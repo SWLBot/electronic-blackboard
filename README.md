@@ -9,41 +9,18 @@ The functions Electronic-Blackboard included are as follows
 * Announcement template
 * etc
 
-## Setup
+## Quick start
+### Prerequisities
+* docker
 
-### Prerequisites
-
-Since the project is totally written in python 3, pyhton 2 is not recommended.
-* Python3
-* MySQL
-
-### Installing
-
-1. For the libraries needed
+### Starting up docker
 ```
-# pip3 install -r requirements.txt
+./docker/run.sh
+[sudo] password for <username>: 
+root@XXXXXXXXXX:/home/EB# 
 ```
-2. create nessasary files in this project
-  * create `mysql_auth.txt`
-3. The content inside `mysql_auth.txt` should be  
-  * Host
-  * User
-  * Password
-  * Database  -create the database first where to store your data
-```
-localhost
-root
-your_password
-yout_database_name
-```
-4. Execute `env_init.py` to automatically initialize environment settings
-```
-$ python3 env_init.py
-```
-
-## Run test
-`$ pytest test/`
-
+### Testing
+`root@XXXXXXXXXX:/home/EB# ./docker/test.sh`
 if success, it should print
 ```
 ============================= test session starts ==============================
@@ -52,20 +29,24 @@ rootdir: /home/travis/build/SWLBot/electronic-blackboard, inifile:
 plugins: ordering-0.5
  ...
 
-=================== XX passed, XX warnings in 186.97 seconds ====================
+=================== XX passed, XX warnings in XXXX seconds ====================
 ```
-
-## Start
+### Running up 
 ```
-$ python3 server.py
-$ python3 arrange_schedule.py
-$ python3 board.py
+root@XXXXXXXXXX:/home/EB# python3 env_init.py
+...
+root@XXXXXXXXXX:/home/EB# ./autorun.sh
+root@XXXXXXXXXX:/home/EB# tmux ls
+blackboard: 4 windows (created XXXXXX ) [135x34]
 ```
-
-Open the web browser to check the implement result with the url `localhost:3000` and `localhost:4000`
-* port:3000 -the platform of uploading files
-* port:4000 -the broadcast display
-
+Now you can use your browser connect to following addresses:
+#### backend dashboard
+*Default* 
+Account: admin
+Password: admin
+http://localhost:3000/
+#### frontend display
+http://localhost:4000/
 ## Functional test
 ### Firefox
 1. Install geckodriver
