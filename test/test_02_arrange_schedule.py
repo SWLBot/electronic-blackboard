@@ -65,7 +65,7 @@ class Arrange_Schedule(unittest.TestCase):
         self.assertEqual(receive_msg['result'],'success')
 
     def test_expire_data_check(self):
-        receive_msg = expire_data_check_()
+        receive_msg = expire_data_check()
         self.assertEqual(receive_msg['result'],'success')
 
     def test_mark_now_activity(self):

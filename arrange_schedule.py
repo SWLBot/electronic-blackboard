@@ -358,7 +358,7 @@ def find_activity(json_obj):
     return_msg["result"] = "success"
     return return_msg
 
-def expire_data_check_():
+def expire_data_check():
     """
     Check text and image data has expired, and if it is in schedule,
     mark it expired, too.
@@ -1235,8 +1235,8 @@ def set_system_log(json_obj):
     return_msg["result"] = "success"
     return return_msg
         
-def expire_data_check():
-    receive_obj = expire_data_check_()
+def do_expire_data_check():
+    receive_obj = expire_data_check()
     if receive_obj["result"] == "success":
         "DO NOTHING"
     else :
@@ -1356,7 +1356,7 @@ def main():
     alarm_crawler_functions = raw_time + 15.0
     alarm_auto_text_generator = raw_time + 97.0
 
-    check_expire_data_worker = Worker(job=expire_data_check,name='Check expired data')
+    check_expire_data_worker = Worker(job=do_expire_data_check,name='Check expired data')
     set_schedule_log_worker = Worker(job=do_set_schedule_log,name='Set schedule log')
     cwb_crawler_worker = Worker(job=do_cwb_crawler,name='Crawler for cwb image')
     google_calendar_worker = Worker(job=do_google_calendar,name='Grab Google calendar event')
