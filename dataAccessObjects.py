@@ -493,6 +493,17 @@ class DataTypeDao(DefaultDao):
             #TODO check need to raise exception or not
             return None
 
+    def getDataType(self, typeId=None, typeName=None):
+        sql = 'SELECT type_id, type_name, type_dir FROM data_type WHERE {condition}'
+        if typeId:
+            condition = 'type_id = {typeId}'.format(typeId=typeId)
+        elif typeName:
+            condition = 'type_name = "{typeName}"'.format(typeName=typeName)
+        sql = sql.format(condition=condition)
+        ret = self.db.query(sql)
+        dataType = dict(typeId=ret[0][0],typeName=ret[0][1],typeDir=ret[0][2])
+        return dataType
+
 class ArrangeModeDao(DefaultDao):
     def getArrangeMode(self):
         sql = 'SELECT armd_sn, armd_mode, armd_condition FROM arrange_mode WHERE armd_is_delete=0 and armd_is_expire=0 and '\
