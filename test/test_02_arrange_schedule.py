@@ -72,9 +72,6 @@ class Arrange_Schedule(unittest.TestCase):
         receive_msg = expire_data_check_()
         self.assertEqual(receive_msg['result'],'success')
 
-    def test_find_cwb_type_id(self):
-        self.assertNotEqual(find_cwb_type(),-1)
-
     def test_mark_now_activity(self):
         receive_msg = mark_now_activity()
         self.assertEqual(receive_msg['result'], 'success')
