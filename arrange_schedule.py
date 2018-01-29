@@ -852,19 +852,6 @@ def add_event_by_qrcode(eventInfo):
         .format(summary=summary,startDate=startDate,startTime=startTime,endDate=endDate,endTime=endTime,location=location,detail=description)
     qrcode.make_qrcode_image(link,target_dir,event=eventInfo['id'])
 
-def find_drive_data_type():
-    return_msg = {}
-    with DataTypeDao() as dataTypeDao:
-        typeId = dataTypeDao.getTypeId('google_drive_image')
-    if typeId != None:
-        return_msg['data_type'] = int(typeId)
-        return_msg['result'] = 'success'
-        return return_msg
-    else:
-        return_msg['error'] = "no google_drive_image data type"
-        return_msg['result'] = 'fail'
-        return return_msg
-
 def search_google_drive_folder(service):
     g_sql = "(name='1day' or name='3day' or name='7day' or name='14day')"
     results = service.files().list(
@@ -973,12 +960,14 @@ def crawler_google_drive_img(json_obj):
             return_msg["error"] = "input parameter missing"
             return return_msg
 
-        #find google_drive_image type id 
-        receive_msg = find_drive_data_type()
-        if receive_msg['result']=='fail':
-            return receive_msg
+        with DataTypeDao() as dataTypeDao:
+            googel_drive_type_id = dataTypeDao.getTypeId(typeName='google_drive_image')
+
+        if googel_drive_type_id:
+            json_obj['data_type'] = googel_drive_type_id
         else:
-            json_obj['data_type'] = receive_msg['data_type']
+            return_msg["error"] = "No such data_type: {}".format('google_drive_image')
+            return return_msg
         
         #get google credentials
         credentials = get_credentials()
