@@ -145,22 +145,20 @@ def load_next_schedule(json_obj):
                     if expired:
                         raise loadScheduleError("Schedule target expired {}".format(sche_target_id))
 
-                #find type dir
-                check_target_dir = ""
                 with DataTypeDao() as dataTypeDao:
                     type_dir = dataTypeDao.getTypeDir(type_id)
 
                 if type_dir:
-                    check_target_dir = os.path.join(target_dir,'static',
+                    target_filepath = os.path.join(target_dir,'static',
                                             type_dir,system_file_name)
                 else:
                     raise loadScheduleError("No such type dir for type id {}".format(type_id))
 
                 #if text read file
-                if not os.path.isfile(check_target_dir) :
-                    raise loadScheduleError("File {} doesn't exist".format(check_target_dir))
+                if not os.path.isfile(target_filepath) :
+                    raise loadScheduleError("File {} doesn't exist".format(target_filepath))
                 else :
-                    return_msg["file"] = check_target_dir
+                    return_msg["file"] = target_filepath
                     break
 
             except loadScheduleError as e:
