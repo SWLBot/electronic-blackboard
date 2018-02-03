@@ -83,107 +83,6 @@ def find_next_schedule():
         return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
-def load_next_schedule(json_obj):
-    """
-    This function will call find_next_schedule() to decide next display
-    item, and check it has expired or not, and count the undisplayed
-    schedule
-    """
-    try:
-        return_msg = {}
-        return_msg["result"] = "fail"
-        try:
-            target_dir = json_obj["board_py_dir"]
-        except:
-            return_msg["error"] = "input parameter missing"
-            return return_msg
-        
-        while True:
-            #find schedule
-            receive_msg = find_next_schedule()
-            if receive_msg["result"]=="fail":
-                return_msg["error"] = receive_msg["error"]
-                return return_msg
-            
-            sche_target_id = receive_msg["sche_target_id"]
-            no_need_check_time = receive_msg["no_need_check_time"]
-            target_sn = receive_msg["target_sn"]
-            #fill return msg
-            return_msg["schedule_id"] = receive_msg["schedule_id"]
-            return_msg["display_time"] = receive_msg["display_time"]
-    
-            #get type id and filename accord to type
-            try:
-                if sche_target_id[0:4]=="imge":
-                    with ImageDao() as imageDao:
-                        file_info= imageDao.getFileInfo(sche_target_id)
-                    return_msg["file_type"] = "image"
-                elif sche_target_id[0:4]=="text":
-                    with TextDao() as textDao:
-                        file_info = textDao.getFileInfo(sche_target_id)
-                    return_msg["file_type"] = "text"
-                else :
-                    raise loadScheduleError("No such type data {}".format(sche_target_id[0:4]))
-
-                if file_info:
-                    type_id = file_info['typeId']
-                    system_file_name = file_info['systemFileName']
-                else:
-                    raise loadScheduleError("No file info of {}".format(sche_target_id))
-
-                # check display target expired
-                if no_need_check_time == b'\x00':
-                    if return_msg["file_type"]=="image":
-                        with ImageDao() as imageDao:
-                            expired = imageDao.checkExpired(sche_target_id)
-                    elif return_msg["file_type"]=="text":
-                        with TextDao() as textDao:
-                            expired = textDao.checkExpired(sche_target_id)
-                    else:
-                        "impossible"
-
-                    if expired:
-                        raise loadScheduleError("Schedule target expired {}".format(sche_target_id))
-
-                #find type dir
-                check_target_dir = ""
-                with DataTypeDao() as dataTypeDao:
-                    type_dir = dataTypeDao.getTypeDir(type_id)
-
-                if type_dir:
-                    check_target_dir = os.path.join(target_dir,'static',
-                                            type_dir,system_file_name)
-                else:
-                    raise loadScheduleError("No such type dir for type id {}".format(type_id))
-
-                #if text read file
-                if not os.path.isfile(check_target_dir) :
-                    raise loadScheduleError("File {} doesn't exist".format(check_target_dir))
-                else :
-                    return_msg["file"] = check_target_dir
-                    break
-
-            except loadScheduleError as e:
-                if target_sn != 0:
-                    with ScheduleDao() as scheduleDao:
-                        scheduleDao.markExpiredSchedule(target_sn)
-                    target_sn = 0
-                print(e)
-                continue
-        
-        #check less activity number
-        with ScheduleDao() as scheduleDao:
-            return_msg['last_activity'] = scheduleDao.countUndisplaySchedule()
-        if not return_msg['last_activity']:
-            return_msg["error"] = "sql error"
-            return return_msg
-
-        return_msg["result"] = "success"
-        return return_msg
-    except DB_Exception as e:
-        return_msg["error"] = gen_error_msg(e.args[1])
-        return return_msg
-
 def find_text_acticity(json_obj):
     """
     According current `arrange_mode` and `condition`, to find out
@@ -1313,11 +1212,9 @@ max_db_log = 100
 min_db_activity = 10
 
 def main():
-    just_startup = 1
     arrange_mode_change = 0
     arrange_sn = 0
     arrange_mode = 0
-    check_file_dir = "NO_FILE"
     condition = []
     send_obj = {}
     receive_obj = {}
@@ -1348,7 +1245,7 @@ def main():
     alarm_read_system_setting = raw_time + 300.0
     alarm_expire_data_check = raw_time + 3.0
     alarm_set_schedule_log = raw_time + 10.0
-    alarm_load_next_schedule = raw_time
+    alarm_check_remain_schedule = raw_time
     alarm_add_schedule = 1960380833.0
     alarm_crawler_cwb_img = raw_time + 7.0
     alarm_google_calendar_text = raw_time + 5.0
@@ -1390,34 +1287,19 @@ def main():
         alarm_set_schedule_log = fork_time_management(raw_time,now_time,
             alarm_set_schedule_log,set_schedule_log_worker,3.0,1800.0)
 
-        #load next schedule
-        if not os.path.isfile(check_file_dir) or raw_time >= alarm_load_next_schedule:
-            print("#4 "+ time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time))
-            #mark now activity
-            if just_startup == 0:
-                receive_obj = mark_now_activity()
-                if receive_obj["result"] == "success":
-                    "DO NOTHING"
-                else :
-                    receive_obj["error"] = "mark_now_activity : " + receive_obj["error"]
-                    set_system_log(receive_obj)
-            
-            #load next schedule
-            send_obj["board_py_dir"] = board_py_dir
-            receive_obj = load_next_schedule(send_obj)
-            if receive_obj["result"] == "success":
-                just_startup = 0
-                alarm_load_next_schedule = raw_time + int(receive_obj["display_time"])
-                check_file_dir = receive_obj["file"]
-                if int(receive_obj["last_activity"]) < min_db_activity:
-                    alarm_add_schedule = raw_time
-            else :
-                if receive_obj["error"] == "no schedule":
-                    alarm_add_schedule = raw_time
-                    alarm_load_next_schedule = raw_time + 1.0
-                    just_startup = 1
-                receive_obj["error"] = "load_next_schedule : " + receive_obj["error"]
-                set_system_log(receive_obj)
+        if raw_time >= alarm_check_remain_schedule:
+            print("[{timestamp}] Check remain schedule count".format(timestamp=time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time)))
+
+            ret = mark_now_activity()
+            if "error" in ret:
+                set_system_log(ret)
+
+            with ScheduleDao() as scheduleDao:
+                remain_schedules = scheduleDao.countUndisplaySchedule()
+            if remain_schedules < min_db_activity:
+                alarm_add_schedule = raw_time
+
+            alarm_check_remain_schedule += 3
 
         #add_schedule
         if raw_time >= alarm_add_schedule:

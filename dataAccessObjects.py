@@ -284,9 +284,6 @@ class ImageDao(DataManipulateDao):
     prefix = 'imge'
     def markExpired(self,imgId):
         super().markExpired(targetId=imgId)
-        
-    def markDeleted(self,imgId,userId):
-        super().markDeleted(targetId=imgId,userId=userId)
 
     def checkExisted(self,typeId,fileName):
         sql = 'SELECT COUNT(*) FROM image_data WHERE img_is_expire=0 and img_is_delete=0 '\
@@ -383,9 +380,6 @@ class TextDao(DataManipulateDao):
 
     def markExpired(self,textId):
         super().markExpired(targetId=textId)
-
-    def markDeleted(self,textId,userId):
-        super().markDeleted(targetId=textId,userId=userId)
 
     def addLikeCount(self,targetId):
         sql = 'UPDATE text_data SET text_like_count=text_like_count+1 WHERE text_id="{targetId}"'.format(targetId=str(targetId))
