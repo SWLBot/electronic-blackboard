@@ -83,12 +83,12 @@ def find_next_schedule():
         return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
-def find_text_acticity(json_obj):
+def get_candidates(arrange_mode_attr):
     """
     According current `arrange_mode` and `condition`, to find out
-    candidates text data returns to caller
+    candidates data returns to caller
 
-    return text candidates for displaying
+    return candidates for displaying
 
     Variables:
     arrange_mode: Different mode has different method to select candidates
@@ -103,86 +103,33 @@ def find_text_acticity(json_obj):
         return_msg = {}
         return_msg["result"] = "fail"
         deal_result = []
-        arrange_condition = []
         try:
-            arrange_mode = json_obj["arrange_mode"]
-            if "condition" in json_obj:
-                arrange_condition = json_obj["condition"]
+            arrange_mode = arrange_mode_attr["arrange_mode"]
+            arrange_condition = arrange_mode_attr.get('condition',[])
         except:
             return_msg["error"] = "input parameter missing"
             return return_msg
 
-        #find texts that may be schedule
         orderById = ModeUtil.checkOrderById(arrange_mode)
 
         conditionAssigned = ModeUtil.checkConditionAssigned(arrange_mode)
 
         with TextDao() as textDao:
-            pure_result= textDao.findActivities(conditionAssigned,orderById,arrange_mode,arrangeCondition=arrange_condition)
-        #restruct results of query
-        for result_row in pure_result:
-            if len(result_row)==2:
-                deal_result.append([result_row[0], int(result_row[1])])
-            elif len(result_row)==3:
-                deal_result.append([result_row[0], int(result_row[1]), float(result_row[2])])
-            else:
-                "DO NOTHING"
+            test_candidates= textDao.findActivities(conditionAssigned,orderById,arrange_mode,arrangeCondition=arrange_condition)
         
-        candidates = ModeUtil.selectDisplayCandidates(arrange_mode,deal_result)
-
-        return_msg["ans_list"] = candidates
-        return_msg["result"] = "success"
-        return return_msg
-    except DB_Exception as e:
-        return_msg["error"] = gen_error_msg(e.args[1])
-        return return_msg
-
-def find_image_acticity(json_obj):
-    """
-    According current `arrange_mode` and `condition`, to find out
-    candidates image data returns to caller
-
-    return image candidates for displaying
-
-    Variables:
-    arrange_mode: Different mode has different method to select candidates
-    arrange_condition: The type_id list of data_type will be used by some
-        arrange_mode
-    orderById: According to arrange_mode, the candidates should sort by id
-        or not
-    conditionAssigned: According to arrange_mode, the candidates should in
-    arrange_condition or not.
-    """
-    try:
-        return_msg = {}
-        return_msg["result"] = "fail"
-        deal_result = []
-        arrange_mode = 1
-        arrange_condition = []
-        try:
-            arrange_mode = json_obj["arrange_mode"]
-            if "condition" in json_obj:
-                arrange_condition = json_obj["condition"]
-        except:
-            return_msg["error"] = "input parameter missing"
-            return return_msg
-        
-        #find images that may be schedule
-        orderById = ModeUtil.checkOrderById(arrange_mode)
-
-        conditionAssigned = ModeUtil.checkConditionAssigned(arrange_mode)
-
         with ImageDao() as imageDao:
-            pure_result= imageDao.findActivities(conditionAssigned,orderById,arrange_mode,arrangeCondition=arrange_condition)
-        #restruct results of query
-        for result_row in pure_result:
+            image_candidates= imageDao.findActivities(conditionAssigned,orderById,arrange_mode,arrangeCondition=arrange_condition)
+
+        candidates = list(test_candidates) + list(image_candidates)
+
+        for result_row in candidates:
             if len(result_row)==2:
                 deal_result.append([result_row[0], int(result_row[1])])
             elif len(result_row)==3:
                 deal_result.append([result_row[0], int(result_row[1]), float(result_row[2])])
             else:
                 "DO NOTHING"
-         
+
         candidates = ModeUtil.selectDisplayCandidates(arrange_mode,deal_result)
 
         return_msg["ans_list"] = candidates
@@ -225,18 +172,9 @@ def find_activity(json_obj):
     if arrange_mode in [3,4,5] and len(arrange_condition) == 0:
         return_msg["error"] = 'Then arrange mode {mode} need to assgin condition'.format(mode=arrange_mode)
         return return_msg
-    
-    #get text activity
-    receive_obj = find_text_acticity(json_obj)
-    if receive_obj["result"] == "success":
-        for text_data in receive_obj['ans_list']:
-            deal_obj.append(text_data)
-    
-    #get image activity
-    receive_obj = find_image_acticity(json_obj)
-    if receive_obj["result"] == "success":
-        for image_data in receive_obj['ans_list']:
-            deal_obj.append(image_data)
+
+    receive_obj = get_candidates(json_obj)
+    deal_obj = receive_obj['ans_list']
     
     deal_obj = mix_image_and_text(arrange_mode,deal_obj)
 
@@ -1351,7 +1289,7 @@ def main():
                 else: #Parent
                     alarm_add_schedule = 1960380833.0
                     arrange_mode_change = 0
-            except:
+            except Exception as e:
                 receive_obj["result"] = "fail"
                 receive_obj["error"] = "fork3 error"
                 set_system_log(receive_obj)
