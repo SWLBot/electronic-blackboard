@@ -10,7 +10,7 @@ class ModeUtil(object):
 
     @staticmethod
     def checkConditionAssigned(arrangeMode):
-        if arrangeMode in [3,4,5,7]:
+        if arrangeMode in [3,4,5]:
             return True
         else:
             return False

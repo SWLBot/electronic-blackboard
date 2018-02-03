@@ -59,24 +59,6 @@ class DataManipulateDao(DefaultDao):
                 sql += " and ({type_condition}) ".format(type_condition=type_condition)
             if orderById:
                 sql += " ORDER BY {dataName}_id ASC".format(dataName=self.dataName)
-        elif arrangeMode == 6:
-            sql = "SELECT a0.{dataName}_id, a0.{dataName}_display_time, a1.type_weight FROM " \
-                +" (SELECT {dataName}_id, type_id, {dataName}_display_time FROM {tableName} WHERE " \
-                +" {dataName}_is_delete=0 and {dataName}_is_expire=0 "\
-                +" and (TO_DAYS(NOW()) between TO_DAYS({dataName}_start_date) and TO_DAYS({dataName}_end_date)) " \
-                +" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC({dataName}_start_time) and TIME_TO_SEC({dataName}_end_time))) AS a0 "\
-                +" LEFT JOIN (SELECT type_id, type_weight FROM data_type ) AS a1 "\
-                +" ON a0.type_id=a1.type_id ORDER BY a1.type_weight ASC"
-        elif arrangeMode == 7:
-            sql = "SELECT a0.{dataName}_id, a0.{dataName}_display_time, a1.type_weight FROM " \
-                +" (SELECT {dataName}_id, type_id, {dataName}_display_time FROM {tableName} WHERE "\
-                +" ({type_condition})".format(type_condition=type_condition)\
-                +" and {dataName}_is_delete=0 and {dataName}_is_expire=0 "\
-                +" and (TO_DAYS(NOW()) between TO_DAYS({dataName}_start_date) and TO_DAYS({dataName}_end_date)) " \
-                +" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC({dataName}_start_time) and TIME_TO_SEC({dataName}_end_time))) AS a0 "\
-                +" LEFT JOIN (SELECT type_id, type_weight FROM data_type WHERE "\
-                +" ({type_condition})".format(type_condition=type_condition)\
-                +" ) AS a1 ON a0.type_id=a1.type_id ORDER BY a1.type_weight ASC"
 
         sql = sql.format(dataName=self.dataName,tableName=self.tableName)
         ret = self.db.query(sql)
@@ -302,9 +284,6 @@ class ImageDao(DataManipulateDao):
     prefix = 'imge'
     def markExpired(self,imgId):
         super().markExpired(targetId=imgId)
-        
-    def markDeleted(self,imgId,userId):
-        super().markDeleted(targetId=imgId,userId=userId)
 
     def checkExisted(self,typeId,fileName):
         sql = 'SELECT COUNT(*) FROM image_data WHERE img_is_expire=0 and img_is_delete=0 '\
@@ -402,9 +381,6 @@ class TextDao(DataManipulateDao):
     def markExpired(self,textId):
         super().markExpired(targetId=textId)
 
-    def markDeleted(self,textId,userId):
-        super().markDeleted(targetId=textId,userId=userId)
-
     def addLikeCount(self,targetId):
         sql = 'UPDATE text_data SET text_like_count=text_like_count+1 WHERE text_id="{targetId}"'.format(targetId=str(targetId))
         self.db.cmd(sql)
@@ -458,8 +434,13 @@ class UserPreferDao(DefaultDao):
         self.db.cmd(sql)
 
 class DataTypeDao(DefaultDao):
-    def getTypeDir(self,typeId):
-        sql = 'SELECT type_dir FROM data_type WHERE type_id={typeId}'.format(typeId=typeId)
+    def getTypeDir(self,typeId=None,typeName=None):
+        sql = 'SELECT type_dir FROM data_type WHERE {condition}'
+        if typeId:
+            condition = 'type_id={typeId}'.format(typeId=typeId)
+        elif typeName:
+            condition = 'type_name={typeName}'.format(typeName=typeName)
+        sql = sql.format(condition=condition)
         return self.queryOneValue(sql)
 
     def getTypeName(self,typeId):
@@ -505,6 +486,17 @@ class DataTypeDao(DefaultDao):
         else:
             #TODO check need to raise exception or not
             return None
+
+    def getDataType(self, typeId=None, typeName=None):
+        sql = 'SELECT type_id, type_name, type_dir FROM data_type WHERE {condition}'
+        if typeId:
+            condition = 'type_id = {typeId}'.format(typeId=typeId)
+        elif typeName:
+            condition = 'type_name = "{typeName}"'.format(typeName=typeName)
+        sql = sql.format(condition=condition)
+        ret = self.db.query(sql)
+        dataType = dict(typeId=ret[0][0],typeName=ret[0][1],typeDir=ret[0][2])
+        return dataType
 
 class ArrangeModeDao(DefaultDao):
     def getArrangeMode(self):

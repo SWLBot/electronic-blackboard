@@ -49,10 +49,6 @@ class Arrange_Schedule(unittest.TestCase):
             receive_msg = crawler_ptt_news(boards)
             self.assertEqual(receive_msg['result'],'success')
 
-    def test_crawler_schedule(self):
-        receive_msg = crawler_schedule()
-        self.assertEqual(receive_msg['result'],'success')
-
     def test_check_fortune_table(self):
         receive_msg = check_table(fortune=True)
         self.assertEqual(receive_msg['result'],'success')
@@ -69,11 +65,8 @@ class Arrange_Schedule(unittest.TestCase):
         self.assertEqual(receive_msg['result'],'success')
 
     def test_expire_data_check(self):
-        receive_msg = expire_data_check_()
+        receive_msg = expire_data_check()
         self.assertEqual(receive_msg['result'],'success')
-
-    def test_find_cwb_type_id(self):
-        self.assertNotEqual(find_cwb_type(),-1)
 
     def test_mark_now_activity(self):
         receive_msg = mark_now_activity()
