@@ -8,7 +8,13 @@ import os.path
 import json
 
 def getDisplayContent(sche_target_id,return_msg):
-    #get type from target id prefix
+    """
+    Get the display content of the display target.
+
+    Args:
+        sche_target_id: The id of display target
+        return_msg: Output paramter
+    """
     targetIdPrefix = sche_target_id[:4]
     if targetIdPrefix == "imge":
         with ImageDao() as imageDao:
@@ -19,41 +25,40 @@ def getDisplayContent(sche_target_id,return_msg):
             file_info = textDao.getIdSysName(Id=sche_target_id)
         return_msg["file_type"] = "text"
     else :
-        return_msg["error"] = "target id type error {}".format(targetIdPrefix)
-        return return_msg
+        raise Exception("target id type error {}".format(targetIdPrefix))
 
     try:
         type_id = file_info['typeId']
         system_file_name = file_info['systemName']
         return_msg["like_count"] = file_info['likeCount']
     except:
-        return_msg["error"] = "no file record"
-        return return_msg
+        raise Exception("no file record")
 
     with DataTypeDao() as dataTypeDao:
         type_dir = dataTypeDao.getTypeDir(typeId=type_id)
         type_name = dataTypeDao.getTypeName(typeId=type_id)
     if type_dir == None or type_name == None:
-        return_msg["error"] = "No such type id {}".format(type_id)
-        return return_msg
+        raise Exception("No such type id {}".format(type_id))
 
     targetFile = os.path.join("static", type_dir, system_file_name)
     return_msg["file"] = os.path.join(type_dir, system_file_name)
     return_msg["type_name"] = type_name
 
-    #if text read file
     if return_msg["file_type"] == "text":
         if not os.path.isfile(targetFile) :
-            return_msg["error"] = "no file"
-            return return_msg
+            raise Exception("Text file doesn't exists")
         else :
             with open(targetFile,"r") as fp:
                 file_content = json.load(fp)
             return_msg["file_text"] = file_content
-    return return_msg
 
-#The API load schedule.txt and find out the first image which has not print and the time limit still allow
 def load_schedule():
+    """
+    Get the next display target
+
+    Returns:
+        return_msg: Display target filled with its attributes
+    """
     try:
         return_msg = {}
         return_msg["result"] = "fail"
@@ -65,12 +70,11 @@ def load_schedule():
             return_msg["error"] = "no schedule"
             return return_msg
         return_msg["schedule_id"] = next_schedule['schedule_id']
-        sche_target_id = next_schedule['sche_target_id']
         return_msg["display_time"] = int(next_schedule['display_time'])
 
-        return_msg = getDisplayContent(sche_target_id,return_msg)
-        if "error" in return_msg:
-            return return_msg
+        sche_target_id = next_schedule['sche_target_id']
+
+        getDisplayContent(sche_target_id,return_msg)
 
         #update display count
         if return_msg["file_type"] == "image":
@@ -84,5 +88,8 @@ def load_schedule():
         return return_msg
     except DB_Exception as e:
         return_msg["error"] = e.args[1]
+        return return_msg
+    except Exception as e:
+        return_msg["error"] = str(e)
         return return_msg
 
