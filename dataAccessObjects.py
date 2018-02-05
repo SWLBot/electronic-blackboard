@@ -282,9 +282,6 @@ class ImageDao(DataManipulateDao):
     dataName = 'img'
     tableName = 'image_data'
     prefix = 'imge'
-    def markExpired(self,imgId):
-        super().markExpired(targetId=imgId)
-
     def checkExisted(self,typeId,fileName):
         sql = 'SELECT COUNT(*) FROM image_data WHERE img_is_expire=0 and img_is_delete=0 '\
                 +'and type_id={typeId} and img_file_name="{fileName}"'.format(typeId=typeId,fileName=fileName)
@@ -334,9 +331,6 @@ class ImageDao(DataManipulateDao):
         sql = 'UPDATE image_data SET img_like_count=img_like_count+1 WHERE img_id="{targetId}"'.format(targetId=str(targetId))
         self.db.cmd(sql)
 
-    def generateNewId(self):
-        return super().generateNewId()
-
     def getCwbImgIds(self):
         sql = "SELECT img_id FROM image_data WHERE img_is_delete=0 and img_file_name like 'CV1_TW_3600_%'"
         Ids = self.db.query(sql)
@@ -378,9 +372,6 @@ class TextDao(DataManipulateDao):
             eventId=eventId)
         return self.queryOneValue(sql)
 
-    def markExpired(self,textId):
-        super().markExpired(targetId=textId)
-
     def addLikeCount(self,targetId):
         sql = 'UPDATE text_data SET text_like_count=text_like_count+1 WHERE text_id="{targetId}"'.format(targetId=str(targetId))
         self.db.cmd(sql)
@@ -389,9 +380,6 @@ class TextDao(DataManipulateDao):
         sql = 'select * from text_data where text_is_delete = 0 and text_id = "{textId}"'.format(textId=textId)
         ret = self.db.query(sql)
         return ret[0]
-
-    def generateNewId(self):
-        return super().generateNewId()
 
     def getDisplayTexts(self,userId=None):
         sql = "SELECT text_id, type_id, text_upload_time, text_start_date, text_end_date, text_start_time, text_end_time, text_display_time, text_display_count " \
