@@ -465,7 +465,7 @@ def delete_old_cwb_img(server_dir,user_id):
             continue
     return error_list_id
 
-def mark_old_cwb_img(error_list_id):
+def mark_cwb_img_expired(error_list_id):
     for error_id in error_list_id:
         with ImageDao() as imageDao:
             imageDao.markExpired(targetId=error_id,markOldData=True)
@@ -505,7 +505,7 @@ def crawler_cwb_img(json_obj):
 
             error_list_id = delete_old_cwb_img(server_dir,user_id)
 
-            mark_old_cwb_img(error_list_id)
+            mark_cwb_img_expired(error_list_id)
 
             #upload new file
             send_obj["server_dir"] = server_dir
