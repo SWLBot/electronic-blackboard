@@ -409,7 +409,6 @@ def set_schedule_log(json_obj):
         return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
-#future can write to log.txt. now just print it
 def read_system_setting():
     return_msg = {}
     return_msg["result"] = "fail"
@@ -426,7 +425,6 @@ def read_system_setting():
     return_msg["result"] = "success"
     return return_msg
 
-#future can write to log.txt. now just print it
 def read_arrange_mode():
     try:
         return_msg = {}
