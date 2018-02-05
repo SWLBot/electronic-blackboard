@@ -29,10 +29,17 @@ class DataManipulateDao(DefaultDao):
                 dataName=self.dataName,targetId=targetId,tableName=self.tableName)
         self.db.cmd(sql)
 
-    def markExpired(self,targetId):
-        sql = 'UPDATE {tableName} SET {dataName}_is_expire=1 WHERE {dataName}_id="{targetId}"'.format(
-                dataName=self.dataName,targetId=targetId,tableName=self.tableName)
-        self.db.cmd(sql)
+    def markExpired(self,target):
+        target_list = None
+        if not isinstance(target,list):
+            target_list = [target]
+        else:
+            target_list = target
+
+        sql_template = 'UPDATE {tableName} SET {dataName}_is_expire=1 WHERE {dataName}_id="{targetId}"'
+        for targetId in target_list:
+            sql = sql_template.format(dataName=self.dataName,targetId=targetId,tableName=self.tableName)
+            self.db.cmd(sql)
         
     def markDeleted(self,targetId,userId):
         sql = 'UPDATE {tableName} SET {dataName}_is_delete=1,{dataName}_last_edit_user_id={userId} WHERE {dataName}_id="{targetId}"'.format(
