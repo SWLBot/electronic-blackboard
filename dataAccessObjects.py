@@ -29,12 +29,9 @@ class DataManipulateDao(DefaultDao):
                 dataName=self.dataName,targetId=targetId,tableName=self.tableName)
         self.db.cmd(sql)
 
-    def markExpired(self,targetId,markOldData=None):
+    def markExpired(self,targetId):
         sql = 'UPDATE {tableName} SET {dataName}_is_expire=1 WHERE {dataName}_id="{targetId}"'.format(
                 dataName=self.dataName,targetId=targetId,tableName=self.tableName)
-        if markOldData:
-            sql += ' and {dataName}_is_expire=0 and {dataName}_is_delete=0'.format(
-                dataName=self.dataName)
         self.db.cmd(sql)
         
     def markDeleted(self,targetId,userId):
