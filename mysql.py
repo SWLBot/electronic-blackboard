@@ -74,3 +74,15 @@ class mysql:
             self.db.close()
         except:
             "Do Nothing"
+
+def to_list(sql_results):
+    """
+    Transform the results from mysql query (tuple) to list
+    """
+    ret = list()
+    for tup in sql_results:
+        if len(tup) == 1:
+            ret.append(tup[0])
+        else:
+            ret.append(list(tup))
+    return ret
