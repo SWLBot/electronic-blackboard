@@ -436,10 +436,10 @@ def delete_old_cwb_img(server_dir,user_id):
     error_list_id = []
     with ImageDao() as imageDao:
         Ids=imageDao.getCwbImgIds()
-    for num2 in range(len(Ids)):
+    for id in Ids:
         try:
             send_obj["server_dir"] = server_dir
-            send_obj["target_id"] = str(Ids[num2][0])
+            send_obj["target_id"] = str(id)
             send_obj["user_id"] = user_id
             receive_obj = delete_image_or_text_data(send_obj)
             if receive_obj["result"] == "fail":

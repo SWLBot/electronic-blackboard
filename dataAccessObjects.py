@@ -337,7 +337,7 @@ class ImageDao(DataManipulateDao):
 
     def getCwbImgIds(self):
         sql = "SELECT img_id FROM image_data WHERE img_is_delete=0 and img_file_name like 'CV1_TW_3600_%'"
-        Ids = self.db.query(sql)
+        Ids = to_list(self.db.query(sql))
         return Ids
 
     def getDisplayImgs(self,userId=None):
