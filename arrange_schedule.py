@@ -203,28 +203,14 @@ def expire_data_check():
     try:
         return_msg = {}
         return_msg["result"] = "fail"
-        deal_result = []
 
         with ImageDao() as imageDao:
-            pure_result = imageDao.getExpiredIds()
+            expired_images = imageDao.markExpired()
 
-        #update expire data
-        for expired_image_id in pure_result:
-            deal_result.append(expired_image_id[0])
-            with ImageDao() as imageDao:
-                imageDao.markExpired(expired_image_id[0])
-
-        #find expire text data
         with TextDao() as textDao:
-            pure_result = textDao.getExpiredIds()
+            expired_texts = textDao.markExpired()
 
-        #update expire data
-        for expired_text_id in pure_result:
-            deal_result.append(expired_text_id[0])
-            with TextDao() as textDao:
-                textDao.markExpired(expired_text_id[0])
-
-        for target_id in deal_result:
+        for target_id in expired_images+expired_texts:
             with ScheduleDao() as scheduleDao:
                 scheduleDao.markExpiredSchedule(targetId=target_id)
 

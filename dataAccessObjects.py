@@ -29,9 +29,15 @@ class DataManipulateDao(DefaultDao):
                 dataName=self.dataName,targetId=targetId,tableName=self.tableName)
         self.db.cmd(sql)
 
-    def markExpired(self,target):
+    def markExpired(self,target=None):
         target_list = None
-        if not isinstance(target,list):
+        if not target:
+            sql = 'SELECT {dataName}_id FROM {tableName} '\
+                +'WHERE {dataName}_is_delete=0 and {dataName}_is_expire=0 and (TO_DAYS(NOW())>TO_DAYS({dataName}_end_date) '\
+                +'or (TO_DAYS(NOW())=TO_DAYS({dataName}_end_date) and TIME_TO_SEC(DATE_FORMAT(NOW(), "%H:%i:%s"))>TIME_TO_SEC({dataName}_end_time)))'
+            sql = sql.format(dataName=self.dataName,tableName=self.tableName)
+            target_list = to_list(self.db.query(sql))
+        elif not isinstance(target,list):
             target_list = [target]
         else:
             target_list = target
@@ -40,7 +46,9 @@ class DataManipulateDao(DefaultDao):
         for targetId in target_list:
             sql = sql_template.format(dataName=self.dataName,targetId=targetId,tableName=self.tableName)
             self.db.cmd(sql)
-        
+
+        return target_list
+
     def markDeleted(self,targetId,userId):
         sql = 'UPDATE {tableName} SET {dataName}_is_delete=1,{dataName}_last_edit_user_id={userId} WHERE {dataName}_id="{targetId}"'.format(
                 dataName=self.dataName,targetId=targetId,userId=userId,tableName=self.tableName)
@@ -67,14 +75,6 @@ class DataManipulateDao(DefaultDao):
         sql = sql.format(dataName=self.dataName,tableName=self.tableName)
         ret = self.db.query(sql)
         return ret
-        
-    def getExpiredIds(self):
-        sql = 'SELECT {dataName}_id FROM {tableName} '\
-                +'WHERE {dataName}_is_delete=0 and {dataName}_is_expire=0 and (TO_DAYS(NOW())>TO_DAYS({dataName}_end_date) '\
-                +'or (TO_DAYS(NOW())=TO_DAYS({dataName}_end_date) and TIME_TO_SEC(DATE_FORMAT(NOW(), "%H:%i:%s"))>TIME_TO_SEC({dataName}_end_time)))'
-        sql = sql.format(dataName=self.dataName,tableName=self.tableName)
-        Ids = self.db.query(sql)
-        return Ids
 
     def generateNewId(self):
         sql = 'SELECT {dataName}_id FROM {tableName} ORDER BY {dataName}_upload_time DESC, {dataName}_id DESC LIMIT 1'.format(
