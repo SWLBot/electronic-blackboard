@@ -183,12 +183,10 @@ def check_bluetooth_mode_enable():
     except Exception as e:
         print(str(e))
         return False
-#
+
 def load_now_user_prefer(user_id):
     try:
-        now_hour = time.localtime(time.time())[3]
-        #use now time to choose preference rule
-        data_type = ""
+        now_hour = time.localtime(time.time()).tm_hour
         if now_hour >= 7 and now_hour < 11:
             data_type = "01"
         elif now_hour >= 11 and now_hour < 13:
@@ -201,21 +199,15 @@ def load_now_user_prefer(user_id):
             data_type = "05"
         
         with UserPreferDao() as userPreferDao:
-            pure_result = userPreferDao.getNowUserPrefer(dataType=data_type,UserId=user_id)
+            user_pref_str = userPreferDao.getNowUserPrefer(dataType=data_type,UserId=user_id)
         
-        #reshap pref_data_type_XX from varchar to int array
-        data_type_array = []
-        if len(pure_result) > 0  and pure_result[0][0] is not None:
-            str_condition = pure_result[0][0].split(' ')
-            for num1 in range(len(str_condition)):
-                data_type_array.append(int(str_condition[num1]))
+        if user_pref_str:
+            return [int(type_id) for type_id in user_pref_str.split(' ')]
         else:
-            return -1
-        
-        return data_type_array
+            return []
     except:
         return -1
-#
+
 def set_insert_customer_text_msg():
     try:
         send_msg = {}

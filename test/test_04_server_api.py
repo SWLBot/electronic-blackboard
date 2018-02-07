@@ -69,5 +69,9 @@ class Server_api(unittest.TestCase):
         ret = add_new_data_type(send_msg)
         self.assertTrue(ret['result']=='success' or ret['error']=='Type name has existed')
 
+    def test_load_now_user_prefer(self):
+        ret = load_now_user_prefer(user_id=1)
+        self.assertTrue(isinstance(ret,list))
+
 if __name__ == "__main__":
     unittest.main()
