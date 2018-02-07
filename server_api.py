@@ -174,38 +174,15 @@ def check_bluetooth_id_exist(bluetooth_id):
         return isUsed
     except:
         return -1
-#
-def check_bluetooth_mode_available():
-    file_dir = "setting"
-    file_name = "server_setting.txt"
-    #check setting file exist
-    if not os.path.exists(file_dir):
-        return -1
-    if not os.path.isfile(file_dir+'/'+file_name):
-        return -1
-    
+
+def check_bluetooth_mode_enable():
     try:
-        #read setting file
-        filename = file_dir + '/' + file_name
-        file_pointer = open(filename,"r")
-        bluetooth_available = 0
-        for line in file_pointer:
-            pure_data = []
-            pure_data = line.rstrip('\n').split(' ')
-            if pure_data[0] == "bluetooth_enable":
-                bluetooth_available = int(pure_data[1])
-        file_pointer.close()
-        
-        #check function available
-        if bluetooth_available==1:
-            return 1
-        else :
-            return 0
-        
-        return 0
+        from config.settings import bluetooth_enable
+
+        return bluetooth_enable
     except Exception as e:
         print(str(e))
-        return -1
+        return False
 #
 def load_now_user_prefer(user_id):
     try:
@@ -379,7 +356,7 @@ def deal_with_bluetooth_id(bluetooth_id):
         user_id=0
 
         #check bluetooth mode available
-        if check_bluetooth_mode_available()==0:
+        if not check_bluetooth_mode_enable():
             return_msg["error"] = "the bluetooth function is closed"
             return return_msg
 

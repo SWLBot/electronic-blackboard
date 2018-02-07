@@ -11,7 +11,7 @@ class Server_api(unittest.TestCase):
         self.assertNotEqual(find_now_schedule(),-1)
 
     def test_check_bluetooth_mode_available(self):
-        ret = check_bluetooth_mode_available()
+        ret = check_bluetooth_mode_enable()
         self.assertNotEqual(ret,-1)
 
     def test_set_insert_customer_text_msg(self):
