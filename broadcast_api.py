@@ -19,11 +19,11 @@ def getDisplayContent(sche_target_id,return_msg):
     if targetIdPrefix == "imge":
         with ImageDao() as imageDao:
             file_info = imageDao.getIdSysName(Id=sche_target_id)
-        return_msg["file_type"] = "image"
+        return_msg["display_type"] = "image"
     elif targetIdPrefix == "text":
         with TextDao() as textDao:
             file_info = textDao.getIdSysName(Id=sche_target_id)
-        return_msg["file_type"] = "text"
+        return_msg["display_type"] = "text"
     else :
         raise Exception("target id type error {}".format(targetIdPrefix))
 
@@ -41,16 +41,18 @@ def getDisplayContent(sche_target_id,return_msg):
         raise Exception("No such type id {}".format(type_id))
 
     targetFile = os.path.join("static", type_dir, system_file_name)
-    return_msg["file"] = os.path.join(type_dir, system_file_name)
     return_msg["type_name"] = type_name
-
-    if return_msg["file_type"] == "text":
+    if return_msg["display_type"] == "image":
+        return_msg["img"] = targetFile
+    elif return_msg["display_type"] == "text":
         if not os.path.isfile(targetFile) :
             raise Exception("Text file doesn't exists")
         else :
             with open(targetFile,"r") as fp:
                 file_content = json.load(fp)
-            return_msg["file_text"] = file_content
+            if file_content.get('text_type','') == 'news':
+                return_msg['display_type'] = 'news'
+            return_msg.update(file_content)
 
 def load_schedule():
     """
@@ -69,21 +71,18 @@ def load_schedule():
         if next_schedule is None:
             return_msg["error"] = "no schedule"
             return return_msg
-        return_msg["schedule_id"] = next_schedule['schedule_id']
         return_msg["display_time"] = int(next_schedule['display_time'])
 
         sche_target_id = next_schedule['sche_target_id']
 
         getDisplayContent(sche_target_id,return_msg)
 
-        #update display count
-        if return_msg["file_type"] == "image":
+        if return_msg["display_type"] == "image":
             with ImageDao() as imageDao:
                 imageDao.addDisplayCount(sche_target_id)
-        elif return_msg["file_type"] == "text":
+        elif return_msg["display_type"] in ["text","news"]:
             with TextDao() as textDao:
                 textDao.addDisplayCount(sche_target_id)
-
         return_msg["result"] = "success"
         return return_msg
     except DB_Exception as e:
