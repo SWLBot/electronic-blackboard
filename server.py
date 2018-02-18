@@ -18,6 +18,7 @@ import httplib2
 from apiclient import discovery
 from pprint import pprint
 import datetime
+from display_object import *
 
 define('port',default=3000,help='run the server on the given port',type=int)
 define('log_file_prefix',default='server.log',help='log file name',type=str)
@@ -125,20 +126,19 @@ class UploadHandler(BaseHandler):
             self.redirect("/signin")
 
     def post(self):
-        send_msg = {}
         receive_msg = {}
         upload_path = os.path.join(os.path.dirname(__file__),"static","img")
         thumbnail_filepath = os.path.join(os.path.dirname(__file__),"static","thumbnail")
-        send_msg = get_upload_meta_data(self) 
-        send_msg["file_dir"] = upload_path
+        display_object = get_upload_meta_data(self)
         if self.get_argument('type') == 'image':
             try:
+                display_object.__class__ = DisplayImage
                 file_metas=self.request.files['file']
                 for meta in file_metas:
                     filepath = os.path.join(upload_path,meta['filename'])
-                    send_msg["filepath"] = filepath
+                    display_object.filepath = filepath
                     store_image(filepath,meta['body'])
-                    receive_msg = upload_image_insert_db(send_msg)
+                    receive_msg = upload_image_insert_db(display_image=display_object)
 
                     filepath = receive_msg["img_system_filepath"]
                     thumbnail_filepath=os.path.join(thumbnail_filepath,receive_msg["img_thumbnail_name"])
@@ -149,7 +149,8 @@ class UploadHandler(BaseHandler):
             except:
                 self.redirect("/upload")
         else:
-            receive_msg = upload_text_insert_db(send_msg)
+            display_object.__class__ = DisplayText
+            receive_msg = upload_text_insert_db(display_text=display_object)
             text_file = get_upload_text_data(self)
 
             if text_file['result'] == 'success':
@@ -179,28 +180,29 @@ class EditHandler(BaseHandler):
         img = None
         text = None
         text_content = None
-        send_msg = {}
         receive_msg = {}
-        send_msg = get_upload_meta_data(self)
+        display_object = get_upload_meta_data(self)
         if self.get_argument("type") == "image":
-            send_msg["img_id"] = tornado.escape.xhtml_escape(self.get_argument("img_id"))
-            receive_msg = edit_image_data(send_msg)
+            display_object.__class__ = DisplayImage
+            display_object.id = tornado.escape.xhtml_escape(self.get_argument("img_id"))
+            receive_msg = edit_image_data(display_image=display_object)
             if receive_msg["result"] == "success":
                 flash = "Edit "+self.get_argument("img_id")+" successed "
             else:
                 flash = "Edit "+self.get_argument("img_id")+" failed "
             img = get_img_meta(self.get_argument("img_id"))
         else:
-            send_msg["text_id"] = tornado.escape.xhtml_escape(self.get_argument("text_id"))
-            send_msg["invisible_title"] = send_msg["text_id"]
-            send_msg["text_file"] = get_upload_text_data(self)
-            receive_msg = edit_text_data(send_msg)
+            display_object.__class__ = DisplayText
+            display_object.id = tornado.escape.xhtml_escape(self.get_argument("text_id"))
+            display_object.invisible_title = display_object.id
+            display_object.text_file = get_upload_text_data(self)
+            receive_msg = edit_text_data(display_text=display_object)
             if receive_msg["result"] == "success":
                 flash = "Edit "+self.get_argument("text_id")+" successed "
             else:
                 flash = "Edit "+self.get_argument("text_id")+" failed "
             text = get_text_meta(self.get_argument("text_id"))
-            text_content = read_text_data(send_msg["text_id"])
+            text_content = read_text_data(display_object.id)
         data_types = display_data_types()
         self.render("edit.html",img=img,text=text,data_types=data_types,flash=flash,text_content=text_content)
 

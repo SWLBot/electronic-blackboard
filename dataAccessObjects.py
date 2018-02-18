@@ -1,4 +1,5 @@
 from mysql import *
+from display_object import *
 
 class DefaultDao():
     def __init__(self):
@@ -85,17 +86,17 @@ class DataManipulateDao(DefaultDao):
         else:
             return "{prefix}0000000001".format(prefix=self.prefix)
     
-    def updateEditedData(self,data):
+    def updateEditedData(self,display_object):
         sql = 'UPDATE {tableName} '
-        update = 'SET type_id={data[typeId]}, {dataName}_start_date="{data[startDate]}", ' \
-            + '{dataName}_end_date="{data[endDate]}", {dataName}_start_time="{data[startTime]}", ' \
-            + '{dataName}_end_time="{data[endTime]}", {dataName}_display_time={data[displayTime]}, ' \
-            + '{dataName}_last_edit_user_id="{data[editUserId]}"'
+        update = 'SET type_id={display_object.type_id}, {dataName}_start_date="{display_object.start_date}", ' \
+            + '{dataName}_end_date="{display_object.end_date}", {dataName}_start_time="{display_object.start_time}", ' \
+            + '{dataName}_end_time="{display_object.end_time}", {dataName}_display_time={display_object.display_time}, ' \
+            + '{dataName}_last_edit_user_id="{display_object.user_id}"'
         if self.tableName == "text_data":
-            update += ', text_invisible_title="{data[invisibleTitle]}"'
+            update += ', text_invisible_title="{display_object.invisible_title}"'
         sql += update
-        sql += ' WHERE {dataName}_id="{data[Id]}"'
-        sql = sql.format(tableName=self.tableName,dataName=self.dataName,data=data)
+        sql += ' WHERE {dataName}_id="{display_object.id}"'
+        sql = sql.format(tableName=self.tableName,dataName=self.dataName,display_object=display_object)
         self.db.cmd(sql)
 
     def getIdSysName(self,Id):
@@ -109,23 +110,23 @@ class DataManipulateDao(DefaultDao):
             #TODO raise exception
             return None
 
-    def insertData(self,data):
+    def insertData(self,display_object):
         sql = 'INSERT INTO {tableName} ' \
             + '({dataName}_id, type_id, {dataName}_system_name, ' \
             + '{column}, {dataName}_start_date, ' \
             + '{dataName}_end_date, {dataName}_start_time, {dataName}_end_time, ' \
             + '{dataName}_display_time, user_id)' \
             + ' VALUES ' \
-            + '("{data[id]}", {data[typeId]}, "{data[systemName]}", {value}, "{data[startDate]}",' \
-            + ' "{data[endDate]}", "{data[startTime]}", "{data[endTime]}", {data[displayTime]}, {data[userId]})'
+            + '("{display_object.id}", {display_object.type_id}, "{display_object.system_name}", {value}, "{display_object.start_date}",' \
+            + ' "{display_object.end_date}", "{display_object.start_time}", "{display_object.end_time}", {display_object.display_time}, {display_object.user_id})'
         if self.tableName == "image_data":
             column = "img_thumbnail_name, img_file_name"
-            value = '"{data[thumbnailName]}", "{data[fileName]}"'.format(data=data)
+            value = '"{display_image.thumbnail_name}", "{display_image.file_name}"'.format(display_image=display_object)
         elif self.tableName == "text_data":
             column = "text_invisible_title"
-            value = '"{data[invisibleTitle]}"'.format(data=data)
+            value = '"{display_text.invisible_title}"'.format(display_text=display_object)
         
-        sql = sql.format(column=column, value=value, dataName=self.dataName, tableName=self.tableName, data=data)
+        sql = sql.format(column=column, value=value, dataName=self.dataName, tableName=self.tableName, display_object=display_object)
         self.db.cmd(sql)
 
 class UserDao(DefaultDao):

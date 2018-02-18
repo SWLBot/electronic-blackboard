@@ -23,6 +23,7 @@ import os.path
 import json
 import sys
 import config.settings as setting
+from display_object import *
 
 class loadScheduleError(Exception):
     def __init__(self,value):
@@ -460,7 +461,6 @@ def crawler_cwb_img(json_obj):
             return_msg["error"] = "input parameter missing"
             return return_msg
         now_time = time.time()
-        send_obj = {}
         receive_obj = {}
 
         with DataTypeDao() as dataTypeDao:
@@ -486,17 +486,17 @@ def crawler_cwb_img(json_obj):
             with ImageDao() as imageDao:
                 imageDao.markExpired(target=error_id_list)
 
-            #upload new file
-            send_obj["server_dir"] = server_dir
-            send_obj["file_type"] = weather_data_type["typeId"]
-            send_obj["filepath"] = target_img
-            send_obj["start_date"] = time.strftime("%Y-%m-%d", time.localtime(time.time()))
-            send_obj["end_date"] = time.strftime("%Y-%m-%d", time.localtime(time.time()+86400))
-            send_obj["start_time"] = "00:00:00"
-            send_obj["end_time"] = "23:59:59"
-            send_obj["display_time"] = 5
-            send_obj["user_id"] = user_id
-            receive_obj = upload_image_insert_db(send_obj)
+            display_image = DisplayImage()
+            display_image.server_dir = server_dir
+            display_image.type_id = weather_data_type["typeId"]
+            display_image.filepath = target_img
+            display_image.start_date = time.strftime("%Y-%m-%d", time.localtime(time.time()))
+            display_image.end_date = time.strftime("%Y-%m-%d", time.localtime(time.time()+86400))
+            display_image.start_time = "00:00:00"
+            display_image.end_time = "23:59:59"
+            display_image.display_time = 5
+            display_image.user_id = user_id
+            receive_obj = upload_image_insert_db(display_image)
             try:
                 if receive_obj["result"] == "success":
                     filepath = receive_obj["img_system_filepath"]
@@ -589,28 +589,28 @@ def check_event_exist_or_insert(event, calendar_name=None):
         # do nothing
         return
     else:
-        send_msg = {}
-        send_msg["server_dir"] = os.path.dirname(__file__)
-        send_msg["file_type"] = 6
+        display_text = DisplayText()
+        display_text.server_dir = os.path.dirname(__file__)
+        display_text.type_id = 6
         if 'date' in event['start'].keys():
-            send_msg["start_date"] = datetime.datetime.strftime(datetime.datetime.strptime(event['start']['date'],'%Y-%m-%d') - datetime.timedelta(display_days),'%Y-%m-%d')
-            send_msg["end_date"] = event['start']['date']
+            display_text.start_date = datetime.datetime.strftime(datetime.datetime.strptime(event['start']['date'],'%Y-%m-%d') - datetime.timedelta(display_days),'%Y-%m-%d')
+            display_text.end_date = event['start']['date']
         elif 'dateTime' in event['start'].keys():
             event_start_date = event['start']['dateTime'].split('T')[0]
             event_start_time = event['start']['dateTime'].split('T')[1][:5]
             event_end_date = event['end']['dateTime'].split('T')[0]
             event_end_time = event['end']['dateTime'].split('T')[1][:5]
-            send_msg["start_date"] = datetime.datetime.strftime(datetime.datetime.strptime(event['start']['dateTime'].split('T')[0],'%Y-%m-%d') - datetime.timedelta(display_days),'%Y-%m-%d')
-            send_msg["end_date"] = event_start_date
+            display_text.start_date = datetime.datetime.strftime(datetime.datetime.strptime(event['start']['dateTime'].split('T')[0],'%Y-%m-%d') - datetime.timedelta(display_days),'%Y-%m-%d')
+            display_text.end_date = event_start_date
         else:
             print("no date and dateTime")
             return
-        send_msg["start_time"] = ""
-        send_msg["end_time"] = ""
-        send_msg["display_time"] = 10
-        send_msg["user_id"] = 1
-        send_msg["invisible_title"] = event_id
-        receive_msg = upload_text_insert_db(send_msg)
+        display_text.start_time = ""
+        display_text.end_time = ""
+        display_text.display_time = 10
+        display_text.user_id = 1
+        display_text.invisible_title = event_id
+        receive_msg = upload_text_insert_db(display_text=display_text)
         addition_msg = rule_base_agent(event)
         event_file_path = os.path.join('static','calendar_event','{name}.png'.format(name=event_id))
         description = event.get('description',addition_msg['description'])
@@ -621,7 +621,7 @@ def check_event_exist_or_insert(event, calendar_name=None):
         else:
             detailtime = ""
 
-        text_file = {   "con" : send_msg["end_date"],
+        text_file = {   "con" : display_text.end_date,
                         "title1" : addition_msg['title1'],
                         "title2" : addition_msg['title2'],
                         "description": description,
@@ -716,18 +716,17 @@ def save_google_drive_file(service, json_obj):
             while done is False:
                 status, done = downloader.next_chunk()
             
-            #upload new file
-            send_obj = {}
-            send_obj["server_dir"] = json_obj['server_dir']
-            send_obj["file_type"] = json_obj['data_type']
-            send_obj["filepath"] = 'static/img/' + file_name
-            send_obj["start_date"] = time.strftime("%Y-%m-%d", time.localtime(time.time()))
-            send_obj["end_date"] = time.strftime("%Y-%m-%d", time.localtime(time.time()+item['time']))
-            send_obj["start_time"] = "00:00:00"
-            send_obj["end_time"] = "23:59:59"
-            send_obj["display_time"] = 3
-            send_obj["user_id"] = json_obj['user_id']
-            receive_obj = upload_image_insert_db(send_obj)
+            display_image = DisplayImage()
+            display_image.server_dir = json_obj['server_dir']
+            display_image.type_id = json_obj['data_type']
+            display_image.filepath = os.path.join("static","img",file_name)
+            display_image.start_date = time.strftime("%Y-%m-%d", time.localtime(time.time()))
+            display_image.end_date = time.strftime("%Y-%m-%d", time.localtime(time.time()+item['time']))
+            display_image.start_time = "00:00:00"
+            display_image.end_time = "23:59:59"
+            display_image.display_time = 5
+            display_image.user_id = json_obj['user_id']
+            receive_obj = upload_image_insert_db(display_image)
 
             #save thumbnail image
             try:
@@ -932,17 +931,17 @@ def crawler_schedule():
 
 def add_news_text(typeId, textFile):
     now_time = time.time()
-    send_msg = {}
-    send_msg["server_dir"] = os.path.dirname(__file__)
-    send_msg["file_type"] = typeId
-    send_msg["start_date"] = time.strftime("%Y-%m-%d", time.localtime(now_time))
-    send_msg["end_date"] = time.strftime("%Y-%m-%d", time.localtime(now_time))
-    send_msg["start_time"] = ""
-    send_msg["end_time"] = ""
-    send_msg["display_time"] = 5
-    send_msg["user_id"] = 1
-    send_msg["invisible_title"] = "news"
-    receive_msg = upload_text_insert_db(send_msg)
+    display_text = DisplayText()
+    display_text.server_dir = os.path.dirname(__file__)
+    display_text.type_id = typeId
+    display_text.start_date = time.strftime("%Y-%m-%d", time.localtime(now_time))
+    display_text.end_date = time.strftime("%Y-%m-%d", time.localtime(now_time))
+    display_text.start_time = ""
+    display_text.end_time = ""
+    display_text.display_time = 5
+    display_text.user_id = 1
+    display_text.invisible_title = "news"
+    receive_msg = upload_text_insert_db(display_text=display_text)
     with open(receive_msg["text_system_dir"],"w") as fp:
         print(json.dumps(textFile),file=fp)
 
