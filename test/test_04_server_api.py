@@ -11,7 +11,7 @@ class Server_api(unittest.TestCase):
         self.assertNotEqual(find_now_schedule(),-1)
 
     def test_check_bluetooth_mode_available(self):
-        ret = check_bluetooth_mode_available()
+        ret = check_bluetooth_mode_enable()
         self.assertNotEqual(ret,-1)
 
     def test_set_insert_customer_text_msg(self):
@@ -68,6 +68,10 @@ class Server_api(unittest.TestCase):
         send_msg["type_name"] = 'test_type'
         ret = add_new_data_type(send_msg)
         self.assertTrue(ret['result']=='success' or ret['error']=='Type name has existed')
+
+    def test_load_now_user_prefer(self):
+        ret = load_now_user_prefer(user_id=1)
+        self.assertTrue(isinstance(ret,list))
 
 if __name__ == "__main__":
     unittest.main()

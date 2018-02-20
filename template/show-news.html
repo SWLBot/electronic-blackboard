@@ -1,0 +1,22 @@
+{% autoescape None %}
+<div id="news">
+    <div class="forum-name" id="forum-1">{{ news_info['forum_name1'] }}</div>
+    <div class="news-bar" id="news-1">
+        <div class="news-title">
+            <p class="title-text" id="title-1">{{ news_info['title1'] }}</p>
+        </div>
+        <div class="news-qrcode">
+            <img src="{{ news_info['QR1'] }}" id="qrcode-1">
+        </div>
+    </div>
+
+    <div class="forum-name" id="forum-2">{{ news_info['forum_name2'] }}</div>
+    <div class="news-bar" id="news-2">
+        <div class="news-title">
+            <p class="title-text" id="title-2">{{ news_info['title2'] }}</p>
+        </div>
+        <div class="news-qrcode">
+            <img src="{{ news_info['QR2'] }}" id="qrcode-2">
+        </div>
+    </div>
+</div>

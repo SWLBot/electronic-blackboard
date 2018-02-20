@@ -21,6 +21,7 @@ import httplib2
 from apiclient import discovery
 import datetime
 from dataAccessObjects import *
+from display_object import *
 
 class ArgumentUtil():
     """Provide the interface to get argument from handler
@@ -71,15 +72,15 @@ class UserEditArgumentsUtil(ArgumentUtil):
 
 class UploadArgumentsUtil(ArgumentUtil):
     def getArguments(self):
-        uploadData = {}
-        uploadData['file_type'] = self.getArgument('data_type')
-        uploadData['start_date'] = self.getArgument('start_date')
-        uploadData['end_date'] = self.getArgument('end_date')
-        uploadData['start_time'] = self.getArgument('start_time')
-        uploadData['end_time'] = self.getArgument('end_time')
-        uploadData['display_time'] = self.getArgument('display_time')
-        return uploadData
-#
+        display_object = DisplayObject()
+        display_object.type_id = self.getArgument('data_type')
+        display_object.start_date = self.getArgument('start_date')
+        display_object.end_date = self.getArgument('end_date')
+        display_object.start_time = self.getArgument('start_time')
+        display_object.end_time = self.getArgument('end_time')
+        display_object.display_time = self.getArgument('display_time')
+        return display_object
+
 def add_like_count(target_id):
     try:
         if target_id[0:4]=="imge":
@@ -174,44 +175,19 @@ def check_bluetooth_id_exist(bluetooth_id):
         return isUsed
     except:
         return -1
-#
-def check_bluetooth_mode_available():
-    file_dir = "setting"
-    file_name = "server_setting.txt"
-    #check setting file exist
-    if not os.path.exists(file_dir):
-        return -1
-    if not os.path.isfile(file_dir+'/'+file_name):
-        return -1
-    
+
+def check_bluetooth_mode_enable():
     try:
-        #read setting file
-        filename = file_dir + '/' + file_name
-        file_pointer = open(filename,"r")
-        bluetooth_available = 0
-        for line in file_pointer:
-            pure_data = []
-            pure_data = line.rstrip('\n').split(' ')
-            if pure_data[0] == "bluetooth_enable":
-                bluetooth_available = int(pure_data[1])
-        file_pointer.close()
-        
-        #check function available
-        if bluetooth_available==1:
-            return 1
-        else :
-            return 0
-        
-        return 0
+        from config.settings import bluetooth_enable
+
+        return bluetooth_enable
     except Exception as e:
         print(str(e))
-        return -1
-#
+        return False
+
 def load_now_user_prefer(user_id):
     try:
-        now_hour = time.localtime(time.time())[3]
-        #use now time to choose preference rule
-        data_type = ""
+        now_hour = time.localtime(time.time()).tm_hour
         if now_hour >= 7 and now_hour < 11:
             data_type = "01"
         elif now_hour >= 11 and now_hour < 13:
@@ -224,21 +200,15 @@ def load_now_user_prefer(user_id):
             data_type = "05"
         
         with UserPreferDao() as userPreferDao:
-            pure_result = userPreferDao.getNowUserPrefer(dataType=data_type,UserId=user_id)
+            user_pref_str = userPreferDao.getNowUserPrefer(dataType=data_type,UserId=user_id)
         
-        #reshap pref_data_type_XX from varchar to int array
-        data_type_array = []
-        if len(pure_result) > 0  and pure_result[0][0] is not None:
-            str_condition = pure_result[0][0].split(' ')
-            for num1 in range(len(str_condition)):
-                data_type_array.append(int(str_condition[num1]))
+        if user_pref_str:
+            return [int(type_id) for type_id in user_pref_str.split(' ')]
         else:
-            return -1
-        
-        return data_type_array
+            return []
     except:
         return -1
-#
+
 def set_insert_customer_text_msg():
     try:
         send_msg = {}
@@ -336,8 +306,11 @@ def collect_user_prefer_data(user_id, prefer_data_type):
         return return_msg
     except:
         return return_msg
-#
+
 def insert_customized_schedule(user_id, prefer_data_type):
+    """
+    Deprecated
+    """
     from arrange_schedule import edit_schedule
 
     try:
@@ -379,7 +352,7 @@ def deal_with_bluetooth_id(bluetooth_id):
         user_id=0
 
         #check bluetooth mode available
-        if check_bluetooth_mode_available()==0:
+        if not check_bluetooth_mode_enable():
             return_msg["error"] = "the bluetooth function is closed"
             return return_msg
 
@@ -515,11 +488,10 @@ def get_upload_meta_data(handler):
     uploadArgUtil = UploadArgumentsUtil(handler)
     user_name = handler.get_current_user().decode('utf-8')
 
-    meta_data = uploadArgUtil.getArguments()
-    meta_data["server_dir"] = os.path.dirname(__file__)
-    meta_data["user_id"] = get_user_id(user_name)
-
-    return meta_data
+    display_object = uploadArgUtil.getArguments()
+    display_object.server_dir = os.path.dirname(__file__)
+    display_object.user_id = get_user_id(user_name)
+    return display_object
 
 #get the text data from the handler
 def get_upload_text_data(handler):
@@ -598,45 +570,28 @@ def get_abs_type_dir(type_id,server_dir):
         type_dir = dataTypeDao.getTypeDir(typeId=type_id)
     return os.path.join(server_dir,"static",type_dir)
 
-#
-def upload_image_insert_db(json_obj):
+def upload_image_insert_db(display_image):
     try:
         return_msg = {}
         return_msg["result"] = "fail"
-        try:
-            server_dir = json_obj["server_dir"]
-            type_id = json_obj["file_type"]
-            img_filepath = json_obj["filepath"]
-            img_start_date = json_obj["start_date"]
-            img_end_date = json_obj["end_date"]
-            img_start_time = json_obj["start_time"]
-            img_end_time = json_obj["end_time"]
-            img_display_time = json_obj["display_time"]
-            user_id = json_obj["user_id"]
-        except:
-            return_msg["error"] = "input parameter missing"
-            return return_msg
 
-        img_id = ""
-        img_file_name = os.path.split(img_filepath)[1]
-        user_level_low_bound = 100
-        #default
-        if len(img_start_time)==0:
-            img_start_time = "00:00:00"
-        if len(img_end_time)==0:
-            img_end_time = "23:59:59"
+        img_file_name = os.path.split(display_image.filepath)[1]
 
-        receive_msg = check_user_level(str(user_id))
+        if len(display_image.start_time)==0:
+            display_image.start_time = "00:00:00"
+        if len(display_image.end_time)==0:
+            display_image.end_time = "23:59:59"
+
+        receive_msg = check_user_level(str(display_image.user_id))
         if 'fail' in receive_msg:
             return_msg['error'] = receive_msg['error']
         
         try:
-            img_type_dir = get_abs_type_dir(type_id,server_dir)
+            img_type_dir = get_abs_type_dir(display_image.type_id,display_image.server_dir)
         except:
-            return_msg["error"] = "no such type id : " + str(type_id)
+            return_msg["error"] = "no such type id : " + str(display_image.type_id)
             return return_msg
 
-        #generate new id
         with ImageDao() as imageDao:
             img_id = imageDao.generateNewId()
         
@@ -644,41 +599,32 @@ def upload_image_insert_db(json_obj):
         img_thumbnail_name = "thumbnail_" + img_system_name
         img_system_filepath = os.path.join(img_type_dir, img_system_name)
         try:
-            copyfile(img_filepath, img_system_filepath)
-            if os.path.isfile(img_filepath) and os.path.isfile(img_system_filepath):
-                os.remove(img_filepath)
+            copyfile(display_image.filepath, img_system_filepath)
+            if os.path.isfile(display_image.filepath) and os.path.isfile(img_system_filepath):
+                os.remove(display_image.filepath)
         except:
             try:
-                if os.path.isfile(img_filepath) and os.path.isfile(img_system_filepath):
+                if os.path.isfile(display_image.filepath) and os.path.isfile(img_system_filepath):
                     os.remove(img_system_filepath)
             except:
                 "DO NOTHING"
             return_msg["error"] = "copy or remove file error"
             return return_msg
 
-        #insert images data to mysql
-        img_data = {}
-        img_data["id"] = img_id
-        img_data["typeId"] = str(type_id)
-        img_data["systemName"] = img_system_name
-        img_data["thumbnailName"] = img_thumbnail_name
-        img_data["fileName"] = img_file_name
-        img_data["startDate"] = img_start_date
-        img_data["endDate"] = img_end_date
-        img_data["startTime"] = img_start_time
-        img_data["endTime"] = img_end_time
-        img_data["displayTime"] = str(img_display_time)
-        img_data["userId"] = str(user_id)
+        display_image.id = img_id
+        display_image.system_name = img_system_name
+        display_image.file_name = img_file_name
+        display_image.thumbnail_name = img_thumbnail_name
         try:
             with ImageDao() as imageDao:
-                imageDao.insertData(data=img_data)
+                imageDao.insertData(display_object=display_image)
         except DB_Exception as e:
-            return_msg["error"] = "insert mysql error ({filename}) {msg}".format(filename=img_filepath,msg=str(e))
+            return_msg["error"] = "insert mysql error ({filename}) {msg}".format(filename=display_image.filepath,msg=str(e))
             try:
-                copyfile(img_system_filepath, img_filepath)
-                if os.path.isfile(img_filepath) and os.path.isfile(img_system_filepath):
+                copyfile(img_system_filepath, display_image.filepath)
+                if os.path.isfile(display_image.filepath) and os.path.isfile(img_system_filepath):
                     os.remove(img_system_filepath)
-                return_msg["error"] = "insert mysql error ({filename}) {msg}".format(filename=img_filepath,msg=str(e))
+                return_msg["error"] = "insert mysql error ({filename}) {msg}".format(filename=display_image.filepath,msg=str(e))
             except:
                 "DO NOTHING"
             return return_msg
@@ -692,24 +638,10 @@ def upload_image_insert_db(json_obj):
         return_msg["error"] = e.args[1]
         return return_msg 
 
-#
-def edit_image_data(json_obj):
+def edit_image_data(display_image):
     try:
         return_msg = {}
         return_msg["result"] = "fail"
-        try:
-            server_dir = json_obj["server_dir"]
-            img_id = json_obj["img_id"]
-            type_id = json_obj["file_type"]
-            img_start_date = json_obj["start_date"]
-            img_end_date = json_obj["end_date"]
-            img_start_time = json_obj["start_time"]
-            img_end_time = json_obj["end_time"]
-            img_display_time = json_obj["display_time"]
-            user_id = json_obj["user_id"]
-        except:
-            return_msg["error"] = "input parameter missing"
-            return return_msg
 
         user_level_low_bound = 100
         user_level_high_bound = 10000
@@ -717,9 +649,9 @@ def edit_image_data(json_obj):
         
         #check user level
         with UserDao() as userDao:
-            user_level = userDao.getUserLevel(user_id)
+            user_level = userDao.getUserLevel(display_image.user_id)
         if not user_level:
-            return_msg['error'] = 'No user_id "{user_id}"'.format(user_id=user_id)
+            return_msg['error'] = 'No user_id "{user_id}"'.format(user_id=display_image.user_id)
             return return_msg
         else:
             if user_level < user_level_low_bound:
@@ -727,31 +659,31 @@ def edit_image_data(json_obj):
                 return return_msg
             #check self image
             with ImageDao() as imageDao:
-                imgInfo = imageDao.getIdSysName(Id=str(img_id))
+                imgInfo = imageDao.getIdSysName(Id=str(display_image.id))
             try:
-                if imgInfo["userId"] != user_id and user_level < user_level_high_bound:
+                if imgInfo["userId"] != display_image.user_id and user_level < user_level_high_bound:
                     return_msg["error"] = "can not modify other user image "
                     return return_msg
                 img_type_id = imgInfo["typeId"]
             except:
-                return_msg["error"] = "no such image id : {img_id}".format(img_id=img_id)
+                return_msg["error"] = "no such image id : {id}".format(id=display_image.id)
                 return return_msg    
         
         #check if we need to move the file
         old_dir = ""
         new_dir = ""
-        if img_type_id == type_id:
+        if img_type_id == display_image.type_id:
             "DO NOTHING"
         else :
             #get img_system_name
             with ImageDao() as imageDao:
-                img_info = imageDao.getIdSysName(Id=str(img_id))
+                img_info = imageDao.getIdSysName(Id=str(display_image.id))
                 img_sys_name = img_info["systemName"]
             if img_sys_name: 
                 old_dir = img_sys_name
                 new_dir = img_sys_name
             else:
-                return_msg["error"] = "no such image id : {img_id}".format(img_id=img_id)
+                return_msg["error"] = "no such image id : {id}".format(id=display_image.id)
                 return return_msg
             
             #get old image type dir
@@ -760,16 +692,16 @@ def edit_image_data(json_obj):
             if type_dir: 
                 old_dir = type_dir + old_dir
             else:
-                return_msg["error"] = "no such image type : {type_id}".format(type_id=str(img_type_id))
+                return_msg["error"] = "no such image type : {type_id}".format(type_id=img_type_id)
                 return return_msg
                     
             #get new image type dir
             with DataTypeDao() as dataTypeDao:
-                type_dir = dataTypeDao.getTypeDir(typeId=str(type_id))
+                type_dir = dataTypeDao.getTypeDir(typeId=str(display_image.type_id))
             if type_dir: 
                 new_dir = type_dir + new_dir
             else:
-                return_msg["error"] = "no such image type : {type_id}".format(type_id=str(type_id))
+                return_msg["error"] = "no such image type : {type_id}".format(type_id=display_image.type_id)
                 return return_msg
             
             #check if we need to move the file
@@ -777,8 +709,8 @@ def edit_image_data(json_obj):
                 "DO NOTHING"
             else :
                 try:
-                    old_dir = os.path.join(server_dir,"static",old_dir)
-                    new_dir = os.path.join(server_dir,"static",new_dir)
+                    old_dir = os.path.join(display_image.server_dir,"static",old_dir)
+                    new_dir = os.path.join(display_image.server_dir,"static",new_dir)
                     copyfile(old_dir, new_dir)
                     if os.path.isfile(old_dir) and os.path.isfile(new_dir):
                         os.remove(old_dir)
@@ -790,20 +722,10 @@ def edit_image_data(json_obj):
                         "DO NOTHING"
                     return_msg["error"] = "move file error : " + old_dir
                     return return_msg
-        
-        #start to modify mysql
-        img_data = {}
-        img_data["typeId"] = str(type_id)
-        img_data["startDate"] = img_start_date
-        img_data["endDate"] = img_end_date
-        img_data["startTime"] = img_start_time
-        img_data["endTime"] = img_end_time
-        img_data["displayTime"] = str(img_display_time)
-        img_data["editUserId"] = str(user_id)
-        img_data["Id"] = img_id
+
         try:
             with ImageDao() as imageDao:
-                imageDao.updateEditedData(data=img_data)
+                imageDao.updateEditedData(display_object=display_image)
         except DB_Exception as e:
             try:
                 copyfile(new_dir, old_dir)
@@ -827,73 +749,40 @@ def edit_image_data(json_obj):
         return_msg["error"] = e.args[1]
         return return_msg
 
-#never debug this function
-def upload_text_insert_db(json_obj):
+def upload_text_insert_db(display_text):
     try:
         return_msg = {}
         return_msg["result"] = "fail"
-        try:
-            server_dir = json_obj["server_dir"]
-            type_id = json_obj["file_type"]
-            text_start_date = json_obj["start_date"]
-            text_end_date = json_obj["end_date"]
-            text_start_time = json_obj["start_time"]
-            text_end_time = json_obj["end_time"]
-            text_display_time = json_obj["display_time"]
-            user_id = json_obj["user_id"]
-        except:
-            return_msg["error"] = "input parameter missing"
-            return return_msg
 
-        text_id = ""
-        system_file_dir = ""
-        text_system_name = ""
-        user_level_low_bound = 100
-        #default
-        if len(text_start_time)==0:
-            text_start_time = "00:00:00"
-        if len(text_end_time)==0:
-            text_end_time = "23:59:59"
+        if len(display_text.start_time)==0:
+            display_text.start_time = "00:00:00"
+        if len(display_text.end_time)==0:
+            display_text.end_time = "23:59:59"
 
-        
-        receive_msg = check_user_level(user_id)
+        receive_msg = check_user_level(display_text.user_id)
         if 'fail' in receive_msg:
             return_msg['result'] = receive_msg['error']
 
-        #generate new id
         with TextDao() as textDao:
             text_id = textDao.generateNewId()
-
-        if "invisible_title" in json_obj:
-            invisible_title = json_obj["invisible_title"]
-        else:
-            invisible_title = text_id
         
         #get file place
         with DataTypeDao() as dataTypeDao:
-            type_dir = dataTypeDao.getTypeDir(typeId=str(type_id))
+            type_dir = dataTypeDao.getTypeDir(typeId=str(display_text.type_id))
         try:
             text_system_name = text_id + ".txt"
-            system_file_dir = os.path.join(server_dir, "static", type_dir)
+            system_file_dir = os.path.join(display_text.server_dir, "static", type_dir)
             system_file_dir = os.path.join(system_file_dir, text_system_name)
         except:
-            return_msg["error"] = "no such type id : " + str(type_id)
+            return_msg["error"] = "no such type id : " + str(display_text.type_id)
             return return_msg
-        
-        #insert text data to mysql
-        text_data = {}
-        text_data["id"] = text_id
-        text_data["typeId"] = str(type_id)
-        text_data["systemName"] = text_system_name
-        text_data["invisibleTitle"] = invisible_title
-        text_data["startDate"] = text_start_date
-        text_data["endDate"] = text_end_date
-        text_data["startTime"] = text_start_time
-        text_data["endTime"] = text_end_time
-        text_data["displayTime"] = str(text_display_time)
-        text_data["userId"] = str(user_id)
+
+        display_text.id = text_id
+        display_text.system_name = text_system_name
+        if display_text.invisible_title == None:
+            display_text.invisible_title = text_id 
         with TextDao() as textDao:
-            textDao.insertData(data=text_data)
+            textDao.insertData(display_object=display_text)
 
         return_msg["text_id"] = text_id
         return_msg["text_system_dir"] = system_file_dir
@@ -904,25 +793,10 @@ def upload_text_insert_db(json_obj):
         return return_msg    
 
 #
-def edit_text_data(json_obj):
+def edit_text_data(display_text):
     try:
         return_msg = {}
         return_msg["result"] = "fail"
-        try:
-            server_dir = json_obj["server_dir"]
-            text_id = json_obj["text_id"]
-            invisible_title = json_obj["invisible_title"]
-            type_id = json_obj["file_type"]
-            text_start_date = json_obj["start_date"]
-            text_end_date = json_obj["end_date"]
-            text_start_time = json_obj["start_time"]
-            text_end_time = json_obj["end_time"]
-            text_display_time = json_obj["display_time"]
-            user_id = json_obj["user_id"]
-            text_file = json_obj["text_file"]
-        except:
-            return_msg["error"] = "input parameter missing"
-            return return_msg
 
         user_level_low_bound = 100
         user_level_high_bound = 10000
@@ -930,9 +804,9 @@ def edit_text_data(json_obj):
         
         #check user level
         with UserDao() as userDao:
-            user_level = userDao.getUserLevel(user_id)
+            user_level = userDao.getUserLevel(display_text.user_id)
         if not user_level:
-            return_msg['error'] = 'No user_id "{user_id}"'.format(user_id=user_id)
+            return_msg['error'] = 'No user_id "{user_id}"'.format(user_id=display_text.user_id)
             return return_msg
         else:
             if user_level < user_level_low_bound:
@@ -940,27 +814,27 @@ def edit_text_data(json_obj):
                 return return_msg
             #check self text
             with TextDao() as textDao:
-                textInfo = textDao.getIdSysName(Id=str(text_id))
+                textInfo = textDao.getIdSysName(Id=str(display_text.id))
             try:
-                if textInfo["userId"] != user_id and user_level < user_level_high_bound:
+                if textInfo["userId"] != display_text.user_id and user_level < user_level_high_bound:
                     return_msg["error"] = "can not modify other user text"
                     return return_msg
                 text_type_id = int(textInfo["typeId"])
             except:
-                return_msg["error"] = "no such text id : {text_id}".format(text_id=text_id)
+                return_msg["error"] = "no such text id : {text_id}".format(text_id=display_text.id)
                 return return_msg
         
         old_dir = ""
         new_dir = ""
         #get text_system_name
         with TextDao() as textDao:
-            text_info = textDao.getIdSysName(Id=str(text_id))
+            text_info = textDao.getIdSysName(Id=str(display_text.id))
             text_sys_name = text_info["systemName"]
         try: 
             old_dir = text_sys_name
             new_dir = text_sys_name
         except:
-            return_msg["error"] = "no such text id : {text_id}".format(text_id=text_id)
+            return_msg["error"] = "no such text id : {text_id}".format(text_id=display_text.id)
             return return_msg
         
         #get old text type dir
@@ -973,17 +847,17 @@ def edit_text_data(json_obj):
             return return_msg
 
         #check if we need to move the file
-        if text_type_id == type_id:
-            old_dir = os.path.join(server_dir,"static",old_dir)
+        if text_type_id == display_text.type_id:
+            old_dir = os.path.join(display_text.server_dir,"static",old_dir)
             new_dir = old_dir
         else :  
             #get new text type dir
             with DataTypeDao() as dataTypeDao:
-                type_dir = dataTypeDao.getTypeDir(typeId=str(type_id))
+                type_dir = dataTypeDao.getTypeDir(typeId=str(display_text.type_id))
             try: 
                 new_dir = type_dir + new_dir
             except:
-                return_msg["error"] = "no such text type : " + str(type_id)
+                return_msg["error"] = "no such text type : " + str(display_text.type_id)
                 return return_msg
 
             #check if we need to move the file
@@ -991,8 +865,8 @@ def edit_text_data(json_obj):
                 new_dir = 'static/'+new_dir
             else :
                 try:
-                    old_dir = os.path.join(server_dir,"static",old_dir)
-                    new_dir = os.path.join(server_dir,"static",new_dir)
+                    old_dir = os.path.join(display_text.server_dir,"static",old_dir)
+                    new_dir = os.path.join(display_text.server_dir,"static",new_dir)
                     copyfile(old_dir, new_dir)
                     if os.path.isfile(old_dir) and os.path.isfile(new_dir):
                         os.remove(old_dir)
@@ -1005,22 +879,11 @@ def edit_text_data(json_obj):
                     return_msg["error"] = "move file error : " + old_dir
                     return return_msg
             with open(new_dir,'w') as fp:
-                print(json.dumps(text_file),file=fp)
-        
-        #start to modify mysql
-        text_data = {}
-        text_data["typeId"] = str(type_id)
-        text_data["invisibleTitle"] = invisible_title
-        text_data["startDate"] = text_start_date
-        text_data["endDate"] = text_end_date
-        text_data["startTime"] = text_start_time
-        text_data["endTime"] = text_end_time
-        text_data["displayTime"] = str(text_display_time)
-        text_data["editUserId"] = str(user_id)
-        text_data["Id"] = text_id
+                print(json.dumps(display_text.text_file),file=fp)
+
         try:
             with TextDao() as textDao:
-                textDao.updateEditedData(data=text_data)
+                textDao.updateEditedData(display_object=display_text)
         except DB_Exception as e:
             try:
                 copyfile(new_dir, old_dir)

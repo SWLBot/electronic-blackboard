@@ -1,0 +1,34 @@
+{% autoescape None %}
+<div class="title2">
+    <div class="header">
+        <span id="con" >{{ text_info['con'] }}</span>
+    </div>
+    <div class='content'>
+        <div class='title' id='title1'>{{ text_info['title1'] }}</div>
+        <div class='title' id='title2'>{{ text_info['title2'] }}</div>
+        {% if 'location' in text_info %}
+            <div id='location'>{{ text_info['location'] }}</div>
+        {% end %}
+        {% if 'detailtime' in text_info %}
+            <div id='detailtime'>{{ text_info['detailtime'] }}</div>
+        {% end %}
+        {% if 'description' in text_info %}
+            <div id='description'>{{ text_info['description'] }}</div>
+        {% end %}
+        {% if 'event_id' in text_info %}
+        <img id='event_qrcode' src="{{ text_info['event_id'] }}"/>
+        {% end %}
+        <div id='footer'>
+            <div class='bar'></div>
+            {% if 'year' in text_info and 'month' in text_info %}
+            <div class='congratulation'>{{ text_info['year'] }}年{{ text_info['month'] }}月 資訊學院全體師生慶賀</div>
+            {% end %}
+        </div>
+    </div>
+</div>
+{% if 'background_color' in text_info %}
+<script>
+    $('div.header').css('background-color', '{{ text_info['background_color'] }}')
+    $('div.bar').css('background-color', '{{ text_info['background_color'] }}')
+</script>
+{% end %}

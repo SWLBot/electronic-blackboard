@@ -1,4 +1,5 @@
 from mysql import *
+from display_object import *
 
 class DefaultDao():
     def __init__(self):
@@ -29,14 +30,26 @@ class DataManipulateDao(DefaultDao):
                 dataName=self.dataName,targetId=targetId,tableName=self.tableName)
         self.db.cmd(sql)
 
-    def markExpired(self,targetId,markOldData=None):
-        sql = 'UPDATE {tableName} SET {dataName}_is_expire=1 WHERE {dataName}_id="{targetId}"'.format(
-                dataName=self.dataName,targetId=targetId,tableName=self.tableName)
-        if markOldData:
-            sql += ' and {dataName}_is_expire=0 and {dataName}_is_delete=0'.format(
-                dataName=self.dataName)
-        self.db.cmd(sql)
-        
+    def markExpired(self,target=None):
+        target_list = None
+        if not target:
+            sql = 'SELECT {dataName}_id FROM {tableName} '\
+                +'WHERE {dataName}_is_delete=0 and {dataName}_is_expire=0 and (TO_DAYS(NOW())>TO_DAYS({dataName}_end_date) '\
+                +'or (TO_DAYS(NOW())=TO_DAYS({dataName}_end_date) and TIME_TO_SEC(DATE_FORMAT(NOW(), "%H:%i:%s"))>TIME_TO_SEC({dataName}_end_time)))'
+            sql = sql.format(dataName=self.dataName,tableName=self.tableName)
+            target_list = to_list(self.db.query(sql))
+        elif not isinstance(target,list):
+            target_list = [target]
+        else:
+            target_list = target
+
+        sql_template = 'UPDATE {tableName} SET {dataName}_is_expire=1 WHERE {dataName}_id="{targetId}"'
+        for targetId in target_list:
+            sql = sql_template.format(dataName=self.dataName,targetId=targetId,tableName=self.tableName)
+            self.db.cmd(sql)
+
+        return target_list
+
     def markDeleted(self,targetId,userId):
         sql = 'UPDATE {tableName} SET {dataName}_is_delete=1,{dataName}_last_edit_user_id={userId} WHERE {dataName}_id="{targetId}"'.format(
                 dataName=self.dataName,targetId=targetId,userId=userId,tableName=self.tableName)
@@ -63,14 +76,6 @@ class DataManipulateDao(DefaultDao):
         sql = sql.format(dataName=self.dataName,tableName=self.tableName)
         ret = self.db.query(sql)
         return ret
-        
-    def getExpiredIds(self):
-        sql = 'SELECT {dataName}_id FROM {tableName} '\
-                +'WHERE {dataName}_is_delete=0 and {dataName}_is_expire=0 and (TO_DAYS(NOW())>TO_DAYS({dataName}_end_date) '\
-                +'or (TO_DAYS(NOW())=TO_DAYS({dataName}_end_date) and TIME_TO_SEC(DATE_FORMAT(NOW(), "%H:%i:%s"))>TIME_TO_SEC({dataName}_end_time)))'
-        sql = sql.format(dataName=self.dataName,tableName=self.tableName)
-        Ids = self.db.query(sql)
-        return Ids
 
     def generateNewId(self):
         sql = 'SELECT {dataName}_id FROM {tableName} ORDER BY {dataName}_upload_time DESC, {dataName}_id DESC LIMIT 1'.format(
@@ -81,17 +86,17 @@ class DataManipulateDao(DefaultDao):
         else:
             return "{prefix}0000000001".format(prefix=self.prefix)
     
-    def updateEditedData(self,data):
+    def updateEditedData(self,display_object):
         sql = 'UPDATE {tableName} '
-        update = 'SET type_id={data[typeId]}, {dataName}_start_date="{data[startDate]}", ' \
-            + '{dataName}_end_date="{data[endDate]}", {dataName}_start_time="{data[startTime]}", ' \
-            + '{dataName}_end_time="{data[endTime]}", {dataName}_display_time={data[displayTime]}, ' \
-            + '{dataName}_last_edit_user_id="{data[editUserId]}"'
+        update = 'SET type_id={display_object.type_id}, {dataName}_start_date="{display_object.start_date}", ' \
+            + '{dataName}_end_date="{display_object.end_date}", {dataName}_start_time="{display_object.start_time}", ' \
+            + '{dataName}_end_time="{display_object.end_time}", {dataName}_display_time={display_object.display_time}, ' \
+            + '{dataName}_last_edit_user_id="{display_object.user_id}"'
         if self.tableName == "text_data":
-            update += ', text_invisible_title="{data[invisibleTitle]}"'
+            update += ', text_invisible_title="{display_object.invisible_title}"'
         sql += update
-        sql += ' WHERE {dataName}_id="{data[Id]}"'
-        sql = sql.format(tableName=self.tableName,dataName=self.dataName,data=data)
+        sql += ' WHERE {dataName}_id="{display_object.id}"'
+        sql = sql.format(tableName=self.tableName,dataName=self.dataName,display_object=display_object)
         self.db.cmd(sql)
 
     def getIdSysName(self,Id):
@@ -105,23 +110,23 @@ class DataManipulateDao(DefaultDao):
             #TODO raise exception
             return None
 
-    def insertData(self,data):
+    def insertData(self,display_object):
         sql = 'INSERT INTO {tableName} ' \
             + '({dataName}_id, type_id, {dataName}_system_name, ' \
             + '{column}, {dataName}_start_date, ' \
             + '{dataName}_end_date, {dataName}_start_time, {dataName}_end_time, ' \
             + '{dataName}_display_time, user_id)' \
             + ' VALUES ' \
-            + '("{data[id]}", {data[typeId]}, "{data[systemName]}", {value}, "{data[startDate]}",' \
-            + ' "{data[endDate]}", "{data[startTime]}", "{data[endTime]}", {data[displayTime]}, {data[userId]})'
+            + '("{display_object.id}", {display_object.type_id}, "{display_object.system_name}", {value}, "{display_object.start_date}",' \
+            + ' "{display_object.end_date}", "{display_object.start_time}", "{display_object.end_time}", {display_object.display_time}, {display_object.user_id})'
         if self.tableName == "image_data":
             column = "img_thumbnail_name, img_file_name"
-            value = '"{data[thumbnailName]}", "{data[fileName]}"'.format(data=data)
+            value = '"{display_image.thumbnail_name}", "{display_image.file_name}"'.format(display_image=display_object)
         elif self.tableName == "text_data":
             column = "text_invisible_title"
-            value = '"{data[invisibleTitle]}"'.format(data=data)
+            value = '"{display_text.invisible_title}"'.format(display_text=display_object)
         
-        sql = sql.format(column=column, value=value, dataName=self.dataName, tableName=self.tableName, data=data)
+        sql = sql.format(column=column, value=value, dataName=self.dataName, tableName=self.tableName, display_object=display_object)
         self.db.cmd(sql)
 
 class UserDao(DefaultDao):
@@ -282,9 +287,6 @@ class ImageDao(DataManipulateDao):
     dataName = 'img'
     tableName = 'image_data'
     prefix = 'imge'
-    def markExpired(self,imgId):
-        super().markExpired(targetId=imgId)
-
     def checkExisted(self,typeId,fileName):
         sql = 'SELECT COUNT(*) FROM image_data WHERE img_is_expire=0 and img_is_delete=0 '\
                 +'and type_id={typeId} and img_file_name="{fileName}"'.format(typeId=typeId,fileName=fileName)
@@ -334,12 +336,9 @@ class ImageDao(DataManipulateDao):
         sql = 'UPDATE image_data SET img_like_count=img_like_count+1 WHERE img_id="{targetId}"'.format(targetId=str(targetId))
         self.db.cmd(sql)
 
-    def generateNewId(self):
-        return super().generateNewId()
-
     def getCwbImgIds(self):
         sql = "SELECT img_id FROM image_data WHERE img_is_delete=0 and img_file_name like 'CV1_TW_3600_%'"
-        Ids = self.db.query(sql)
+        Ids = to_list(self.db.query(sql))
         return Ids
 
     def getDisplayImgs(self,userId=None):
@@ -378,9 +377,6 @@ class TextDao(DataManipulateDao):
             eventId=eventId)
         return self.queryOneValue(sql)
 
-    def markExpired(self,textId):
-        super().markExpired(targetId=textId)
-
     def addLikeCount(self,targetId):
         sql = 'UPDATE text_data SET text_like_count=text_like_count+1 WHERE text_id="{targetId}"'.format(targetId=str(targetId))
         self.db.cmd(sql)
@@ -389,9 +385,6 @@ class TextDao(DataManipulateDao):
         sql = 'select * from text_data where text_is_delete = 0 and text_id = "{textId}"'.format(textId=textId)
         ret = self.db.query(sql)
         return ret[0]
-
-    def generateNewId(self):
-        return super().generateNewId()
 
     def getDisplayTexts(self,userId=None):
         sql = "SELECT text_id, type_id, text_upload_time, text_start_date, text_end_date, text_start_time, text_end_time, text_display_time, text_display_count " \
@@ -419,12 +412,7 @@ class UserPreferDao(DefaultDao):
         sql = 'SELECT pref_data_type_{dataType}'.format(dataType=dataType) \
             + ' FROM user_prefer WHERE pref_is_delete=0 and user_id="{UserId}"'.format(UserId=str(UserId)) \
             + ' ORDER BY pref_set_time DESC LIMIT 1'
-        res = self.db.query(sql)
-        if len(res):
-            return res
-        else:
-            #TODO raise exception
-            return None
+        return self.queryOneValue(sql)
 
     def insertUserPrefer(self,prefId,userId,prefStr):
         sql = 'INSERT INTO user_prefer' \

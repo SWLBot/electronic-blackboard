@@ -23,6 +23,7 @@ import os.path
 import json
 import sys
 import config.settings as setting
+from display_object import *
 
 class loadScheduleError(Exception):
     def __init__(self,value):
@@ -83,12 +84,12 @@ def find_next_schedule():
         return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
-def find_text_acticity(json_obj):
+def get_candidates(arrange_mode_attr):
     """
     According current `arrange_mode` and `condition`, to find out
-    candidates text data returns to caller
+    candidates data returns to caller
 
-    return text candidates for displaying
+    return candidates for displaying
 
     Variables:
     arrange_mode: Different mode has different method to select candidates
@@ -103,86 +104,33 @@ def find_text_acticity(json_obj):
         return_msg = {}
         return_msg["result"] = "fail"
         deal_result = []
-        arrange_condition = []
         try:
-            arrange_mode = json_obj["arrange_mode"]
-            if "condition" in json_obj:
-                arrange_condition = json_obj["condition"]
+            arrange_mode = arrange_mode_attr["arrange_mode"]
+            arrange_condition = arrange_mode_attr.get('condition',[])
         except:
             return_msg["error"] = "input parameter missing"
             return return_msg
 
-        #find texts that may be schedule
         orderById = ModeUtil.checkOrderById(arrange_mode)
 
         conditionAssigned = ModeUtil.checkConditionAssigned(arrange_mode)
 
         with TextDao() as textDao:
-            pure_result= textDao.findActivities(conditionAssigned,orderById,arrange_mode,arrangeCondition=arrange_condition)
-        #restruct results of query
-        for result_row in pure_result:
-            if len(result_row)==2:
-                deal_result.append([result_row[0], int(result_row[1])])
-            elif len(result_row)==3:
-                deal_result.append([result_row[0], int(result_row[1]), float(result_row[2])])
-            else:
-                "DO NOTHING"
+            test_candidates= textDao.findActivities(conditionAssigned,orderById,arrange_mode,arrangeCondition=arrange_condition)
         
-        candidates = ModeUtil.selectDisplayCandidates(arrange_mode,deal_result)
-
-        return_msg["ans_list"] = candidates
-        return_msg["result"] = "success"
-        return return_msg
-    except DB_Exception as e:
-        return_msg["error"] = gen_error_msg(e.args[1])
-        return return_msg
-
-def find_image_acticity(json_obj):
-    """
-    According current `arrange_mode` and `condition`, to find out
-    candidates image data returns to caller
-
-    return image candidates for displaying
-
-    Variables:
-    arrange_mode: Different mode has different method to select candidates
-    arrange_condition: The type_id list of data_type will be used by some
-        arrange_mode
-    orderById: According to arrange_mode, the candidates should sort by id
-        or not
-    conditionAssigned: According to arrange_mode, the candidates should in
-    arrange_condition or not.
-    """
-    try:
-        return_msg = {}
-        return_msg["result"] = "fail"
-        deal_result = []
-        arrange_mode = 1
-        arrange_condition = []
-        try:
-            arrange_mode = json_obj["arrange_mode"]
-            if "condition" in json_obj:
-                arrange_condition = json_obj["condition"]
-        except:
-            return_msg["error"] = "input parameter missing"
-            return return_msg
-        
-        #find images that may be schedule
-        orderById = ModeUtil.checkOrderById(arrange_mode)
-
-        conditionAssigned = ModeUtil.checkConditionAssigned(arrange_mode)
-
         with ImageDao() as imageDao:
-            pure_result= imageDao.findActivities(conditionAssigned,orderById,arrange_mode,arrangeCondition=arrange_condition)
-        #restruct results of query
-        for result_row in pure_result:
+            image_candidates= imageDao.findActivities(conditionAssigned,orderById,arrange_mode,arrangeCondition=arrange_condition)
+
+        candidates = list(test_candidates) + list(image_candidates)
+
+        for result_row in candidates:
             if len(result_row)==2:
                 deal_result.append([result_row[0], int(result_row[1])])
             elif len(result_row)==3:
                 deal_result.append([result_row[0], int(result_row[1]), float(result_row[2])])
             else:
                 "DO NOTHING"
-         
+
         candidates = ModeUtil.selectDisplayCandidates(arrange_mode,deal_result)
 
         return_msg["ans_list"] = candidates
@@ -225,18 +173,9 @@ def find_activity(json_obj):
     if arrange_mode in [3,4,5] and len(arrange_condition) == 0:
         return_msg["error"] = 'Then arrange mode {mode} need to assgin condition'.format(mode=arrange_mode)
         return return_msg
-    
-    #get text activity
-    receive_obj = find_text_acticity(json_obj)
-    if receive_obj["result"] == "success":
-        for text_data in receive_obj['ans_list']:
-            deal_obj.append(text_data)
-    
-    #get image activity
-    receive_obj = find_image_acticity(json_obj)
-    if receive_obj["result"] == "success":
-        for image_data in receive_obj['ans_list']:
-            deal_obj.append(image_data)
+
+    receive_obj = get_candidates(json_obj)
+    deal_obj = receive_obj['ans_list']
     
     deal_obj = mix_image_and_text(arrange_mode,deal_obj)
 
@@ -265,28 +204,14 @@ def expire_data_check():
     try:
         return_msg = {}
         return_msg["result"] = "fail"
-        deal_result = []
 
         with ImageDao() as imageDao:
-            pure_result = imageDao.getExpiredIds()
+            expired_images = imageDao.markExpired()
 
-        #update expire data
-        for expired_image_id in pure_result:
-            deal_result.append(expired_image_id[0])
-            with ImageDao() as imageDao:
-                imageDao.markExpired(expired_image_id[0])
-
-        #find expire text data
         with TextDao() as textDao:
-            pure_result = textDao.getExpiredIds()
+            expired_texts = textDao.markExpired()
 
-        #update expire data
-        for expired_text_id in pure_result:
-            deal_result.append(expired_text_id[0])
-            with TextDao() as textDao:
-                textDao.markExpired(expired_text_id[0])
-
-        for target_id in deal_result:
+        for target_id in expired_images+expired_texts:
             with ScheduleDao() as scheduleDao:
                 scheduleDao.markExpiredSchedule(targetId=target_id)
 
@@ -471,7 +396,6 @@ def set_schedule_log(json_obj):
         return_msg["error"] = gen_error_msg(e.args[1])
         return return_msg
 
-#future can write to log.txt. now just print it
 def read_system_setting():
     return_msg = {}
     return_msg["result"] = "fail"
@@ -488,7 +412,6 @@ def read_system_setting():
     return_msg["result"] = "success"
     return return_msg
 
-#future can write to log.txt. now just print it
 def read_arrange_mode():
     try:
         return_msg = {}
@@ -514,10 +437,10 @@ def delete_old_cwb_img(server_dir,user_id):
     error_list_id = []
     with ImageDao() as imageDao:
         Ids=imageDao.getCwbImgIds()
-    for num2 in range(len(Ids)):
+    for id in Ids:
         try:
             send_obj["server_dir"] = server_dir
-            send_obj["target_id"] = str(Ids[num2][0])
+            send_obj["target_id"] = str(id)
             send_obj["user_id"] = user_id
             receive_obj = delete_image_or_text_data(send_obj)
             if receive_obj["result"] == "fail":
@@ -527,12 +450,6 @@ def delete_old_cwb_img(server_dir,user_id):
             continue
     return error_list_id
 
-def mark_old_cwb_img(error_list_id):
-    for error_id in error_list_id:
-        with ImageDao() as imageDao:
-            imageDao.markExpired(targetId=error_id,markOldData=True)
-
-#
 def crawler_cwb_img(json_obj):
     try:
         return_msg = {}
@@ -544,7 +461,6 @@ def crawler_cwb_img(json_obj):
             return_msg["error"] = "input parameter missing"
             return return_msg
         now_time = time.time()
-        send_obj = {}
         receive_obj = {}
 
         with DataTypeDao() as dataTypeDao:
@@ -565,21 +481,22 @@ def crawler_cwb_img(json_obj):
                 now_time -= 60
                 continue
 
-            error_list_id = delete_old_cwb_img(server_dir,user_id)
+            error_id_list = delete_old_cwb_img(server_dir,user_id)
 
-            mark_old_cwb_img(error_list_id)
+            with ImageDao() as imageDao:
+                imageDao.markExpired(target=error_id_list)
 
-            #upload new file
-            send_obj["server_dir"] = server_dir
-            send_obj["file_type"] = weather_data_type["typeId"]
-            send_obj["filepath"] = target_img
-            send_obj["start_date"] = time.strftime("%Y-%m-%d", time.localtime(time.time()))
-            send_obj["end_date"] = time.strftime("%Y-%m-%d", time.localtime(time.time()+86400))
-            send_obj["start_time"] = "00:00:00"
-            send_obj["end_time"] = "23:59:59"
-            send_obj["display_time"] = 5
-            send_obj["user_id"] = user_id
-            receive_obj = upload_image_insert_db(send_obj)
+            display_image = DisplayImage()
+            display_image.server_dir = server_dir
+            display_image.type_id = weather_data_type["typeId"]
+            display_image.filepath = target_img
+            display_image.start_date = time.strftime("%Y-%m-%d", time.localtime(time.time()))
+            display_image.end_date = time.strftime("%Y-%m-%d", time.localtime(time.time()+86400))
+            display_image.start_time = "00:00:00"
+            display_image.end_time = "23:59:59"
+            display_image.display_time = 5
+            display_image.user_id = user_id
+            receive_obj = upload_image_insert_db(display_image)
             try:
                 if receive_obj["result"] == "success":
                     filepath = receive_obj["img_system_filepath"]
@@ -672,28 +589,28 @@ def check_event_exist_or_insert(event, calendar_name=None):
         # do nothing
         return
     else:
-        send_msg = {}
-        send_msg["server_dir"] = os.path.dirname(__file__)
-        send_msg["file_type"] = 6
+        display_text = DisplayText()
+        display_text.server_dir = os.path.dirname(__file__)
+        display_text.type_id = 6
         if 'date' in event['start'].keys():
-            send_msg["start_date"] = datetime.datetime.strftime(datetime.datetime.strptime(event['start']['date'],'%Y-%m-%d') - datetime.timedelta(display_days),'%Y-%m-%d')
-            send_msg["end_date"] = event['start']['date']
+            display_text.start_date = datetime.datetime.strftime(datetime.datetime.strptime(event['start']['date'],'%Y-%m-%d') - datetime.timedelta(display_days),'%Y-%m-%d')
+            display_text.end_date = event['start']['date']
         elif 'dateTime' in event['start'].keys():
             event_start_date = event['start']['dateTime'].split('T')[0]
             event_start_time = event['start']['dateTime'].split('T')[1][:5]
             event_end_date = event['end']['dateTime'].split('T')[0]
             event_end_time = event['end']['dateTime'].split('T')[1][:5]
-            send_msg["start_date"] = datetime.datetime.strftime(datetime.datetime.strptime(event['start']['dateTime'].split('T')[0],'%Y-%m-%d') - datetime.timedelta(display_days),'%Y-%m-%d')
-            send_msg["end_date"] = event_start_date
+            display_text.start_date = datetime.datetime.strftime(datetime.datetime.strptime(event['start']['dateTime'].split('T')[0],'%Y-%m-%d') - datetime.timedelta(display_days),'%Y-%m-%d')
+            display_text.end_date = event_start_date
         else:
             print("no date and dateTime")
             return
-        send_msg["start_time"] = ""
-        send_msg["end_time"] = ""
-        send_msg["display_time"] = 10
-        send_msg["user_id"] = 1
-        send_msg["invisible_title"] = event_id
-        receive_msg = upload_text_insert_db(send_msg)
+        display_text.start_time = ""
+        display_text.end_time = ""
+        display_text.display_time = 10
+        display_text.user_id = 1
+        display_text.invisible_title = event_id
+        receive_msg = upload_text_insert_db(display_text=display_text)
         addition_msg = rule_base_agent(event)
         event_file_path = os.path.join('static','calendar_event','{name}.png'.format(name=event_id))
         description = event.get('description',addition_msg['description'])
@@ -704,7 +621,7 @@ def check_event_exist_or_insert(event, calendar_name=None):
         else:
             detailtime = ""
 
-        text_file = {   "con" : send_msg["end_date"],
+        text_file = {   "con" : display_text.end_date,
                         "title1" : addition_msg['title1'],
                         "title2" : addition_msg['title2'],
                         "description": description,
@@ -799,18 +716,17 @@ def save_google_drive_file(service, json_obj):
             while done is False:
                 status, done = downloader.next_chunk()
             
-            #upload new file
-            send_obj = {}
-            send_obj["server_dir"] = json_obj['server_dir']
-            send_obj["file_type"] = json_obj['data_type']
-            send_obj["filepath"] = 'static/img/' + file_name
-            send_obj["start_date"] = time.strftime("%Y-%m-%d", time.localtime(time.time()))
-            send_obj["end_date"] = time.strftime("%Y-%m-%d", time.localtime(time.time()+item['time']))
-            send_obj["start_time"] = "00:00:00"
-            send_obj["end_time"] = "23:59:59"
-            send_obj["display_time"] = 3
-            send_obj["user_id"] = json_obj['user_id']
-            receive_obj = upload_image_insert_db(send_obj)
+            display_image = DisplayImage()
+            display_image.server_dir = json_obj['server_dir']
+            display_image.type_id = json_obj['data_type']
+            display_image.filepath = os.path.join("static","img",file_name)
+            display_image.start_date = time.strftime("%Y-%m-%d", time.localtime(time.time()))
+            display_image.end_date = time.strftime("%Y-%m-%d", time.localtime(time.time()+item['time']))
+            display_image.start_time = "00:00:00"
+            display_image.end_time = "23:59:59"
+            display_image.display_time = 5
+            display_image.user_id = json_obj['user_id']
+            receive_obj = upload_image_insert_db(display_image)
 
             #save thumbnail image
             try:
@@ -1015,17 +931,17 @@ def crawler_schedule():
 
 def add_news_text(typeId, textFile):
     now_time = time.time()
-    send_msg = {}
-    send_msg["server_dir"] = os.path.dirname(__file__)
-    send_msg["file_type"] = typeId
-    send_msg["start_date"] = time.strftime("%Y-%m-%d", time.localtime(now_time))
-    send_msg["end_date"] = time.strftime("%Y-%m-%d", time.localtime(now_time))
-    send_msg["start_time"] = ""
-    send_msg["end_time"] = ""
-    send_msg["display_time"] = 5
-    send_msg["user_id"] = 1
-    send_msg["invisible_title"] = "news"
-    receive_msg = upload_text_insert_db(send_msg)
+    display_text = DisplayText()
+    display_text.server_dir = os.path.dirname(__file__)
+    display_text.type_id = typeId
+    display_text.start_date = time.strftime("%Y-%m-%d", time.localtime(now_time))
+    display_text.end_date = time.strftime("%Y-%m-%d", time.localtime(now_time))
+    display_text.start_time = ""
+    display_text.end_time = ""
+    display_text.display_time = 5
+    display_text.user_id = 1
+    display_text.invisible_title = "news"
+    receive_msg = upload_text_insert_db(display_text=display_text)
     with open(receive_msg["text_system_dir"],"w") as fp:
         print(json.dumps(textFile),file=fp)
 
@@ -1351,7 +1267,7 @@ def main():
                 else: #Parent
                     alarm_add_schedule = 1960380833.0
                     arrange_mode_change = 0
-            except:
+            except Exception as e:
                 receive_obj["result"] = "fail"
                 receive_obj["error"] = "fork3 error"
                 set_system_log(receive_obj)

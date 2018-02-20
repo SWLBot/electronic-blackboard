@@ -22,7 +22,18 @@ class MainHandler(BaseHandler):
 
 class Get_DB_Data(BaseHandler):
     def get(self):
-        self.write(load_schedule())
+        display_content = load_schedule()
+        if display_content['result'] == 'fail':
+            pass
+        elif display_content['display_type'] == 'image':
+            self.render('show-image.html',img_info=display_content)
+        elif display_content['display_type'] == 'text':
+            from tornado.template import Loader
+            loader = Loader('template')
+            print(loader.load('show-text.html').generate(text_info=display_content))
+            self.render('show-text.html', text_info=display_content)
+        elif display_content['display_type'] == 'news':
+            self.render('show-news.html', news_info=display_content)
 
 def main():
 
@@ -33,7 +44,6 @@ def main():
         "static_path":os.path.join(base_dir,"static"),
         "thumbnail_path":os.path.join(base_dir,"thumbnail"),
         "debug":True,
-        "xsrf_cookies":True,
     }
     application = tornado.web.Application([
         tornado.web.url(r"/",MainHandler,name="main"),

@@ -34,5 +34,12 @@ class Mysql(unittest.TestCase):
             db.connect()
             db.close()
 
+    @pytest.mark.run(order=7)
+    def test_to_list(self):
+        tup = ((1,),(2,))
+        tup2 = ((3,"str"),(4,"test"))
+        self.assertTrue(isinstance(to_list(tup),list))
+        self.assertTrue(isinstance(to_list(tup2),list))
+
 if __name__ == '__main__':
     unittest.main()
