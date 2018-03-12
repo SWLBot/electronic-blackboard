@@ -58,24 +58,6 @@ def mark_now_activity():
     return_msg["result"] = "success"
     return return_msg
 
-def find_next_schedule():
-    """
-    Find out the next undisplayed schedule
-    """
-    return_msg = {}
-    return_msg["result"] = "fail"
-    with ScheduleDao() as scheduleDao:
-        ret = scheduleDao.getNextSchedule()
-
-    if ret:
-        return_msg.update(ret)
-    else:
-        return_msg["error"] = "no schedule"
-        return return_msg
-    
-    return_msg["result"] = "success"
-    return return_msg
-
 def get_candidates(arrange_mode_attr):
     """
     According current `arrange_mode` and `condition`, to find out
