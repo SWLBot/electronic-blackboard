@@ -112,8 +112,8 @@ function insert_imgs(imgs,data_types,page,type){
         row.insertCell().innerHTML = obj['img_end_date'];
         row.insertCell().innerHTML = obj['img_start_time'];
         row.insertCell().innerHTML = obj['img_end_time'];
-        row.insertCell().innerHTML = obj['img_display_count'];
         row.insertCell().innerHTML = obj['img_display_time'];
+        row.insertCell().innerHTML = obj['img_display_count'];
         row.insertCell().appendChild(preview_img);
         var editCell = row.insertCell();
         editCell.appendChild(editButton);
