@@ -1162,6 +1162,7 @@ def main():
     alarm_expire_data_check = raw_time + 3.0
     alarm_set_schedule_log = raw_time + 10.0
     alarm_check_remain_schedule = raw_time
+    alarm_expire_displaying = raw_time + 10.0
     alarm_add_schedule = 1960380833.0
     alarm_crawler_cwb_img = raw_time + 7.0
     alarm_google_calendar_text = raw_time + 5.0
@@ -1205,10 +1206,6 @@ def main():
 
         if raw_time >= alarm_check_remain_schedule:
             print("[{timestamp}] Check remain schedule count".format(timestamp=time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time)))
-
-            ret = mark_now_activity()
-            if "error" in ret:
-                set_system_log(ret)
 
             with ScheduleDao() as scheduleDao:
                 remain_schedules = scheduleDao.countUndisplaySchedule()
@@ -1274,6 +1271,26 @@ def main():
                 arrange_mode_change = 0
                 alarm_add_schedule = raw_time + 3
         
+        #expire displaying data check
+        if raw_time>=alarm_expire_displaying:
+            ret = mark_now_activity()
+            print("[{timestamp}] Activity mark expired".format(timestamp=time.strftime('%Y-%m-%dT%H:%M:%SZ',now_time)))
+            if "error" in ret:
+                set_system_log(ret)
+            
+            with ScheduleDao() as scheduleDao:
+                now_sche_sn = scheduleDao.getDisplayingSchedule()
+            if now_sche_sn is not None:
+                with ScheduleDao() as scheduleDao:
+                    display_time = scheduleDao.getDisplayTime(scheSn=now_sche_sn)
+                if display_time is not None:
+                    alarm_expire_displaying+=int(display_time)
+                else:
+                    print("can't get displaying display_time")
+                    alarm_expire_displaying+=3
+            else:
+                alarm_expire_displaying=raw_time
+
         #crawl cwb radar image
         alarm_crawler_cwb_img = fork_time_management(raw_time,now_time,
             alarm_crawler_cwb_img,cwb_crawler_worker,600.0,3600.0)

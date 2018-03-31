@@ -282,6 +282,10 @@ class ScheduleDao(DefaultDao):
     def updateNewIdSchedule(self,scheNewId,scheSn):
         sql = "UPDATE schedule SET sche_id='{scheId}' WHERE sche_sn={scheSn}".format(scheId=scheNewId,scheSn=scheSn)
         self.db.cmd(sql)
+    
+    def getDisplayTime(self,scheSn):
+        sql = "SELECT sche_display_time FROM schedule WHERE sche_sn={scheSn}".format(scheSn=scheSn)
+        return self.queryOneValue(sql)
 
 class ImageDao(DataManipulateDao):
     dataName = 'img'
