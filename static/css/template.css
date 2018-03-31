@@ -81,6 +81,8 @@ p#like_count {
 }
 
 #news {
+    background-color: #0a5aaa;
+    width: 100%;
     padding-top: 60px;
 }
 
@@ -91,8 +93,7 @@ p#like_count {
     font-weight: bold;
     color: #162573;
     text-align: center;
-    width: 600px;
-    padding: 5px 0;
+    width: 750px;
 }
 
 .news-bar {
@@ -105,17 +106,17 @@ p#like_count {
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
-    margin: 20px;
+    margin: 50px;
 }
 
 .news-title {
     background-color: #34CCCF;
     font-family: 微軟正黑體;
-    font-size: 45px;
+    font-size: 50px;
     font-weight: bold;
     color: #2B287A;
     box-sizing: border-box;
-    margin: 90px;
+    margin: 70px;
     flex-basis: 60%;
     height: 250px;
     position: relative;
