@@ -35,7 +35,7 @@
         });
         $('#upload_activity').click(function(){
             if($('.image_block').css('display') !== "none"){
-                $('.imgae_block').toggle();
+                $('.image_block').toggle();
             }
             if($('.text_block').css('display') !== "none"){
                 $('.text_block').toggle();
