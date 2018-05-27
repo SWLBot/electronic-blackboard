@@ -64,7 +64,8 @@ class DataManipulateDao(DefaultDao):
                 else:
                     type_condition += " or type_id={type_id} ".format(type_id=type_id)
         if arrangeMode in range(6):
-            sql = "SELECT {dataName}_id, {dataName}_display_time FROM {tableName}" \
+            sql = "SELECT {dataName}_id, {dataName}_display_time," \
+                +" {dataName}_end_date,{dataName}_end_time FROM {tableName}" \
                 +" WHERE {dataName}_is_delete=0 and {dataName}_is_expire=0 "\
                 +" and (TO_DAYS(NOW()) between TO_DAYS({dataName}_start_date) and TO_DAYS({dataName}_end_date)) " \
                 +" and (TIME_TO_SEC(DATE_FORMAT(NOW(), '%H:%i:%s')) between TIME_TO_SEC({dataName}_start_time) and TIME_TO_SEC({dataName}_end_time))"
