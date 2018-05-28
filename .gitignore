@@ -4,14 +4,28 @@ thumbnail/*
 *.jpge
 __pycache__
 mysql_auth.txt
+.cache
+.vscode
+token.txt
+
+# log file
+*.log
 
 # for text data
 
 text*.txt
 
-# for weather image
+# for weather image and stored data
 
 static/img/*
 static/thumbnail/*
 static/trash_data/*
 static/log/*
+static/calendar_event/
+static/cowbei/
+static/inside/
+static/medium/
+static/pttStupidClown/
+static/pttjoke/
+static/techOrange/
+static/圖片/
