@@ -128,16 +128,6 @@ def get_candidates(arrange_mode_attr):
     return_msg["result"] = "success"
     return return_msg
 
-def mix_image_and_text(arrange_mode,deal_obj):
-    if arrange_mode in [0,3]:
-        "DO NOTHING"
-    elif arrange_mode in [1,4]:
-        deal_obj = sample(deal_obj, len(deal_obj))
-    elif arrange_mode in [2,5]:
-        if len(deal_obj)>20:
-            deal_obj = sample(deal_obj, 20)
-    return deal_obj
-
 def find_activity(json_obj):
     """
     According to the input arrange_mode setting, check the arrange mode consistence,
@@ -164,8 +154,6 @@ def find_activity(json_obj):
 
     receive_obj = get_candidates(json_obj)
     deal_obj = receive_obj['ans_list']
-    
-    deal_obj = mix_image_and_text(arrange_mode,deal_obj)
 
     #reshape data
     content_id = ""
