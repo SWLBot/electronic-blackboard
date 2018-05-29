@@ -24,6 +24,8 @@ import json
 import sys
 import config.settings as setting
 from display_object import *
+from random import randrange, seed
+from math import ceil
 
 class loadScheduleError(Exception):
     def __init__(self,value):
@@ -95,10 +97,10 @@ def get_candidates(arrange_mode_attr):
         image_candidates= imageDao.findActivities(conditionAssigned,orderById,arrange_mode,arrangeCondition=arrange_condition)
 
     candidates = list(test_candidates) + list(image_candidates)
-
     for result_row in candidates:
-        if len(result_row)==2:
-            deal_result.append([result_row[0], int(result_row[1])])
+        if len(result_row)==4:
+            deal_result.append([result_row[0], int(result_row[1]), 
+                                result_row[2], result_row[3]])
         elif len(result_row)==3:
             deal_result.append([result_row[0], int(result_row[1]), float(result_row[2])])
         else:
@@ -142,14 +144,24 @@ def find_activity(json_obj):
     content_time = 5
     return_msg["target_id"] = []
     return_msg["display_time"] = []
+    return_msg["delta_time"] = []
+    # utc+8 in taiwan
+    now_time = datetime.datetime.utcnow() + datetime.timedelta(hours=8)
     for display_data in deal_obj:
         try:
             content_id = str(display_data[0])
             content_time = int(display_data[1])
-        except:
+            content_end_date = datetime.datetime.combine(display_data[2], datetime.time.min)
+            content_end_time = content_end_date + display_data[3]
+            #end_time_str = "{date} {time}".format(date=str(display_data[2]),time=str(display_data[3]))
+            delta_time = \
+                int((content_end_time - now_time).total_seconds())
+        except Exception as e:
+            print(e)     
             continue
         return_msg["target_id"].append(content_id)
         return_msg["display_time"].append(content_time)
+        return_msg["delta_time"].append(delta_time)
 
     return_msg["result"] = "success"
     return return_msg
@@ -271,7 +283,78 @@ def add_schedule(json_obj):
     return_msg["result"] = "success"
     return return_msg
 
+#The API connect mysql and add activity to schedule
+def add_schedule_by_duedate(json_obj):
+    """
+    The schedule will be add to data based on due date.
+    Every schedule has a probability selected to add 
+    in the `schedule` database. When the schedule is closed to end time, the
+    probability will increase. A schedule end in a half day will have the same
+    probability(the upper bound).
+    """
+    try:
+        return_msg = {}
+        return_msg["result"] = "fail"
+        target_id_list = []
+        display_time_list = []
+        target_id = ""
+        display_time = 5
+        arrange_mode_sn = 1
+        try:
+            target_id_list = json_obj["target_id"]
+            display_time_list = json_obj["display_time"]
+            arrange_mode_sn = json_obj["arrange_sn"]
+            delta_time_list = json_obj["delta_time"]
+        except:
+            return_msg["error"] = "input parameter missing"
+            return return_msg
+        # count tatoal delta time
+        sche_distribution = []
+        for delta_time in delta_time_list:
+            # 43200 = 60*60*24*5, total seconds of 5 days
+            
+            distribution = int( ceil(432000/delta_time) if delta_time > 0 else 0 )
+            # give distribution an upper bound, prevent a schedule be selected
+            # a lot when it approach its end time
+            if distribution > 10:
+                distribution = 10
+            sche_distribution.append(distribution)
+        
+        sche_distribution_sum = sum(sche_distribution)
+        # insert into schedule database 10 data one tiem
+        seed()
+        # loop 10 times, i means nothing
+        for i in range(10):
+            # select schedule randomly by distribution
+            select_distribution = randrange(sche_distribution_sum)          
+            sche_count = 0
+            while select_distribution >= 0 and sche_idx < len(sche_distribution):
+                select_distribution -= sche_distribution[sche_idx]
+                sche_idx = sche_count
+                sche_count += 1
+            # get schedule item and record it
+            target_id = target_id_list[sche_idx]
+            display_time = int(display_time_list[sche_idx])
+            #insert
+            with ScheduleDao() as scheduleDao:
+                scheduleDao.insertUndecidedSchedule(target_id,display_time,arrange_mode_sn)
+                sche_sn = scheduleDao.getUndecidedScheduleSn()
+            if sche_sn:
+                new_id = "sche" + "{0:010d}".format(int(sche_sn))
+                with ScheduleDao() as scheduleDao:
+                    scheduleDao.updateNewIdSchedule(new_id,sche_sn)
+            else :
+                return_msg["error"] = "may be another arrange.exe is working"
+                return return_msg
+
+        return_msg["result"] = "success"
+        return return_msg
+    except DB_Exception as e:
+        return_msg["error"] = gen_error_msg(e.args[1])
+        return return_msg
+
 #The API connect mysql and clean non used schedule
+#defined but not used
 def clean_schedule():
     return_msg = {}
     return_msg["result"] = "fail"
@@ -1167,9 +1250,11 @@ def main():
                     send_obj["sn_offset"] = 3
                     send_obj["target_id"] = receive_obj["target_id"]
                     send_obj["display_time"] = receive_obj["display_time"]
+                    send_obj["delta_time"] = receive_obj["delta_time"]
                     send_obj["arrange_sn"] = arrange_sn
                     if arrange_mode_change == 0:
-                        receive_obj = add_schedule(send_obj)
+                        #receive_obj = add_schedule(send_obj)
+                        receive_obj = add_schedule_by_duedate(send_obj)
                     else :
                         receive_obj = edit_schedule(send_obj)
                     if receive_obj["result"] == "success":
@@ -1183,6 +1268,7 @@ def main():
                     alarm_add_schedule = 1960380833.0
                     arrange_mode_change = 0
             except Exception as e:
+                print(e)
                 receive_obj["result"] = "fail"
                 receive_obj["error"] = "fork3 error"
                 set_system_log(receive_obj)
