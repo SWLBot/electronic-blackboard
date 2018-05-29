@@ -40,49 +40,41 @@ def mark_now_activity():
     """
     Find out displaying schedule, then mark it expired
     """
-    try:
-        return_msg = {}
-        return_msg["result"] = "fail"
-    
-        #find schedule
-        with ScheduleDao() as scheduleDao:
-            target_sn = scheduleDao.getDisplayingSchedule()
-        if not target_sn:
-            #no schedule to mark
-            return_msg["result"] = "success"
-            return return_msg
-    
-        #mark target
-        with ScheduleDao() as scheduleDao:
-            scheduleDao.markExpiredSchedule(target_sn)
-    
+    return_msg = {}
+    return_msg["result"] = "fail"
+
+    #find schedule
+    with ScheduleDao() as scheduleDao:
+        target_sn = scheduleDao.getDisplayingSchedule()
+    if not target_sn:
+        #no schedule to mark
         return_msg["result"] = "success"
         return return_msg
-    except DB_Exception as e:
-        return_msg["error"] = gen_error_msg(e.args[1])
-        return return_msg
+
+    #mark target
+    with ScheduleDao() as scheduleDao:
+        scheduleDao.markExpiredSchedule(target_sn)
+
+    return_msg["result"] = "success"
+    return return_msg
 
 def find_next_schedule():
     """
     Find out the next undisplayed schedule
     """
-    try:
-        return_msg = {}
-        return_msg["result"] = "fail"
-        with ScheduleDao() as scheduleDao:
-            ret = scheduleDao.getNextSchedule()
+    return_msg = {}
+    return_msg["result"] = "fail"
+    with ScheduleDao() as scheduleDao:
+        ret = scheduleDao.getNextSchedule()
 
-        if ret:
-            return_msg.update(ret)
-        else:
-            return_msg["error"] = "no schedule"
-            return return_msg
-        
-        return_msg["result"] = "success"
+    if ret:
+        return_msg.update(ret)
+    else:
+        return_msg["error"] = "no schedule"
         return return_msg
-    except DB_Exception as e:
-        return_msg["error"] = gen_error_msg(e.args[1])
-        return return_msg
+    
+    return_msg["result"] = "success"
+    return return_msg
 
 def get_candidates(arrange_mode_attr):
     """
@@ -100,45 +92,41 @@ def get_candidates(arrange_mode_attr):
     conditionAssigned: According to arrange_mode, the candidates should in
     arrange_condition or not.
     """
+    return_msg = {}
+    return_msg["result"] = "fail"
+    deal_result = []
     try:
-        return_msg = {}
-        return_msg["result"] = "fail"
-        deal_result = []
-        try:
-            arrange_mode = arrange_mode_attr["arrange_mode"]
-            arrange_condition = arrange_mode_attr.get('condition',[])
-        except:
-            return_msg["error"] = "input parameter missing"
-            return return_msg
-
-        orderById = ModeUtil.checkOrderById(arrange_mode)
-
-        conditionAssigned = ModeUtil.checkConditionAssigned(arrange_mode)
-
-        with TextDao() as textDao:
-            test_candidates= textDao.findActivities(conditionAssigned,orderById,arrange_mode,arrangeCondition=arrange_condition)
-        
-        with ImageDao() as imageDao:
-            image_candidates= imageDao.findActivities(conditionAssigned,orderById,arrange_mode,arrangeCondition=arrange_condition)
-
-        candidates = list(test_candidates) + list(image_candidates)
-
-        for result_row in candidates:
-            if len(result_row)==2:
-                deal_result.append([result_row[0], int(result_row[1])])
-            elif len(result_row)==3:
-                deal_result.append([result_row[0], int(result_row[1]), float(result_row[2])])
-            else:
-                "DO NOTHING"
-
-        candidates = ModeUtil.selectDisplayCandidates(arrange_mode,deal_result)
-
-        return_msg["ans_list"] = candidates
-        return_msg["result"] = "success"
+        arrange_mode = arrange_mode_attr["arrange_mode"]
+        arrange_condition = arrange_mode_attr.get('condition',[])
+    except:
+        return_msg["error"] = "input parameter missing"
         return return_msg
-    except DB_Exception as e:
-        return_msg["error"] = gen_error_msg(e.args[1])
-        return return_msg
+
+    orderById = ModeUtil.checkOrderById(arrange_mode)
+
+    conditionAssigned = ModeUtil.checkConditionAssigned(arrange_mode)
+
+    with TextDao() as textDao:
+        test_candidates= textDao.findActivities(conditionAssigned,orderById,arrange_mode,arrangeCondition=arrange_condition)
+    
+    with ImageDao() as imageDao:
+        image_candidates= imageDao.findActivities(conditionAssigned,orderById,arrange_mode,arrangeCondition=arrange_condition)
+
+    candidates = list(test_candidates) + list(image_candidates)
+
+    for result_row in candidates:
+        if len(result_row)==2:
+            deal_result.append([result_row[0], int(result_row[1])])
+        elif len(result_row)==3:
+            deal_result.append([result_row[0], int(result_row[1]), float(result_row[2])])
+        else:
+            "DO NOTHING"
+
+    candidates = ModeUtil.selectDisplayCandidates(arrange_mode,deal_result)
+
+    return_msg["ans_list"] = candidates
+    return_msg["result"] = "success"
+    return return_msg
 
 def mix_image_and_text(arrange_mode,deal_obj):
     if arrange_mode in [0,3]:
@@ -201,72 +189,56 @@ def expire_data_check():
     Check text and image data has expired, and if it is in schedule,
     mark it expired, too.
     """
-    try:
-        return_msg = {}
-        return_msg["result"] = "fail"
+    return_msg = {}
+    return_msg["result"] = "fail"
 
-        with ImageDao() as imageDao:
-            expired_images = imageDao.markExpired()
+    with ImageDao() as imageDao:
+        expired_images = imageDao.markExpired()
 
-        with TextDao() as textDao:
-            expired_texts = textDao.markExpired()
+    with TextDao() as textDao:
+        expired_texts = textDao.markExpired()
 
-        for target_id in expired_images+expired_texts:
-            with ScheduleDao() as scheduleDao:
-                scheduleDao.markExpiredSchedule(targetId=target_id)
+    for target_id in expired_images+expired_texts:
+        with ScheduleDao() as scheduleDao:
+            scheduleDao.markExpiredSchedule(targetId=target_id)
 
-        return_msg["result"] = "success"
-        return return_msg
-    except DB_Exception as e:
-        return_msg["error"] = gen_error_msg(e.args[1])
-        return return_msg
+    return_msg["result"] = "success"
+    return return_msg
 
 #The API connect mysql and add activity to schedule
 def edit_schedule(json_obj):
+    return_msg = {}
+    return_msg["result"] = "fail"
+    sn_offset = 0
+    target_id_list = []
+    display_time_list = []
+    target_id = ""
+    display_time = 5
+    arrange_mode_sn = 1
     try:
-        return_msg = {}
-        return_msg["result"] = "fail"
-        sn_offset = 0
-        target_id_list = []
-        display_time_list = []
-        target_id = ""
-        display_time = 5
-        arrange_mode_sn = 1
-        try:
-            sn_offset = json_obj["sn_offset"]
-            target_id_list = json_obj["target_id"]
-            display_time_list = json_obj["display_time"]
-            arrange_mode_sn = json_obj["arrange_sn"]
-        except:
-            return_msg["error"] = "input parameter missing"
-            return return_msg
+        sn_offset = json_obj["sn_offset"]
+        target_id_list = json_obj["target_id"]
+        display_time_list = json_obj["display_time"]
+        arrange_mode_sn = json_obj["arrange_sn"]
+    except:
+        return_msg["error"] = "input parameter missing"
+        return return_msg
 
-        for num0 in range(len(display_time_list)):
-            target_id = target_id_list[num0]
-            display_time = int(display_time_list[num0])
-            
-            #get now sn
+    for num0 in range(len(display_time_list)):
+        target_id = target_id_list[num0]
+        display_time = int(display_time_list[num0])
+        
+        #get now sn
+        with ScheduleDao() as scheduleDao:
+            target_sn = scheduleDao.getDisplayingSchedule()
+        if target_sn:
+            #check use update or insert
             with ScheduleDao() as scheduleDao:
-                target_sn = scheduleDao.getDisplayingSchedule()
-            if target_sn:
-                #check use update or insert
+                sche_sn = scheduleDao.getEditScheSn(scheSn=target_sn+sn_offset)
+            if sche_sn:
                 with ScheduleDao() as scheduleDao:
-                    sche_sn = scheduleDao.getEditScheSn(scheSn=target_sn+sn_offset)
-                if sche_sn:
-                    with ScheduleDao() as scheduleDao:
-                        scheduleDao.updateEditSchedule(target_id,display_time,arrange_mode_sn,sche_sn)
-                else:
-                    with ScheduleDao() as scheduleDao:
-                        scheduleDao.insertUndecidedSchedule(target_id,display_time,arrange_mode_sn)
-                        sche_sn = scheduleDao.getUndecidedScheduleSn()
-                    if sche_sn:
-                        new_id = "sche" + "{0:010d}".format(int(sche_sn))
-                        with ScheduleDao() as scheduleDao:
-                            scheduleDao.updateNewIdSchedule(new_id,sche_sn)
-                    else :
-                        return_msg["error"] = "may be another arrange.exe is working"
-                        return return_msg
-            else :
+                    scheduleDao.updateEditSchedule(target_id,display_time,arrange_mode_sn,sche_sn)
+            else:
                 with ScheduleDao() as scheduleDao:
                     scheduleDao.insertUndecidedSchedule(target_id,display_time,arrange_mode_sn)
                     sche_sn = scheduleDao.getUndecidedScheduleSn()
@@ -277,37 +249,7 @@ def edit_schedule(json_obj):
                 else :
                     return_msg["error"] = "may be another arrange.exe is working"
                     return return_msg
-            sn_offset += 1
-
-        return_msg["result"] = "success"
-        return return_msg
-    except DB_Exception as e:
-        return_msg["error"] = gen_error_msg(e.args[1])
-        return return_msg
-
-#The API connect mysql and add activity to schedule
-def add_schedule(json_obj):
-    try:
-        return_msg = {}
-        return_msg["result"] = "fail"
-        target_id_list = []
-        display_time_list = []
-        target_id = ""
-        display_time = 5
-        arrange_mode_sn = 1
-        try:
-            target_id_list = json_obj["target_id"]
-            display_time_list = json_obj["display_time"]
-            arrange_mode_sn = json_obj["arrange_sn"]
-        except:
-            return_msg["error"] = "input parameter missing"
-            return return_msg
-
-        for num0 in range(len(display_time_list)):
-            target_id = target_id_list[num0]
-            display_time = int(display_time_list[num0])
-            
-            #insert
+        else :
             with ScheduleDao() as scheduleDao:
                 scheduleDao.insertUndecidedSchedule(target_id,display_time,arrange_mode_sn)
                 sche_sn = scheduleDao.getUndecidedScheduleSn()
@@ -318,83 +260,109 @@ def add_schedule(json_obj):
             else :
                 return_msg["error"] = "may be another arrange.exe is working"
                 return return_msg
+        sn_offset += 1
 
-        return_msg["result"] = "success"
+    return_msg["result"] = "success"
+    return return_msg
+
+#The API connect mysql and add activity to schedule
+def add_schedule(json_obj):
+    return_msg = {}
+    return_msg["result"] = "fail"
+    target_id_list = []
+    display_time_list = []
+    target_id = ""
+    display_time = 5
+    arrange_mode_sn = 1
+    try:
+        target_id_list = json_obj["target_id"]
+        display_time_list = json_obj["display_time"]
+        arrange_mode_sn = json_obj["arrange_sn"]
+    except:
+        return_msg["error"] = "input parameter missing"
         return return_msg
-    except DB_Exception as e:
-        return_msg["error"] = gen_error_msg(e.args[1])
-        return return_msg
+
+    for num0 in range(len(display_time_list)):
+        target_id = target_id_list[num0]
+        display_time = int(display_time_list[num0])
+        
+        #insert
+        with ScheduleDao() as scheduleDao:
+            scheduleDao.insertUndecidedSchedule(target_id,display_time,arrange_mode_sn)
+            sche_sn = scheduleDao.getUndecidedScheduleSn()
+        if sche_sn:
+            new_id = "sche" + "{0:010d}".format(int(sche_sn))
+            with ScheduleDao() as scheduleDao:
+                scheduleDao.updateNewIdSchedule(new_id,sche_sn)
+        else :
+            return_msg["error"] = "may be another arrange.exe is working"
+            return return_msg
+
+    return_msg["result"] = "success"
+    return return_msg
 
 #The API connect mysql and clean non used schedule
 def clean_schedule():
-    try:
-        return_msg = {}
-        return_msg["result"] = "fail"
+    return_msg = {}
+    return_msg["result"] = "fail"
 
-        with ScheduleDao() as scheduleDao:
-            scheduleDao.cleanSchedule()
+    with ScheduleDao() as scheduleDao:
+        scheduleDao.cleanSchedule()
 
-        return_msg["result"] = "success"
-        return return_msg
-    except DB_Exception as e:
-        return_msg["error"] = gen_error_msg(e.args[1])
-        return return_msg   
+    return_msg["result"] = "success"
+    return return_msg   
 
 #The API connect mysql and clean up schedule and write it to the schedule.txt
 def set_schedule_log(json_obj):
+    return_msg = {}
+    return_msg["result"] = "fail"
+    log_dir = ""
+    max_is_used = 100
+    is_used_count = 0
     try:
-        return_msg = {}
-        return_msg["result"] = "fail"
-        log_dir = ""
-        max_is_used = 100
-        is_used_count = 0
+        log_dir = json_obj["board_py_dir"]
+        max_is_used = json_obj["max_db_log"]
+    except:
+        return_msg["error"] = "input parameter missing"
+        return return_msg
+    
+    with ScheduleDao() as scheduleDao:
+        is_used_count = scheduleDao.countUsedSchedule()
+    
+    #if log > max_is_used then clean up
+    if is_used_count > max_is_used:
+        #get schedule
+        with ScheduleDao() as scheduleDao:
+            schedules = scheduleDao.getUsedSchedule(limitCount=str(is_used_count - max_is_used))
+
+        #generate log
+        date_now = date.today()
+        schedule_file = 'schedule_{year}_{month}_{day}.txt'.format(year=date_now.year,month=date_now.month,day=date_now.day)
+        schedule_file = os.path.join(log_dir,'static','log',schedule_file)
         try:
-            log_dir = json_obj["board_py_dir"]
-            max_is_used = json_obj["max_db_log"]
+            if not os.path.isfile(schedule_file) :
+                file_pointer = open(schedule_file, "w")
+            else :
+                file_pointer = open(schedule_file, "a")
+
+            for schedule in schedules:
+                write_str = ""
+                for attr in schedule:
+                    write_str = write_str + str(attr) + " "
+                write_str = write_str + "\n"
+                file_pointer.write(write_str)
+            file_pointer.close()
         except:
-            return_msg["error"] = "input parameter missing"
+            return_msg["error"] = "Error occurred when writing to log file"
             return return_msg
         
-        with ScheduleDao() as scheduleDao:
-            is_used_count = scheduleDao.countUsedSchedule()
-        
-        #if log > max_is_used then clean up
-        if is_used_count > max_is_used:
-            #get schedule
+        #delete schedule
+        for schedule in schedules:
             with ScheduleDao() as scheduleDao:
-                schedules = scheduleDao.getUsedSchedule(limitCount=str(is_used_count - max_is_used))
-
-            #generate log
-            date_now = date.today()
-            schedule_file = 'schedule_{year}_{month}_{day}.txt'.format(year=date_now.year,month=date_now.month,day=date_now.day)
-            schedule_file = os.path.join(log_dir,'static','log',schedule_file)
-            try:
-                if not os.path.isfile(schedule_file) :
-                    file_pointer = open(schedule_file, "w")
-                else :
-                    file_pointer = open(schedule_file, "a")
-
-                for schedule in schedules:
-                    write_str = ""
-                    for attr in schedule:
-                        write_str = write_str + str(attr) + " "
-                    write_str = write_str + "\n"
-                    file_pointer.write(write_str)
-                file_pointer.close()
-            except:
-                return_msg["error"] = "Error occurred when writing to log file"
-                return return_msg
-            
-            #delete schedule
-            for schedule in schedules:
-                with ScheduleDao() as scheduleDao:
-                    scheduleDao.cleanSchedule(scheSn=schedule[0])
-        
-        return_msg["result"] = "success"
-        return return_msg
-    except DB_Exception as e:
-        return_msg["error"] = gen_error_msg(e.args[1])
-        return return_msg
+                scheduleDao.cleanSchedule(scheSn=schedule[0])
+    
+    return_msg["result"] = "success"
+    return return_msg
 
 def read_system_setting():
     return_msg = {}
@@ -413,24 +381,20 @@ def read_system_setting():
     return return_msg
 
 def read_arrange_mode():
-    try:
-        return_msg = {}
-        return_msg["result"] = "fail"
+    return_msg = {}
+    return_msg["result"] = "fail"
 
-        with ArrangeModeDao() as arrangeModeDao:
-            arrange_mode = arrangeModeDao.getArrangeMode()
+    with ArrangeModeDao() as arrangeModeDao:
+        arrange_mode = arrangeModeDao.getArrangeMode()
 
-        if arrange_mode:
-            return_msg.update(arrange_mode)
-        else:
-            return_msg["error"] = "no match schedule mode"
-            return return_msg
-
-        return_msg["result"] = "success"
+    if arrange_mode:
+        return_msg.update(arrange_mode)
+    else:
+        return_msg["error"] = "no match schedule mode"
         return return_msg
-    except DB_Exception as e:
-        return_msg["error"] = gen_error_msg(e.args[1])
-        return return_msg
+
+    return_msg["result"] = "success"
+    return return_msg
 
 def delete_old_cwb_img(server_dir,user_id):
     send_obj = {}
@@ -451,73 +415,69 @@ def delete_old_cwb_img(server_dir,user_id):
     return error_list_id
 
 def crawler_cwb_img(json_obj):
+    return_msg = {}
+    return_msg["result"] = "fail"
     try:
-        return_msg = {}
-        return_msg["result"] = "fail"
+        server_dir = json_obj["server_dir"]
+        user_id = json_obj["user_id"]
+    except:
+        return_msg["error"] = "input parameter missing"
+        return return_msg
+    now_time = time.time()
+    receive_obj = {}
+
+    with DataTypeDao() as dataTypeDao:
+        weather_data_type = dataTypeDao.getDataType(typeName='氣像雲圖')
+
+    if weather_data_type is None:
+        #TODO create cwb data_type
+        return_msg["error"] = "no cwb img data type"
+        return return_msg
+
+    for num1 in range(60):
+        target_img = 'CV1_TW_3600_{timeStamp}.png'.format(timeStamp=time.strftime("%Y%m%d%H%M", time.localtime(now_time)))
+        url = 'http://www.cwb.gov.tw/V7/observe/radar/Data/HD_Radar/' + target_img
         try:
-            server_dir = json_obj["server_dir"]
-            user_id = json_obj["user_id"]
+            target_img = os.path.join('static',weather_data_type["typeDir"],target_img)
+            request.urlretrieve(url, target_img)
         except:
-            return_msg["error"] = "input parameter missing"
-            return return_msg
-        now_time = time.time()
-        receive_obj = {}
+            now_time -= 60
+            continue
 
-        with DataTypeDao() as dataTypeDao:
-            weather_data_type = dataTypeDao.getDataType(typeName='氣像雲圖')
+        error_id_list = delete_old_cwb_img(server_dir,user_id)
 
-        if weather_data_type is None:
-            #TODO create cwb data_type
-            return_msg["error"] = "no cwb img data type"
-            return return_msg
+        with ImageDao() as imageDao:
+            imageDao.markExpired(target=error_id_list)
 
-        for num1 in range(60):
-            target_img = 'CV1_TW_3600_{timeStamp}.png'.format(timeStamp=time.strftime("%Y%m%d%H%M", time.localtime(now_time)))
-            url = 'http://www.cwb.gov.tw/V7/observe/radar/Data/HD_Radar/' + target_img
-            try:
-                target_img = os.path.join('static',weather_data_type["typeDir"],target_img)
-                request.urlretrieve(url, target_img)
-            except:
-                now_time -= 60
-                continue
-
-            error_id_list = delete_old_cwb_img(server_dir,user_id)
-
-            with ImageDao() as imageDao:
-                imageDao.markExpired(target=error_id_list)
-
-            display_image = DisplayImage()
-            display_image.server_dir = server_dir
-            display_image.type_id = weather_data_type["typeId"]
-            display_image.filepath = target_img
-            display_image.start_date = time.strftime("%Y-%m-%d", time.localtime(time.time()))
-            display_image.end_date = time.strftime("%Y-%m-%d", time.localtime(time.time()+86400))
-            display_image.start_time = "00:00:00"
-            display_image.end_time = "23:59:59"
-            display_image.display_time = 5
-            display_image.user_id = user_id
-            receive_obj = upload_image_insert_db(display_image)
-            try:
-                if receive_obj["result"] == "success":
-                    filepath = receive_obj["img_system_filepath"]
-                    thumbnail_path = "static/thumbnail/"
-                    thumbnail_path = os.path.join(thumbnail_path,receive_obj["img_thumbnail_name"])
-                    im = Image.open(filepath)
-                    im.thumbnail((100,100))
-                    im.save(thumbnail_path)
-                    break
-                else:
-                    return_msg = receive_obj
-                    return return_msg
-            except:
-                return_msg["error"] = "save thumbnail image fail"
+        display_image = DisplayImage()
+        display_image.server_dir = server_dir
+        display_image.type_id = weather_data_type["typeId"]
+        display_image.filepath = target_img
+        display_image.start_date = time.strftime("%Y-%m-%d", time.localtime(time.time()))
+        display_image.end_date = time.strftime("%Y-%m-%d", time.localtime(time.time()+86400))
+        display_image.start_time = "00:00:00"
+        display_image.end_time = "23:59:59"
+        display_image.display_time = 5
+        display_image.user_id = user_id
+        receive_obj = upload_image_insert_db(display_image)
+        try:
+            if receive_obj["result"] == "success":
+                filepath = receive_obj["img_system_filepath"]
+                thumbnail_path = "static/thumbnail/"
+                thumbnail_path = os.path.join(thumbnail_path,receive_obj["img_thumbnail_name"])
+                im = Image.open(filepath)
+                im.thumbnail((100,100))
+                im.save(thumbnail_path)
+                break
+            else:
+                return_msg = receive_obj
                 return return_msg
-                
-        return_msg["result"] = "success"
-        return return_msg
-    except DB_Exception as e:
-        return_msg["error"] = gen_error_msg(e.args[1])
-        return return_msg
+        except:
+            return_msg["error"] = "save thumbnail image fail"
+            return return_msg
+            
+    return_msg["result"] = "success"
+    return return_msg
 
 def google_calendar_text():
     """
@@ -801,99 +761,87 @@ def crawler_google_drive_img(json_obj):
         return return_msg 
 
 def crawler_news(website):
-    try:
-        return_msg = {}
-        return_msg["result"] = "fail"
+    return_msg = {}
+    return_msg["result"] = "fail"
 
-        #check if table 'news_QR_code' exists
-        check_table(news=True)
+    #check if table 'news_QR_code' exists
+    check_table(news=True)
 
-        with DataTypeDao() as dataTypeDao:
-            existed = dataTypeDao.checkTypeExisted(website)
-        if not existed:
-            create_data_type(website)
+    with DataTypeDao() as dataTypeDao:
+        existed = dataTypeDao.checkTypeExisted(website)
+    if not existed:
+        create_data_type(website)
 
-        for case in switch(website):
-            if case('inside'):
-                #start grab INSIDE info
-                try:
-                    grab_inside_articles()
-                except:
-                    return_msg["error"] = "ERROR occurs in INSIDE crawler. Please check the correction of news_crawler"
-                    return return_msg
-                break
-            if case('techOrange'):
-                #start grab TECHORANGE info
-                try:
-                    grab_techorange_articles()
-                except:
-                    return_msg["error"] = "ERROR occurs in TECHORANGE crawler. Please check the correction of news_crawler"
-                    return return_msg
-                break
-            if case('medium'):
-                #start grab MEDIUM info
-                try:
-                    grab_medium_articles()
-                except:
-                    return_msg["error"] = "ERROR occurs in MEDIUM crawler. Please check the correction of news_crawler"
-                    return return_msg
-                break
-        return_msg["result"] = "success"
-        return return_msg
-    except DB_Exception as e:
-        return_msg["error"] = gen_error_msg(e.args[1])
-        return return_msg
+    for case in switch(website):
+        if case('inside'):
+            #start grab INSIDE info
+            try:
+                grab_inside_articles()
+            except:
+                return_msg["error"] = "ERROR occurs in INSIDE crawler. Please check the correction of news_crawler"
+                return return_msg
+            break
+        if case('techOrange'):
+            #start grab TECHORANGE info
+            try:
+                grab_techorange_articles()
+            except:
+                return_msg["error"] = "ERROR occurs in TECHORANGE crawler. Please check the correction of news_crawler"
+                return return_msg
+            break
+        if case('medium'):
+            #start grab MEDIUM info
+            try:
+                grab_medium_articles()
+            except:
+                return_msg["error"] = "ERROR occurs in MEDIUM crawler. Please check the correction of news_crawler"
+                return return_msg
+            break
+    return_msg["result"] = "success"
+    return return_msg
 
 def crawler_ptt_news(boards):
+    return_msg = {}
+    return_msg["result"] = "fail"
+
+    #check if table 'news_QR_code' exists
+    check_table(news=True)
+    
+    for board in boards:
+        typeName = 'ptt'+board
+        with DataTypeDao() as dataTypeDao:
+            existed = dataTypeDao.checkTypeExisted(typeName)
+        if not existed:
+            create_data_type(typeName)
+
+    #board with data_type but no crawling
+    inhibit_boards = ["Beauty"]
+    #start grab PTT info
     try:
-        return_msg = {}
-        return_msg["result"] = "fail"
-
-        #check if table 'news_QR_code' exists
-        check_table(news=True)
-        
-        for board in boards:
-            typeName = 'ptt'+board
-            with DataTypeDao() as dataTypeDao:
-                existed = dataTypeDao.checkTypeExisted(typeName)
-            if not existed:
-                create_data_type(typeName)
-
-        #board with data_type but no crawling
-        inhibit_boards = ["Beauty"]
-        #start grab PTT info
-        try:
-            allow_boards=list(set(boards) - set(inhibit_boards))
-            grab_ptt_articles(allow_boards)
-        except:
-            return_msg["error"] = "ERROR occurs in PTT crawler. Please check the correction of news_crawler"
-            return return_msg
-
-        return_msg["result"] = "success"
+        allow_boards=list(set(boards) - set(inhibit_boards))
+        grab_ptt_articles(allow_boards)
+    except:
+        return_msg["error"] = "ERROR occurs in PTT crawler. Please check the correction of news_crawler"
         return return_msg
-    except DB_Exception as e:
-        return_msg["error"] = gen_error_msg(e.args[1])
-        return return_msg
+
+    return_msg["result"] = "success"
+    return return_msg
 
 def crawler_constellation_fortune():
+    return_msg = {}
+    return_msg["result"] = "fail"
+
+    #check if table 'fortune' exists
+    check_table(fortune=True)
+    #start grab CONSTELLATION FORTUNE info
     try:
-        return_msg = {}
-        return_msg["result"] = "fail"
-
-        #check if table 'fortune' exists
-        check_table(fortune=True)
-        #start grab CONSTELLATION FORTUNE info
-        try:
-            grab_constellation_fortune()
-        except:
-            return_msg["error"] = "ERROR occurs in FORTUNE crawler. Please check the correction of news_crawler"
-            return return_msg
-
-        return_msg["result"] = "success"
+        grab_constellation_fortune()
+    except:
+        return_msg["error"] = "ERROR occurs in FORTUNE crawler. Please check the correction of news_crawler"
         return return_msg
-    except DB_Exception as e:
-        return_msg["error"] = gen_error_msg(e.args[1])
-        return return_msg
+
+    return_msg["result"] = "success"
+    return return_msg
 
 def check_table(news=False,fortune=False):
     with DatabaseDao() as databaseDao:
