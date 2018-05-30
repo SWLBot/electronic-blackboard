@@ -34,10 +34,6 @@ class loadScheduleError(Exception):
     def __str__(self):
         return repr(self.value)
 
-def gen_error_msg(msg=''):
-    caller = sys._getframe(1).f_code.co_name
-    return '[{caller}] : {msg}'.format(caller=caller,msg=msg)
-
 def mark_now_activity():
     """
     Find out displaying schedule, then mark it expired
