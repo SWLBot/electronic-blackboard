@@ -288,66 +288,63 @@ def add_schedule_by_duedate(json_obj):
     probability will increase. A schedule end in a half day will have the same
     probability(the upper bound).
     """
+    return_msg = {}
+    return_msg["result"] = "fail"
+    target_id_list = []
+    display_time_list = []
+    target_id = ""
+    display_time = 5
+    arrange_mode_sn = 1
     try:
-        return_msg = {}
-        return_msg["result"] = "fail"
-        target_id_list = []
-        display_time_list = []
-        target_id = ""
-        display_time = 5
-        arrange_mode_sn = 1
-        try:
-            target_id_list = json_obj["target_id"]
-            display_time_list = json_obj["display_time"]
-            arrange_mode_sn = json_obj["arrange_sn"]
-            delta_time_list = json_obj["delta_time"]
-        except:
-            return_msg["error"] = "input parameter missing"
-            return return_msg
-        # count tatoal delta time
-        sche_distribution = []
-        for delta_time in delta_time_list:
-            # 43200 = 60*60*24*5, total seconds of 5 days
-            
-            distribution = int( ceil(432000/delta_time) if delta_time > 0 else 0 )
-            # give distribution an upper bound, prevent a schedule be selected
-            # a lot when it approach its end time
-            if distribution > 10:
-                distribution = 10
-            sche_distribution.append(distribution)
+        target_id_list = json_obj["target_id"]
+        display_time_list = json_obj["display_time"]
+        arrange_mode_sn = json_obj["arrange_sn"]
+        delta_time_list = json_obj["delta_time"]
+    except:
+        return_msg["error"] = "input parameter missing"
+        return return_msg
+    # count tatoal delta time
+    sche_distribution = []
+    for delta_time in delta_time_list:
+        # 43200 = 60*60*24*5, total seconds of 5 days
         
-        sche_distribution_sum = sum(sche_distribution)
-        # insert into schedule database 10 data one tiem
-        seed()
-        # loop 10 times, i means nothing
-        for i in range(10):
-            # select schedule randomly by distribution
-            select_distribution = randrange(sche_distribution_sum)          
-            sche_count = 0
-            while select_distribution >= 0 and sche_idx < len(sche_distribution):
-                select_distribution -= sche_distribution[sche_idx]
-                sche_idx = sche_count
-                sche_count += 1
-            # get schedule item and record it
-            target_id = target_id_list[sche_idx]
-            display_time = int(display_time_list[sche_idx])
-            #insert
+        distribution = int( ceil(432000/delta_time) if delta_time > 0 else 0 )
+        # give distribution an upper bound, prevent a schedule be selected
+        # a lot when it approach its end time
+        if distribution > 10:
+            distribution = 10
+        sche_distribution.append(distribution)
+    
+    sche_distribution_sum = sum(sche_distribution)
+    # insert into schedule database 10 data one tiem
+    seed()
+    # loop 10 times, i means nothing
+    for i in range(10):
+        # select schedule randomly by distribution
+        select_distribution = randrange(sche_distribution_sum)          
+        sche_count = 0
+        sche_idx = 0
+        while select_distribution >= 0 and sche_idx < len(sche_distribution):
+            select_distribution -= sche_distribution[sche_idx]
+            sche_idx = sche_count
+            sche_count += 1
+        # get schedule item and record it
+        target_id = target_id_list[sche_idx]
+        display_time = int(display_time_list[sche_idx])
+        #insert
+        with ScheduleDao() as scheduleDao:
+            scheduleDao.insertUndecidedSchedule(target_id,display_time,arrange_mode_sn)
+            sche_sn = scheduleDao.getUndecidedScheduleSn()
+        if sche_sn:
+            new_id = "sche" + "{0:010d}".format(int(sche_sn))
             with ScheduleDao() as scheduleDao:
-                scheduleDao.insertUndecidedSchedule(target_id,display_time,arrange_mode_sn)
-                sche_sn = scheduleDao.getUndecidedScheduleSn()
-            if sche_sn:
-                new_id = "sche" + "{0:010d}".format(int(sche_sn))
-                with ScheduleDao() as scheduleDao:
-                    scheduleDao.updateNewIdSchedule(new_id,sche_sn)
-            else :
-                return_msg["error"] = "may be another arrange.exe is working"
-                return return_msg
+                scheduleDao.updateNewIdSchedule(new_id,sche_sn)
+        else :
+            return_msg["error"] = "may be another arrange.exe is working"
+            return return_msg
 
-        return_msg["result"] = "success"
-        return return_msg
-    except DB_Exception as e:
-        return_msg["error"] = gen_error_msg(e.args[1])
-        return return_msg
+    return_msg["result"] = "success"
+    return return_msg
 
 #The API connect mysql and clean non used schedule
 #defined but not used
