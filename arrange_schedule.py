@@ -359,18 +359,15 @@ def clean_schedule():
     return return_msg   
 
 #The API connect mysql and clean up schedule and write it to the schedule.txt
-def set_schedule_log(json_obj):
+def set_schedule_log(log_dir="", max_is_used=100):
+    """
+    When used_schudule_count is larger than `max_is_used`, 
+    this function will log used schedule into log_dir 
+    and clean them from database.
+    """
     return_msg = {}
     return_msg["result"] = "fail"
-    log_dir = ""
-    max_is_used = 100
     is_used_count = 0
-    try:
-        log_dir = json_obj["board_py_dir"]
-        max_is_used = json_obj["max_db_log"]
-    except:
-        return_msg["error"] = "input parameter missing"
-        return return_msg
     
     with ScheduleDao() as scheduleDao:
         is_used_count = scheduleDao.countUsedSchedule()
@@ -1055,8 +1052,7 @@ def do_expire_data_check():
 def do_set_schedule_log():
     global board_py_dir
     global max_db_log
-    send_obj = dict(board_py_dir=board_py_dir,max_db_log=max_db_log)
-    receive_obj = set_schedule_log(send_obj)
+    receive_obj = set_schedule_log(board_py_dir, max_db_log)
     if receive_obj["result"] == "success":
         "DO NOTHING"
     else :
