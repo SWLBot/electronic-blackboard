@@ -2,7 +2,6 @@ import pyqrcode
 import hashlib
 import os.path
 from urllib import request, parse
-from bs4 import BeautifulSoup
 
 def shorten_url(long_url):
     url_data = parse.urlencode(dict(url=long_url))
