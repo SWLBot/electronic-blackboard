@@ -223,7 +223,7 @@ class ScheduleDao(DefaultDao):
             scheduleInfo = {}
             scheduleInfo['schedule_id'] = ret[0][0]
             scheduleInfo['sche_target_id'] = ret[0][1]
-            scheduleInfo['display_time'] = ret[0][2]
+            scheduleInfo['display_time'] = int(ret[0][2])
             scheduleInfo['no_need_check_time'] = ret[0][3]
             scheduleInfo['target_sn'] = ret[0][4]
             return scheduleInfo

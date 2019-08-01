@@ -7,7 +7,7 @@ from dataAccessObjects import *
 import os.path
 import json
 
-def getDisplayContent(sche_target_id,return_msg):
+def getDisplayContent(sche_target_id, return_msg):
     """
     Get the display content of the display target.
 
@@ -39,9 +39,9 @@ def getDisplayContent(sche_target_id,return_msg):
         type_name = dataTypeDao.getTypeName(typeId=type_id)
     if type_dir == None or type_name == None:
         raise Exception("No such type id {}".format(type_id))
+    return_msg["type_name"] = type_name
 
     targetFile = os.path.join("static", type_dir, system_file_name)
-    return_msg["type_name"] = type_name
     if return_msg["display_type"] == "image":
         return_msg["img"] = targetFile
     elif return_msg["display_type"] == "text":
@@ -71,11 +71,11 @@ def load_schedule():
         if next_schedule is None:
             return_msg["error"] = "no schedule"
             return return_msg
-        return_msg["display_time"] = int(next_schedule['display_time'])
+        return_msg["display_time"] = next_schedule['display_time']
 
         sche_target_id = next_schedule['sche_target_id']
 
-        getDisplayContent(sche_target_id,return_msg)
+        getDisplayContent(sche_target_id, return_msg)
 
         if return_msg["display_type"] == "image":
             with ImageDao() as imageDao:
