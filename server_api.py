@@ -601,12 +601,8 @@ def upload_image_insert_db(display_image):
         return return_msg 
 
 def edit_image_data(display_image):
+    return_msg = dict(result="fail")
     try:
-        return_msg = {}
-        return_msg["result"] = "fail"
-
-        img_type_id = 0
-        
         #check user level
         with UserDao() as userDao:
             user_level = userDao.getUserLevel(display_image.user_id)
@@ -624,15 +620,12 @@ def edit_image_data(display_image):
                 if imgInfo["userId"] != display_image.user_id and user_level < LEVEL_HIGH_BOUND:
                     return_msg["error"] = "can not modify other user image "
                     return return_msg
-                img_type_id = imgInfo["typeId"]
+                type_id = imgInfo["typeId"]
             except:
                 return_msg["error"] = "no such image id : {id}".format(id=display_image.id)
                 return return_msg    
         
-        #check if we need to move the file
-        old_dir = ""
-        new_dir = ""
-        if img_type_id == display_image.type_id:
+        if type_id == display_image.type_id:
             "DO NOTHING"
         else :
             #get img_system_name
@@ -640,47 +633,47 @@ def edit_image_data(display_image):
                 img_info = imageDao.getIdSysName(Id=str(display_image.id))
                 img_sys_name = img_info["systemName"]
             if img_sys_name: 
-                old_dir = img_sys_name
-                new_dir = img_sys_name
+                old_file_path = img_sys_name
+                new_file_path = img_sys_name
             else:
                 return_msg["error"] = "no such image id : {id}".format(id=display_image.id)
                 return return_msg
             
             #get old image type dir
             with DataTypeDao() as dataTypeDao:
-                type_dir = dataTypeDao.getDataType(typeId=str(img_type_id)).type_dir
+                type_dir = dataTypeDao.getDataType(typeId=str(type_id)).type_dir
             if type_dir: 
-                old_dir = type_dir + old_dir
+                old_file_path = type_dir + old_file_path
             else:
-                return_msg["error"] = "no such image type : {type_id}".format(type_id=img_type_id)
+                return_msg["error"] = "no such image type : {type_id}".format(type_id=type_id)
                 return return_msg
                     
             #get new image type dir
             with DataTypeDao() as dataTypeDao:
                 type_dir = dataTypeDao.getDataType(typeId=str(display_image.type_id)).type_dir
             if type_dir: 
-                new_dir = type_dir + new_dir
+                new_file_path = type_dir + new_file_path
             else:
                 return_msg["error"] = "no such image type : {type_id}".format(type_id=display_image.type_id)
                 return return_msg
             
             #check if we need to move the file
-            if old_dir == new_dir:
+            if old_file_path == new_file_path:
                 "DO NOTHING"
             else :
                 try:
-                    old_dir = os.path.join(display_image.server_dir,"static",old_dir)
-                    new_dir = os.path.join(display_image.server_dir,"static",new_dir)
-                    copyfile(old_dir, new_dir)
-                    if os.path.isfile(old_dir) and os.path.isfile(new_dir):
-                        os.remove(old_dir)
+                    old_file_path = os.path.join(display_image.server_dir,"static",old_file_path)
+                    new_file_path = os.path.join(display_image.server_dir,"static",new_file_path)
+                    copyfile(old_file_path, new_file_path)
+                    if os.path.isfile(old_file_path) and os.path.isfile(new_file_path):
+                        os.remove(old_file_path)
                 except:
                     try:
-                        if os.path.isfile(old_dir) and os.path.isfile(new_dir):
-                            os.remove(new_dir)
+                        if os.path.isfile(old_file_path) and os.path.isfile(new_file_path):
+                            os.remove(new_file_path)
                     except:
                         "DO NOTHING"
-                    return_msg["error"] = "move file error : " + old_dir
+                    return_msg["error"] = "move file error : " + old_file_path
                     return return_msg
 
         try:
@@ -688,17 +681,17 @@ def edit_image_data(display_image):
                 imageDao.updateEditedData(display_object=display_image)
         except DB_Exception as e:
             try:
-                copyfile(new_dir, old_dir)
-                if os.path.isfile(old_dir) and os.path.isfile(new_dir):
-                    os.remove(new_dir)
+                copyfile(new_file_path, old_file_path)
+                if os.path.isfile(old_file_path) and os.path.isfile(new_file_path):
+                    os.remove(new_file_path)
             except:
                 try:
-                    if os.path.isfile(old_dir) and os.path.isfile(new_dir):
-                        os.remove(old_dir)
+                    if os.path.isfile(old_file_path) and os.path.isfile(new_file_path):
+                        os.remove(old_file_path)
                 except:
-                    return_msg["error"] = "move file error : duplicate files : " + old_dir
+                    return_msg["error"] = "move file error : duplicate files : " + old_file_path
                     return return_msg
-                return_msg["error"] = "move file error : " + new_dir
+                return_msg["error"] = "move file error : " + new_file_path
                 return return_msg
             return_msg["error"] = "update mysql error"
             return return_msg
@@ -754,12 +747,8 @@ def upload_text_insert_db(display_text):
 
 #
 def edit_text_data(display_text):
+    return_msg = dict(result="fail")
     try:
-        return_msg = {}
-        return_msg["result"] = "fail"
-
-        text_type_id = 0
-        
         #check user level
         with UserDao() as userDao:
             user_level = userDao.getUserLevel(display_text.user_id)
@@ -777,66 +766,64 @@ def edit_text_data(display_text):
                 if textInfo["userId"] != display_text.user_id and user_level < LEVEL_HIGH_BOUND:
                     return_msg["error"] = "can not modify other user text"
                     return return_msg
-                text_type_id = int(textInfo["typeId"])
+                type_id = int(textInfo["typeId"])
             except:
                 return_msg["error"] = "no such text id : {text_id}".format(text_id=display_text.id)
                 return return_msg
         
-        old_dir = ""
-        new_dir = ""
         #get text_system_name
         with TextDao() as textDao:
             text_info = textDao.getIdSysName(Id=str(display_text.id))
             text_sys_name = text_info["systemName"]
         try: 
-            old_dir = text_sys_name
-            new_dir = text_sys_name
+            old_file_path = text_sys_name
+            new_file_path = text_sys_name
         except:
             return_msg["error"] = "no such text id : {text_id}".format(text_id=display_text.id)
             return return_msg
         
         #get old text type dir
         with DataTypeDao() as dataTypeDao:
-            type_dir = dataTypeDao.getDataType(typeId=str(text_type_id)).type_dir
+            type_dir = dataTypeDao.getDataType(typeId=str(type_id)).type_dir
         try: 
-            old_dir = type_dir + old_dir
+            old_file_path = type_dir + old_file_path
         except:
-            return_msg["error"] = "no such text type : " + str(text_type_id)
+            return_msg["error"] = "no such text type : " + str(type_id)
             return return_msg
 
         #check if we need to move the file
-        if text_type_id == display_text.type_id:
-            old_dir = os.path.join(display_text.server_dir,"static",old_dir)
-            new_dir = old_dir
+        if type_id == display_text.type_id:
+            old_file_path = os.path.join(display_text.server_dir,"static",old_file_path)
+            new_file_path = old_file_path
         else :  
             #get new text type dir
             with DataTypeDao() as dataTypeDao:
                 type_dir = dataTypeDao.getDataType(typeId=str(display_text.type_id)).type_dir
             try: 
-                new_dir = type_dir + new_dir
+                new_file_path = type_dir + new_file_path
             except:
                 return_msg["error"] = "no such text type : " + str(display_text.type_id)
                 return return_msg
 
             #check if we need to move the file
-            if old_dir == new_dir:
-                new_dir = 'static/'+new_dir
+            if old_file_path == new_file_path:
+                new_file_path = 'static/'+new_file_path
             else :
                 try:
-                    old_dir = os.path.join(display_text.server_dir,"static",old_dir)
-                    new_dir = os.path.join(display_text.server_dir,"static",new_dir)
-                    copyfile(old_dir, new_dir)
-                    if os.path.isfile(old_dir) and os.path.isfile(new_dir):
-                        os.remove(old_dir)
+                    old_file_path = os.path.join(display_text.server_dir,"static",old_file_path)
+                    new_file_path = os.path.join(display_text.server_dir,"static",new_file_path)
+                    copyfile(old_file_path, new_file_path)
+                    if os.path.isfile(old_file_path) and os.path.isfile(new_file_path):
+                        os.remove(old_file_path)
                 except:
                     try:
-                        if os.path.isfile(old_dir) and os.path.isfile(new_dir):
-                            os.remove(new_dir)
+                        if os.path.isfile(old_file_path) and os.path.isfile(new_file_path):
+                            os.remove(new_file_path)
                     except:
                         "DO NOTHING"
-                    return_msg["error"] = "move file error : " + old_dir
+                    return_msg["error"] = "move file error : " + old_file_path
                     return return_msg
-            with open(new_dir,'w') as fp:
+            with open(new_file_path,'w') as fp:
                 print(json.dumps(display_text.text_file),file=fp)
 
         try:
@@ -844,23 +831,23 @@ def edit_text_data(display_text):
                 textDao.updateEditedData(display_object=display_text)
         except DB_Exception as e:
             try:
-                copyfile(new_dir, old_dir)
-                if os.path.isfile(old_dir) and os.path.isfile(new_dir):
-                    os.remove(new_dir)
+                copyfile(new_file_path, old_file_path)
+                if os.path.isfile(old_file_path) and os.path.isfile(new_file_path):
+                    os.remove(new_file_path)
             except:
                 try:
-                    if os.path.isfile(old_dir) and os.path.isfile(new_dir):
-                        os.remove(old_dir)
+                    if os.path.isfile(old_file_path) and os.path.isfile(new_file_path):
+                        os.remove(old_file_path)
                 except:
-                    return_msg["error"] = "move file error : duplicate files : " + old_dir
+                    return_msg["error"] = "move file error : duplicate files : " + old_file_path
                     return return_msg
-                return_msg["error"] = "move file error : " + new_dir
+                return_msg["error"] = "move file error : " + new_file_path
                 return return_msg
             return_msg["error"] = "update mysql error"
             return return_msg
 
         return_msg["result"] = "success"
-        return_msg["text_system_dir"] = new_dir
+        return_msg["text_system_dir"] = new_file_path
         return return_msg
     except DB_Exception as e:
         return_msg["error"] = e.args[1]
