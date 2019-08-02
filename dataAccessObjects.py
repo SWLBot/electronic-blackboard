@@ -144,14 +144,6 @@ class UserDao(DefaultDao):
         sql = 'SELECT user_level FROM user WHERE user_id  = {userId}'.format(userId=userId)
         return self.queryOneValue(sql)
 
-    def getUserBirthday(self,userId):
-        sql = 'select user_birthday from user where user_id = {userId}'.format(userId=userId)
-        return self.queryOneValue(sql)
-
-    def getUserNickname(self,userId):
-        sql = 'select user_nickname from user where user_id = {userId}'.format(userId=userId)
-        return self.queryOneValue(sql)
-
     def getUserPassword(self,userId=None,userName=None):
         sql = 'SELECT user_password FROM user WHERE '
         if userId:
@@ -496,30 +488,6 @@ class ArrangeModeDao(DefaultDao):
         else:
             #TODO check need to raise exception or not
             return None
-
-class FortuneDao(DefaultDao):
-    def getFortune(self,today,constellation):
-        sql = 'SELECT overall, love, career, wealth FROM fortune ' \
-            + 'WHERE fortune_date = "{today}" AND constellation = "{constellation}"' \
-            .format(today=today,constellation=constellation)
-        ret = self.db.query(sql)
-        if len(ret):
-            return ret
-        else:
-            #TODO check need to raise exception or not
-            return None
-
-    def insertFortune(self,date,constellation,overall,love,career,wealth):
-        sql = 'INSERT INTO fortune '\
-            +' (`fortune_date`, `constellation`, `overall`, `love`, `career`, `wealth`)'\
-            +' VALUES ("{date}","{constellation}","{overall}","{love}","{career}","{wealth}")'.format(
-            date=date,constellation=constellation,overall=overall,love=love,career=career,wealth=wealth)
-        self.db.cmd(sql)
-        
-    def checkFortuneExisted(self,date,constellation):
-        sql = 'SELECT COUNT(*) FROM fortune WHERE fortune_date="{date}" AND constellation="{constellation}"'.format(
-                date=date,constellation=constellation)
-        return self.queryOneValue(sql)
 
 class DatabaseDao(DefaultDao):
     def checkTableExisted(self,tableName):

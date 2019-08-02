@@ -14,22 +14,6 @@ class Server_api(unittest.TestCase):
         ret = check_bluetooth_mode_enable()
         self.assertNotEqual(ret,-1)
 
-    def test_set_insert_customer_text_msg(self):
-        ret = set_insert_customer_text_msg()
-        self.assertEqual(ret['result'],'success')
-
-    def test_collect_user_prefer_data(self):
-        try:
-            user_id = 1
-            prefer = [9,10]
-            collect_user_prefer_data(user_id, prefer)
-        except:
-            self.fail("Failed with %s" % traceback.format_exc())
-
-    def test_get_prefer_news(self):
-        prefer = [9,10]
-        self.assertNotEqual(len(get_prefer_news(prefer)),0)
-
     def test_check_bluetooth_id_exist(self):
         self.assertNotEqual(check_bluetooth_id_exist('test'),-1)
 

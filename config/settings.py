@@ -12,4 +12,3 @@ shutdown = 0,
 max_db_log = 100,
 min_db_activity = 10)
 
-bluetooth_enable = True
