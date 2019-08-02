@@ -910,12 +910,8 @@ def edit_text_data(display_text):
 
 #
 def delete_image_or_text_data(json_obj):
+    return_msg = dict(result="fail")
     try:
-        return_msg = {}
-        return_msg["result"] = "fail"
-        target_dir = ""
-        trash_dir = ""
-        target_type_id = 0
         user_level_low_bound = 100
         user_level_high_bound = 10000
         try:
@@ -932,55 +928,45 @@ def delete_image_or_text_data(json_obj):
         if not user_level:
             return_msg['error'] = 'No user_id "{user_id}"'.format(user_id=user_id)
             return return_msg
-        else:
-            if user_level < user_level_low_bound:
-                return_msg["error"] = "user right is too low"
+        elif user_level < user_level_low_bound:
+            return_msg["error"] = "user right is too low"
+            return return_msg
+
+        #check self data and get type_id
+        if target_id[0:4] == "imge":
+            with ImageDao() as imageDao:
+                info = imageDao.getIdSysName(Id=target_id)
+        elif target_id[0:4] == "text":
+            with TextDao() as textDao:
+                info = textDao.getIdSysName(Id=target_id)
+        else :
+            return_msg["error"] = "target id type error"
+            return return_msg
+        try:
+            if info["userId"] != user_id and user_level < user_level_high_bound:
+                return_msg["error"] = "can not modify other user image or text"
                 return return_msg
-            #check self data and get type_id
-            if target_id[0:4] == "imge":
-                with ImageDao() as imageDao:
-                    info = imageDao.getIdSysName(Id=target_id)
-            elif target_id[0:4] == "text":
-                with TextDao() as textDao:
-                    info = textDao.getIdSysName(Id=target_id)
-            else :
-                return_msg["error"] = "target id type error"
-                return return_msg
-            try:
-                if info["userId"] != user_id and user_level < user_level_high_bound:
-                    return_msg["error"] = "can not modify other user image or text"
-                    return return_msg
-                target_type_id =  int(info["typeId"])
-                target_dir = info["systemName"]
-            except:
-                return_msg["error"] = "no such target id : " + str(target_id)
-                return return_msg
+            target_type_id =  int(info["typeId"])
+            target_file = info["systemName"]
+        except:
+            return_msg["error"] = "no such target id : " + str(target_id)
+            return return_msg
         
         #get file place
         with DataTypeDao() as dataTypeDao:
             type_dir = dataTypeDao.getDataType(typeId=str(target_type_id)).type_dir
         try:
-            trash_dir = os.path.join(server_dir, "static", "trash_data", target_dir)
             system_file_dir = os.path.join(server_dir, "static", type_dir)
-            target_dir = os.path.join(system_file_dir, target_dir)
+            target_file = os.path.join(system_file_dir, target_file)
         except:
             return_msg["error"] = "no such type id : " + str(type_id)
             return return_msg
 
-        #check trash_data 
-        if not os.path.exists(os.path.split(trash_dir)[0]):
+        if os.path.isfile(target_file):
             try:
-                os.makedirs(os.path.split(trash_dir)[0])
+                os.remove(target_file)
             except:
-                return_msg["error"] = "no trash_data folder"
-                return return_msg
-
-        #move to trash
-        if os.path.isfile(target_dir):
-            try:
-                shutil.move(target_dir, trash_dir)
-            except:
-                return_msg["error"] = "move fail"
+                return_msg["error"] = "Delete file fail"
                 return return_msg
 
         if target_id[0:4] == "imge":
