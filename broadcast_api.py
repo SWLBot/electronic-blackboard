@@ -35,13 +35,14 @@ def getDisplayContent(sche_target_id, return_msg):
         raise Exception("no file record")
 
     with DataTypeDao() as dataTypeDao:
-        type_dir = dataTypeDao.getTypeDir(typeId=type_id)
-        type_name = dataTypeDao.getTypeName(typeId=type_id)
-    if type_dir == None or type_name == None:
-        raise Exception("No such type id {}".format(type_id))
-    return_msg["type_name"] = type_name
+        try:
+            data_type = dataTypeDao.getDataType(typeId=type_id)
+        except ValueError:
+            raise Exception("No such type id {}".format(type_id))
 
-    targetFile = os.path.join("static", type_dir, system_file_name)
+    return_msg["type_name"] = data_type.type_name
+
+    targetFile = os.path.join("static", data_type.type_dir, system_file_name)
     if return_msg["display_type"] == "image":
         return_msg["img"] = targetFile
     elif return_msg["display_type"] == "text":

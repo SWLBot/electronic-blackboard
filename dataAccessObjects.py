@@ -1,5 +1,6 @@
 from mysql import *
 from display_object import *
+from dataType import DataType
 
 class DefaultDao():
     def __init__(self):
@@ -487,7 +488,8 @@ class DataTypeDao(DefaultDao):
             condition = 'type_name = "{typeName}"'.format(typeName=typeName)
         sql = sql.format(condition=condition)
         ret = self.db.query(sql)
-        dataType = dict(typeId=ret[0][0],typeName=ret[0][1],typeDir=ret[0][2])
+
+        dataType = DataType(type_id=ret[0][0], type_name=ret[0][1], type_dir=ret[0][2])
         return dataType
 
 class ArrangeModeDao(DefaultDao):
