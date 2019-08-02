@@ -23,6 +23,9 @@ import datetime
 from dataAccessObjects import *
 from display_object import *
 
+LEVEL_LOW_BOUND = 100
+LEVEL_HIGH_BOUND = 10000
+
 class ArgumentUtil():
     """Provide the interface to get argument from handler
 
@@ -546,7 +549,6 @@ def check_user_level(user_id):
     try:
         return_msg = {}
         return_msg["result"] = "fail"
-        user_level_low_bound = 100
 
         #check user level
         with UserDao() as userDao:
@@ -555,7 +557,7 @@ def check_user_level(user_id):
             return_msg['error'] = 'No user_id "{user_id}"'.format(user_id=user_id)
             return return_msg
 
-        if user_level < user_level_low_bound:
+        if user_level < LEVEL_LOW_BOUND:
             return_msg['error'] = 'User has permission to do this job'
             return return_msg
 
@@ -643,8 +645,6 @@ def edit_image_data(display_image):
         return_msg = {}
         return_msg["result"] = "fail"
 
-        user_level_low_bound = 100
-        user_level_high_bound = 10000
         img_type_id = 0
         
         #check user level
@@ -654,14 +654,14 @@ def edit_image_data(display_image):
             return_msg['error'] = 'No user_id "{user_id}"'.format(user_id=display_image.user_id)
             return return_msg
         else:
-            if user_level < user_level_low_bound:
+            if user_level < LEVEL_LOW_BOUND:
                 return_msg["error"] = "user right is too low"
                 return return_msg
             #check self image
             with ImageDao() as imageDao:
                 imgInfo = imageDao.getIdSysName(Id=str(display_image.id))
             try:
-                if imgInfo["userId"] != display_image.user_id and user_level < user_level_high_bound:
+                if imgInfo["userId"] != display_image.user_id and user_level < LEVEL_HIGH_BOUND:
                     return_msg["error"] = "can not modify other user image "
                     return return_msg
                 img_type_id = imgInfo["typeId"]
@@ -798,8 +798,6 @@ def edit_text_data(display_text):
         return_msg = {}
         return_msg["result"] = "fail"
 
-        user_level_low_bound = 100
-        user_level_high_bound = 10000
         text_type_id = 0
         
         #check user level
@@ -809,14 +807,14 @@ def edit_text_data(display_text):
             return_msg['error'] = 'No user_id "{user_id}"'.format(user_id=display_text.user_id)
             return return_msg
         else:
-            if user_level < user_level_low_bound:
+            if user_level < LEVEL_LOW_BOUND:
                 return_msg["error"] = "user right is too low"
                 return return_msg
             #check self text
             with TextDao() as textDao:
                 textInfo = textDao.getIdSysName(Id=str(display_text.id))
             try:
-                if textInfo["userId"] != display_text.user_id and user_level < user_level_high_bound:
+                if textInfo["userId"] != display_text.user_id and user_level < LEVEL_HIGH_BOUND:
                     return_msg["error"] = "can not modify other user text"
                     return return_msg
                 text_type_id = int(textInfo["typeId"])
@@ -912,8 +910,6 @@ def edit_text_data(display_text):
 def delete_image_or_text_data(json_obj):
     return_msg = dict(result="fail")
     try:
-        user_level_low_bound = 100
-        user_level_high_bound = 10000
         try:
             server_dir = json_obj["server_dir"]
             target_id = json_obj["target_id"]
@@ -928,7 +924,7 @@ def delete_image_or_text_data(json_obj):
         if not user_level:
             return_msg['error'] = 'No user_id "{user_id}"'.format(user_id=user_id)
             return return_msg
-        elif user_level < user_level_low_bound:
+        elif user_level < LEVEL_LOW_BOUND:
             return_msg["error"] = "user right is too low"
             return return_msg
 
@@ -943,7 +939,7 @@ def delete_image_or_text_data(json_obj):
             return_msg["error"] = "target id type error"
             return return_msg
         try:
-            if info["userId"] != user_id and user_level < user_level_high_bound:
+            if info["userId"] != user_id and user_level < LEVEL_HIGH_BOUND:
                 return_msg["error"] = "can not modify other user image or text"
                 return return_msg
             target_type_id =  int(info["typeId"])
