@@ -10,16 +10,6 @@ class Server_api(unittest.TestCase):
     def test_find_now_schedule(self):
         self.assertNotEqual(find_now_schedule(),-1)
 
-    def test_check_bluetooth_mode_available(self):
-        ret = check_bluetooth_mode_enable()
-        self.assertNotEqual(ret,-1)
-
-    def test_check_bluetooth_id_exist(self):
-        self.assertNotEqual(check_bluetooth_id_exist('test'),-1)
-
-    def test_Zodiac(self):
-        self.assertEqual(Zodiac(12,31),u'摩羯座')
-
     def test_check_user_existed_or_signup(self):
         try:
             user_info = {}
@@ -28,11 +18,6 @@ class Server_api(unittest.TestCase):
             check_user_existed_or_signup(user_info)
         except:
             self.fail("Failed with %s" % traceback.format_exc())
-
-    def test_register_no_right_user(self):
-        send_msg = {}
-        send_msg["bluetooth_id"] = 'test_bluetooth_id'
-        self.assertEqual(register_no_right_user(send_msg),1)
 
     def test_check_user_password(self):
         try:
@@ -52,10 +37,6 @@ class Server_api(unittest.TestCase):
         send_msg["type_name"] = 'test_type'
         ret = add_new_data_type(send_msg)
         self.assertTrue(ret['result']=='success' or ret['error']=='Type name has existed')
-
-    def test_load_now_user_prefer(self):
-        ret = load_now_user_prefer(user_id=1)
-        self.assertTrue(isinstance(ret,list))
 
 if __name__ == "__main__":
     unittest.main()

@@ -53,10 +53,6 @@ class Arrange_Schedule(unittest.TestCase):
         receive_msg = check_table(fortune=True)
         self.assertEqual(receive_msg['result'],'success')
 
-    def test_crawler_constellation_fortune(self):
-        receive_msg = crawler_constellation_fortune()
-        self.assertEqual(receive_msg['result'], 'success')
-
     def test_set_schedule_log(self):
         send_msg = {}
         send_msg['board_py_dir'] = self.system_setting['board_py_dir']
