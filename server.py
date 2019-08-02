@@ -254,15 +254,6 @@ class BluetoothHandler(BaseHandler):
         else :
             self.write("fail {}".format(bluetooth_id))
 
-class SendlikeHandler(BaseHandler):
-    def get(self):
-        receive_msg = {}
-        receive_msg = add_now_like_count()
-        if receive_msg["result"] == "success":
-            self.write("success")
-        else :
-            self.write("fail")
-#
 class AppRegisterHandler(BaseHandler):
     def post(self):
         data = tornado.escape.json_decode(self.request.body)
@@ -297,7 +288,6 @@ def main():
         tornado.web.url(r"/addType",addTypeHandler,name="addType"),
         tornado.web.url(r"/googleapi",googleApiHandler,name="googleapi"),
         tornado.web.url(r"/bluetooth",BluetoothHandler,name="bluetooth"),
-        tornado.web.url(r"/sendlike",SendlikeHandler,name="sendlike"),
         tornado.web.url(r"/appregister",AppRegisterHandler,name="appregister"),
         tornado.web.url(r"/display",DisplayHandler,name="display"),
     ],**settings)

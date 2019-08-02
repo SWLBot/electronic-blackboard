@@ -83,21 +83,6 @@ class UploadArgumentsUtil(ArgumentUtil):
         display_object.end_time = self.getArgument('end_time')
         display_object.display_time = self.getArgument('display_time')
         return display_object
-
-def add_like_count(target_id):
-    try:
-        if target_id[0:4]=="imge":
-            with ImageDao() as imageDao:
-                imageDao.addLikeCount(targetId=target_id)
-        elif target_id[0:4]=="text":
-            with TextDao() as textDao:
-                textDao.addLikeCount(targetId=target_id)
-        else :
-            return 0
-        
-        return 1
-    except:
-        return 0
         
 #find the current displaying schedule
 def find_now_schedule():
@@ -111,32 +96,7 @@ def find_now_schedule():
             return 0
     except:
         return -1
-#
-def add_now_like_count():
-    try:
-        return_msg = {}
-        return_msg["result"] = "fail"
 
-        #find image or text id from current schedule
-        target_id = find_now_schedule()
-        if target_id==0:
-            return_msg["error"] = "can not find current schedule"
-            return return_msg
-            
-        #add like count
-        if add_like_count(target_id)==0:
-            return_msg["error"] = "can not add like count"
-            return return_msg
-
-        return_msg["result"] = "success"
-        return return_msg
-                
-    except DB_Exception as e:
-        return_msg["error"] = e.args[1]
-        return return_msg 
-    except Exception as e:
-        return_msg["error"] = e
-        return return_msg
 def register_preference(data):
     try:
         data_types = dict()
