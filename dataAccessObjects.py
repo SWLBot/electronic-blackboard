@@ -427,15 +427,6 @@ class UserPreferDao(DefaultDao):
         self.db.cmd(sql)
 
 class DataTypeDao(DefaultDao):
-    def getTypeDir(self,typeId=None,typeName=None):
-        sql = 'SELECT type_dir FROM data_type WHERE {condition}'
-        if typeId:
-            condition = 'type_id={typeId}'.format(typeId=typeId)
-        elif typeName:
-            condition = 'type_name={typeName}'.format(typeName=typeName)
-        sql = sql.format(condition=condition)
-        return self.queryOneValue(sql)
-
     def getTypeName(self,typeId):
         sql = 'SELECT type_name FROM data_type WHERE type_id={typeId}'.format(typeId=typeId)
         return self.queryOneValue(sql)

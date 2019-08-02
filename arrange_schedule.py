@@ -965,17 +965,15 @@ def news2text(text_count):
             text_count = int(len(news)/2)
             for counts in range(text_count):
                 with DataTypeDao() as dataTypeDao:
-                    type_dir1 = dataTypeDao.getTypeDir(typeId=news[counts][2])
-                    type_dir2 = dataTypeDao.getTypeDir(typeId=news[counts+text_count][2])
-                    type_name1 = dataTypeDao.getTypeName(typeId=news[counts][2])
-                    type_name2 = dataTypeDao.getTypeName(typeId=news[counts+text_count][2])
-                QR1 = os.path.join('static',type_dir1,'{name}.png'.format(name=news[counts][1]))
-                QR2 = os.path.join('static',type_dir2,'{name}.png'.format(name=news[counts+text_count][1]))
+                    dt1 = dataTypeDao.getDataType(typeId=news[counts][2])
+                    dt2 = dataTypeDao.getDataType(typeId=news[counts+text_count][2])
+                QR1 = os.path.join('static', dt1.type_dir, '{name}.png'.format(name=news[counts][1]))
+                QR2 = os.path.join('static', dt2.type_dir, '{name}.png'.format(name=news[counts+text_count][1]))
                 textFile = {   "text_type" : "news",
-                                "forum_name1" : type_name1,
+                                "forum_name1" : dt1.type_name,
                                 "title1" : news[counts][0],
                                 "QR1": QR1,
-                                "forum_name2" : type_name2,
+                                "forum_name2" : dt2.type_name,
                                 "title2" : news[counts+text_count][0],
                                 "QR2": QR2
                                 }

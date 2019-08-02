@@ -279,7 +279,7 @@ def get_prefer_news(prefer_data_type):
         #reshape output data
         for num2 in range(len(pure_result)):
             with DataTypeDao() as dataTypeDao:
-                type_dir = dataTypeDao.getTypeDir(typeId=pure_result[num2][2])
+                type_dir = dataTypeDao.getDataType(typeId=pure_result[num2][2]).type_dir
             tmp_json = {}
             tmp_json["title"] = str(pure_result[num2][0])
             tmp_json["QR"] = '/static/{type_dir}{name}.png'.format(type_dir=type_dir,name=str(pure_result[num2][1]))
@@ -567,7 +567,7 @@ def check_user_level(user_id):
 
 def get_abs_type_dir(type_id,server_dir):
     with DataTypeDao() as dataTypeDao:
-        type_dir = dataTypeDao.getTypeDir(typeId=type_id)
+        type_dir = dataTypeDao.getDataType(typeId=type_id).type_dir
     return os.path.join(server_dir,"static",type_dir)
 
 def upload_image_insert_db(display_image):
@@ -688,7 +688,7 @@ def edit_image_data(display_image):
             
             #get old image type dir
             with DataTypeDao() as dataTypeDao:
-                type_dir = dataTypeDao.getTypeDir(typeId=str(img_type_id))
+                type_dir = dataTypeDao.getDataType(typeId=str(img_type_id)).type_dir
             if type_dir: 
                 old_dir = type_dir + old_dir
             else:
@@ -697,7 +697,7 @@ def edit_image_data(display_image):
                     
             #get new image type dir
             with DataTypeDao() as dataTypeDao:
-                type_dir = dataTypeDao.getTypeDir(typeId=str(display_image.type_id))
+                type_dir = dataTypeDao.getDataType(typeId=str(display_image.type_id)).type_dir
             if type_dir: 
                 new_dir = type_dir + new_dir
             else:
@@ -768,7 +768,7 @@ def upload_text_insert_db(display_text):
         
         #get file place
         with DataTypeDao() as dataTypeDao:
-            type_dir = dataTypeDao.getTypeDir(typeId=str(display_text.type_id))
+            type_dir = dataTypeDao.getDataType(typeId=str(display_text.type_id)).type_dir
         try:
             text_system_name = text_id + ".txt"
             system_file_dir = os.path.join(display_text.server_dir, "static", type_dir)
@@ -839,7 +839,7 @@ def edit_text_data(display_text):
         
         #get old text type dir
         with DataTypeDao() as dataTypeDao:
-            type_dir = dataTypeDao.getTypeDir(typeId=str(text_type_id))
+            type_dir = dataTypeDao.getDataType(typeId=str(text_type_id)).type_dir
         try: 
             old_dir = type_dir + old_dir
         except:
@@ -853,7 +853,7 @@ def edit_text_data(display_text):
         else :  
             #get new text type dir
             with DataTypeDao() as dataTypeDao:
-                type_dir = dataTypeDao.getTypeDir(typeId=str(display_text.type_id))
+                type_dir = dataTypeDao.getDataType(typeId=str(display_text.type_id)).type_dir
             try: 
                 new_dir = type_dir + new_dir
             except:
@@ -958,7 +958,7 @@ def delete_image_or_text_data(json_obj):
         
         #get file place
         with DataTypeDao() as dataTypeDao:
-            type_dir = dataTypeDao.getTypeDir(typeId=str(target_type_id))
+            type_dir = dataTypeDao.getDataType(typeId=str(target_type_id)).type_dir
         try:
             trash_dir = os.path.join(server_dir, "static", "trash_data", target_dir)
             system_file_dir = os.path.join(server_dir, "static", type_dir)
@@ -1068,7 +1068,7 @@ def read_text_data(text_id):
             textInfo = textDao.getIdSysName(Id=text_id)
 
         with DataTypeDao() as dataTypeDao:
-            type_dir = dataTypeDao.getTypeDir(typeId=textInfo['typeId'])
+            type_dir = dataTypeDao.getDataType(typeId=textInfo['typeId']).type_dir
         
         filename = os.path.join('static',type_dir,textInfo['systemName'])
         with open(filename,'r') as fp:
