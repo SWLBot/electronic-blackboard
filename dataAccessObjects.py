@@ -148,10 +148,6 @@ class UserDao(DefaultDao):
         sql = 'select user_birthday from user where user_id = {userId}'.format(userId=userId)
         return self.queryOneValue(sql)
 
-    def checkBluetoothIdUsed(self,bluetoothId):
-        sql = 'SELECT count(*) FROM user WHERE user_bluetooth_id="{bluetoothId}"'.format(bluetoothId=bluetoothId)
-        return self.queryOneValue(sql)
-
     def getUserNickname(self,userId):
         sql = 'select user_nickname from user where user_id = {userId}'.format(userId=userId)
         return self.queryOneValue(sql)

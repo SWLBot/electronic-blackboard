@@ -97,48 +97,6 @@ def find_now_schedule():
     except:
         return -1
 
-def register_preference(data):
-    try:
-        data_types = dict()
-        data_types['inside'] = str(display_data_type(type_name='inside')[0])
-        data_types['techOrange'] = str(display_data_type(type_name='techOrange')[0])
-        data_types['medium'] = str(display_data_type(type_name='medium')[0])
-        data_types['pttBeauty'] = str(display_data_type(type_name='pttBeauty')[0])
-        data_types['pttjoke'] = str(display_data_type(type_name='pttjoke')[0])
-        data_types['pttStupidClown'] = str(display_data_type(type_name='pttStupidClown')[0])
-
-        pref_str = ""
-        if "all" in data["user_preference"]:
-            pref_str = " ".join(data_types.values())
-        else:
-            pref_str = " ".join([data_types[key] for key in data["user_preference"]])
-
-        #generate new id
-        try:
-            with UserPreferDao() as userPreferDao:
-                pref_id = userPreferDao.generateNewId()
-        except:
-            pref_id = "pref0000000001"
-
-        with UserDao() as userDao:
-            user_id = userDao.getUserId(bluetoothId=data['bluetooth_id'])
-
-        #insert user preference
-        with UserPreferDao() as userPreferDao:
-            userPreferDao.insertUserPrefer(prefId=pref_id,userId=user_id,prefStr=pref_str)
-
-        return 1
-    except:
-        return 0
-#
-def check_bluetooth_id_exist(bluetooth_id):
-    try:
-        with UserDao() as userDao:
-            isUsed = userDao.checkBluetoothIdUsed(bluetooth_id)
-        return isUsed
-    except:
-        return -1
-
 def check_bluetooth_mode_enable():
     try:
         from config.settings import bluetooth_enable
@@ -368,55 +326,7 @@ def check_user_existed_or_signup(user_info):
     except:
         return_msg["error"] = "Fail to check whether user is existed or create new user"
         return return_msg
-#
-def register_no_right_user(data):
-    try:
-        send_msg = {}
-        send_msg["user_name"] = data["bluetooth_id"]
-        send_msg["user_password"] = data["bluetooth_id"][0:6]
-        check_user_existed_or_signup(send_msg)
 
-        with UserDao() as userDao:
-            existed = userDao.checkUserExisted(userName=data["bluetooth_id"])
-        if not existed:
-            return 0
-
-        with UserDao() as userDao:
-            userDao.updateUserData(userInfo=data)
-        return 1
-    except:
-        return 0
-#
-def add_account_and_prefer(data):
-    try:
-        return_msg = {}
-        return_msg["result"] = "fail"
-
-        #check bluetooth id exist or not
-        if check_bluetooth_id_exist(data["bluetooth_id"])!=0:
-            return_msg["error"] = "bluetooth id exist"
-            return return_msg
-
-        #register new user level 50 == lower than normal user
-        if register_no_right_user(data)==0:
-            return_msg["error"] = "register user fail"
-            return return_msg
-
-        #register preference
-        if register_preference(data)==0:
-            return_msg["error"] = "register preference fail"
-            return return_msg
-
-        return_msg["result"] = "success"
-        return return_msg
-
-    except DB_Exception as e:
-        return_msg["error"] = e.args[1]
-        return return_msg
-    except Exception as e:
-        return_msg["error"] = str(e)
-        return return_msg
-#
 def check_user_password(user_info):
     try:
         return_msg = {}
