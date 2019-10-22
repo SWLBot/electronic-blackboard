@@ -57,11 +57,10 @@ class Arrange_Schedule(unittest.TestCase):
         receive_msg = crawler_constellation_fortune()
         self.assertEqual(receive_msg['result'], 'success')
 
-    def test_set_schedule_log(self):
-        send_msg = {}
-        send_msg['board_py_dir'] = self.system_setting['board_py_dir']
-        send_msg['max_db_log'] = self.system_setting['max_db_log']
-        receive_msg = set_schedule_log(send_msg)
+    def test_set_schedule_log(self): 
+        receive_msg = set_schedule_log(
+            self.system_setting['board_py_dir'], 
+            self.system_setting['max_db_log'])
         self.assertEqual(receive_msg['result'],'success')
 
     def test_expire_data_check(self):
