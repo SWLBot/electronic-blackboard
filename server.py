@@ -21,7 +21,7 @@ import datetime
 from display_object import *
 
 define('port',default=3000,help='run the server on the given port',type=int)
-define('log_file_prefix',default='server.log',help='log file name',type=str)
+#define('log_file_prefix',default='server.log',help='log file name',type=str)
 
 class BaseHandler(tornado.web.RequestHandler):
     def get_current_user(self):
