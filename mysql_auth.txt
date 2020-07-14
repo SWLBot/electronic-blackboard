@@ -1,0 +1,4 @@
+EB-mysql
+root
+mypassword
+blackboard
